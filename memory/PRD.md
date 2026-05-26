@@ -33,6 +33,18 @@ naar wie het kan gebruiken.
 
 ## What's been implemented
 
+### 2026-01-XX — Fase 2a (Aanvraagflow + admin-magazijn) ✅
+- **Aanvragen**: indienen met motivatie (max 500 tekens), intrekken, herinvoeren — alleen op niet-recurrente aanbiedingen en niet op aanbiedingen van eigen organisatie
+- **Selectie**: aanbieder selecteert een ontvanger → status `in_afwachting`, ander aanvragen blijven open, contactgegevens (email + phone + naam) gedeeld tussen aanbieder en geselecteerde
+- **Markering**: aanbieder markeert manueel als `herbestemd` (vanuit `beschikbaar` of `in_afwachting`) → andere open aanvragen worden `not_selected`
+- **Volledig reversibel**: `reservatie ongedaan maken` → terug `beschikbaar`; `herbestemming ongedaan maken` → terug `beschikbaar` + selectie + alle not_selected weer `open`
+- **"Mijn aanvragen"-pagina** (`/aanvragen`): gegroepeerd per status, klikbare tegels naar aanbieding
+- **"Jij bent gekozen!" banner** op detailpagina voor geselecteerde aanvrager met contactgegevens van aanbieder
+- **Owner-paneel** op detailpagina: aanvragen-lijst, selecteer-knoppen, herbestemd-knoppen
+- **Admin-only checkbox in wizard stap 6**: "Plaats direct in magazijn" → aanbieding krijgt status `in_magazijn` bij creatie. Server-side gating: niet-admins kunnen het veld niet misbruiken
+- **Seed-uitbreiding**: Samir (Vagebond) heeft een open aanvraag op Lotte's Lariks balken — toont de flow direct na seed
+- **Testing**: 21/21 backend tests pass, 100% UI flows verified
+
 ### 2026-01-XX — MVP (Fase 1a + 1b + 1c) ✅
 - **Auth**: JWT httpOnly cookie, registratie (nieuwe org + bestaande org paden), login, logout, /me probe
 - **Admin-validatie**: queue van pending users + pending orgs, approve/reject met optionele reden, automatische co-validatie van nieuw-aangemaakte orgs
@@ -51,14 +63,11 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
-### P0 — Volgende iteratie (Fase 2a)
-- Aanvraagflow: gevalideerde gebruikers kunnen zich kandidaat stellen voor een aanbieding
-- Aanbieder ziet kandidaten, kiest een ontvanger → contactgegevens worden gedeeld → status wordt "Herbestemd"
-- Status-transitie naar "In afwachting van pickup" tijdens selectie
+### P0 — Volgende iteratie (Fase 2b)
+- Resend e-mailnotificaties: registratie pending, validatie-uitkomst, aanvraag ontvangen, aanvraag geselecteerd/afgewezen, herbestemming bevestigd
+- In-app notification center
 
-### P1 — Fase 2b + 2c
-- Resend e-mailnotificaties (registratie pending, validatie, aanvraag ontvangen/geselecteerd, afgewezen, …)
-- In-app notificatiecenter
+### P1 — Fase 2c
 - Discussiesectie onder aanbiedingen
 - "Meld dit"-feature voor onaangepast gedrag
 
@@ -73,10 +82,8 @@ naar wie het kan gebruiken.
 - Interactieve kaart (Fase 6)
 
 ## Next tasks list
-1. **Cloudinary API_SECRET corrigeren** — vraag user de juiste waarde uit Cloudinary dashboard
-2. **Fase 2a bouwen** (aanvraagflow + status-transitions)
-3. **Resend integreren** voor de eerste set notificaties (validatie + aanvraag)
-4. **Optional polish**: tooltip-uitleg bij wizard-stappen, betere lege-staat illustraties, browser-image-compression progress indicator
+1. **Fase 2b bouwen**: Resend e-mailnotificaties voor de belangrijkste events
+2. **In-app notification center** (Fase 2b)
 
 ## Tech debt / future improvements
 - `archive_expired_listings` triggert bij elke GET /listings — beter naar achtergrond-scheduler verplaatsen wanneer load groeit

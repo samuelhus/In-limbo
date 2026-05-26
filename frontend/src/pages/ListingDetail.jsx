@@ -443,28 +443,28 @@ function OwnerPanel({ listing, onChanged }) {
 function SelectedContactBanner({ contact, title }) {
   return (
     <div
-      className="mt-8 border-l-4 border-l-green-600 border border-border bg-green-50 p-5"
+      className="mt-8 border-l-4 border-l-green-700 border border-green-700/30 bg-green-50 p-5"
       data-testid="selected-contact-banner"
     >
       <p className="overline text-green-900 mb-2">{title}</p>
-      <p className="text-foreground/90 text-sm mb-3">
+      <p className="text-foreground text-sm mb-3 leading-relaxed">
         Je bent geselecteerd als ontvanger. Hieronder vind je de contactgegevens van de aanbieder
         om een afspraak te maken.
       </p>
-      <p className="font-medium">
+      <p className="font-semibold text-foreground">
         {contact.firstName} {contact.lastName}
         {contact.organisationName && (
-          <span className="text-muted-foreground font-normal"> · {contact.organisationName}</span>
+          <span className="text-foreground/70 font-normal"> · {contact.organisationName}</span>
         )}
       </p>
       {contact.email && (
         <p className="text-sm mt-2">
-          <a href={`mailto:${contact.email}`} className="industrial-link" data-testid="selected-contact-email">{contact.email}</a>
+          <a href={`mailto:${contact.email}`} className="industrial-link text-foreground" data-testid="selected-contact-email">{contact.email}</a>
         </p>
       )}
       {contact.phone && (
         <p className="text-sm">
-          <a href={`tel:${contact.phone}`} className="industrial-link" data-testid="selected-contact-phone">{contact.phone}</a>
+          <a href={`tel:${contact.phone}`} className="industrial-link text-foreground" data-testid="selected-contact-phone">{contact.phone}</a>
         </p>
       )}
     </div>
