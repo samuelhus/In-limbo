@@ -1,0 +1,45 @@
+{
+  "summary": "First testing iteration for In Limbo MVP (Fase 1a+1b+1c). Backend: 25 pytest tests across auth, organisations, listings, cloudinary, admin — 24 passed, 1 skipped (admin-approve-tom was re-run after Tom already approved). Frontend: end-to-end Playwright verification of landing, catalogus (visitor + pending + validated), limited/full listing detail, admin queue, multi-step register, wizard load, mobile catalogus, pending-user routing. All critical flows working. No blocking bugs found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PATCH /api/users/me", "issue": "Email is silently lowercased on save. Acceptable behavior but undocumented — frontend should display lowercased email after update or warn user."},
+      {"endpoint": "POST /api/listings", "issue": "Pydantic schema rejects mixed-case enum (e.g. 'hout'); only 'Hout' accepted. Frontend wizard must use the exact title-case literal — verify ListingWizard sends correct casing."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "All pages (anonymous)", "issues": ["GET /api/auth/me logs a 401 in browser console on every initial render — expected by design but noisy. Consider catching the 401 silently in AuthContext to keep console clean."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_inlimbo_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Cloudinary API_SECRET in /app/backend/.env is identical to API_KEY (971768844624139). The /api/cloudinary/signature endpoint returns 200 (contract OK), but real Cloudinary uploads from the wizard will fail with 'invalid signature'. Ask user for the real API secret before listing-creation E2E can be exercised in browser.",
+    "Optional: suppress 401 console noise from initial /auth/me probe."
+  ],
+  "critical_code_review_comments": [
+    "auth.py uses HS256 + secret from env, httpOnly + samesite=none + secure cookie — good. bcrypt.gensalt() used — good. Cookie deletion repeats samesite/secure — good cross-site handling.",
+    "server.py: strip_mongo() consistently used; passwordHash never leaked. _id excluded.",
+    "server.py listings _public_listing_view correctly strips description/weight for visitors and pending users — verified via tests.",
+    "Lazy archive trigger on every GET /listings call (archive_expired_listings) is a hidden write inside a read endpoint; under high read traffic this may double-write. Consider moving to background scheduler only.",
+    "CORS middleware is added AFTER router include — works in FastAPI but conventionally added first. allow_origins=['*'] in .env is not used (frontend_url is explicitly listed) — OK.",
+    "/api/organisations does not paginate — fixed limit(50). For now seed is small; flag for future.",
+    "/api/users/me does not validate uniqueness of phone but uniqueness is not required by spec — OK.",
+    "Admin reject flow correctly marks lone-owner org as rejected; multi-member org safely left active."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_inlimbo_api.py"
+  ],
+  "success_rate": {"backend": "96% (24/25, 1 skipped due to state)", "frontend": "100% of critical flows verified"},
+  "test_credentials": "All seeded credentials in /app/memory/test_credentials.md work as documented. Tom was approved during testing then manually reset to pending in MongoDB to keep admin queue intact.",
+  "seed_data_creation": "Test-created users (TEST_ prefix) remain in DB as pending users — they appear in the admin queue. Main agent may want to filter test_ data out of admin UI screenshots or add a one-shot cleanup script.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Admin queue currently has 7 pending users (2 seeded: Tom + Nora; 5 TEST_-prefixed leftovers from registration tests). Cloudinary upload from the browser will fail (api_secret == api_key in .env). All other backend + frontend flows are green. Re-seed by running the backend pod (startup() seeds idempotently).",
+  "rca of the issue": "N/A — no critical bug found."
+}
