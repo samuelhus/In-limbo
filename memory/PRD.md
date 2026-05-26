@@ -33,6 +33,14 @@ naar wie het kan gebruiken.
 
 ## What's been implemented
 
+### 2026-01-XX — Mobile hamburger menu ✅
+- Responsive header met **hamburger-icoon** (lucide-react) op schermen < 768px
+- **Dropdown** met alle rol-afhankelijke nav-items + Uitloggen (logged-in) of Inloggen + Word lid (anoniem)
+- Sluit op outside-click én op route-wijziging
+- Desktop layout **volledig ongewijzigd** (verified)
+- ARIA-conform: aria-label en aria-expanded togglen correct, button is keyboard-focusable
+- Testing: **30/30 assertions green** over 4 auth states × 2 viewports
+
 ### 2026-01-XX — Mijn aanbiedingen-pagina ✅
 - **`/mijn-aanbiedingen`**: persoonlijke aanbiedingen-overzichtspagina voor gevalideerde users
 - Aanbiedingen gegroepeerd per status (beschikbaar → in_afwachting → herbestemd → in_magazijn → gearchiveerd)
