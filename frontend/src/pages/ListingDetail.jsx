@@ -114,17 +114,18 @@ export default function ListingDetail() {
                 )}
               </dl>
 
-              {item.organisation && (
-                <div className="border-t border-border pt-6">
-                  <p className="overline mb-2">Aangeboden door</p>
-                  <Link
-                    to={`/organisaties/${item.organisation.id}`}
-                    className="industrial-link font-medium text-lg"
-                    data-testid="listing-org-link"
-                  >
-                    {item.organisation.name}
-                  </Link>
-                  <p className="text-xs text-muted-foreground mt-1">{item.organisation.category}</p>
+              {item.organisation && item.offererFirstName && (
+                <div className="border-t border-border pt-6" data-testid="listing-offerer-block">
+                  <p className="text-base">
+                    Aangeboden door <span className="font-medium">{item.offererFirstName}</span> van{' '}
+                    <Link
+                      to={`/organisaties/${item.organisation.id}`}
+                      className="industrial-link font-medium"
+                      data-testid="listing-org-link"
+                    >
+                      {item.organisation.name}
+                    </Link>
+                  </p>
                 </div>
               )}
 

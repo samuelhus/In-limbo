@@ -285,6 +285,33 @@ def _public_listing_view(listing: dict, viewer: dict | None) -> dict:
     }
 
 
+async def _enrich_listings(items: list[dict]) -> list[dict]:
+    """Attach offererFirstName + organisation {id, name} to non-limited views."""
+    full = [it for it in items if not it.get("limited")]
+    if not full:
+        return items
+    user_ids = list({it["userId"] for it in full if it.get("userId")})
+    org_ids = list({it["organisationId"] for it in full if it.get("organisationId")})
+
+    users_map: dict[str, dict] = {}
+    if user_ids:
+        async for u in db.users.find({"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "firstName": 1}):
+            users_map[u["id"]] = u
+    orgs_map: dict[str, dict] = {}
+    if org_ids:
+        async for o in db.organisations.find({"id": {"$in": org_ids}}, {"_id": 0, "id": 1, "name": 1}):
+            orgs_map[o["id"]] = o
+
+    for it in full:
+        owner = users_map.get(it.get("userId"))
+        if owner:
+            it["offererFirstName"] = owner.get("firstName")
+        org = orgs_map.get(it.get("organisationId"))
+        if org:
+            it["organisation"] = {"id": org["id"], "name": org["name"]}
+    return items
+
+
 @api.get("/listings")
 async def list_listings(
     request: Request,
@@ -306,6 +333,7 @@ async def list_listings(
     items = []
     async for l in cursor:
         items.append(_public_listing_view(l, viewer))
+    items = await _enrich_listings(items)
     return {"total": total, "items": items, "skip": skip, "limit": limit}
 
 
@@ -317,18 +345,18 @@ async def get_listing(listing_id: str, request: Request):
     viewer = await get_current_user_optional(request)
     view = _public_listing_view(listing, viewer)
 
-    # For full view, also attach organisation summary + recurrent contact email
+    # For full view, also attach organisation summary + offerer first name + recurrent contact email
     if not view.get("limited"):
         org = await db.organisations.find_one({"id": listing["organisationId"]})
         if org:
             view["organisation"] = {
                 "id": org["id"],
                 "name": org["name"],
-                "category": org["category"],
             }
-        if listing.get("isRecurrent"):
-            owner = await db.users.find_one({"id": listing["userId"]})
-            if owner:
+        owner = await db.users.find_one({"id": listing["userId"]})
+        if owner:
+            view["offererFirstName"] = owner.get("firstName")
+            if listing.get("isRecurrent"):
                 view["offererEmail"] = owner["email"]
     return view
 

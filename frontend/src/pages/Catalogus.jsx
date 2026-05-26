@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
 import { cloudinaryThumb } from '@/lib/cloudinary';
@@ -40,12 +40,25 @@ function FilterPanel({ status, setStatus, onClose }) {
 }
 
 function ListingTile({ item, isValidated }) {
+  const navigate = useNavigate();
   const photo = item.photos?.[0];
+  const showOfferer = !item.limited && item.offererFirstName && item.organisation;
+
+  const goToListing = () => navigate(`/aanbieding/${item.id}`);
+  const goToOrg = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(`/organisaties/${item.organisation.id}`);
+  };
+
   return (
-    <Link
-      to={`/aanbieding/${item.id}`}
+    <div
+      onClick={goToListing}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && goToListing()}
       data-testid={`listing-tile-${item.id}`}
-      className="group block animate-fade-in"
+      className="group block animate-fade-in cursor-pointer"
     >
       <div className="aspect-[4/5] bg-muted overflow-hidden relative">
         {photo ? (
@@ -74,11 +87,26 @@ function ListingTile({ item, isValidated }) {
           {item.title}
         </h3>
         <p className="mt-1 text-xs text-muted-foreground uppercase tracking-wider">{item.material}</p>
+        {showOfferer && (
+          <p className="mt-1 text-xs text-muted-foreground" data-testid={`listing-tile-offerer-${item.id}`}>
+            Aangeboden door {item.offererFirstName} van{' '}
+            <span
+              role="link"
+              tabIndex={0}
+              onClick={goToOrg}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && goToOrg(e)}
+              className="industrial-link text-foreground/80 hover:text-foreground cursor-pointer"
+              data-testid={`listing-tile-org-link-${item.id}`}
+            >
+              {item.organisation.name}
+            </span>
+          </p>
+        )}
         {!isValidated && (
           <p className="mt-2 text-xs text-muted-foreground italic">Log in voor de volledige aanbieding</p>
         )}
       </div>
-    </Link>
+    </div>
   );
 }
 
