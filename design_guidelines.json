@@ -1,0 +1,148 @@
+{
+  "theme": "light",
+  "archetype": "Swiss Eco (Archetype 4 & 1 Hybrid)",
+  "vibe": "Ecological anarchistic, minimalist, professional, Vinted-style simplicity",
+  "accessibility": "WCAG 2.1 AA",
+  "language": "nl",
+  "colors": {
+    "background": "#F4F4F0",
+    "foreground": "#1A1A1A",
+    "surface": "#FFFFFF",
+    "border": "#E5E5E0",
+    "primary": {
+      "DEFAULT": "#1A1A1A",
+      "foreground": "#FFFFFF",
+      "hover": "#333333"
+    },
+    "secondary": {
+      "DEFAULT": "#4A5D4E",
+      "foreground": "#FFFFFF",
+      "hover": "#3D4D41"
+    },
+    "muted": {
+      "DEFAULT": "#EAEAEC",
+      "foreground": "#666666"
+    },
+    "status": {
+      "beschikbaar": {
+        "bg": "#DCFCE7",
+        "text": "#166534",
+        "border": "#22C55E"
+      },
+      "in_afwachting": {
+        "bg": "#FFEDD5",
+        "text": "#9A3412",
+        "border": "#F97316"
+      },
+      "herbestemd": {
+        "bg": "#DBEAFE",
+        "text": "#1E3A8A",
+        "border": "#3B82F6"
+      },
+      "in_magazijn": {
+        "bg": "#BBF7D0",
+        "text": "#14532D",
+        "border": "#86EFAC"
+      }
+    }
+  },
+  "typography": {
+    "font_families": {
+      "heading": "Archivo, sans-serif",
+      "body": "IBM Plex Sans, sans-serif"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight font-bold",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-semibold",
+      "h3": "text-xl sm:text-2xl font-medium",
+      "h4": "text-lg sm:text-xl font-medium",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm tracking-wide",
+      "overline": "text-xs uppercase tracking-[0.2em] font-semibold"
+    },
+    "alignment": "left-aligned reading rhythms strictly enforced"
+  },
+  "layout": {
+    "spacing": "Generous. Use p-8, p-12, gap-8, gap-12. No cramped containers.",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "catalog_grid": "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8",
+    "bento_hero": "grid-cols-1 md:grid-cols-12 gap-8",
+    "border_radius": "rounded-none or max rounded-sm (2px to 4px) to keep the industrial edge",
+    "card_style": "Cardless design. Use raw divs with border-b or 1px border-border/40, high-quality images, and generous padding."
+  },
+  "components_instructions": {
+    "buttons": "Flat, sharp edges (rounded-none). Dark charcoal for primary. Use translate-y hover effects.",
+    "inputs": "Shadcn inputs customized to have sharp edges, 1px border, bg-transparent or pure white, focus-visible:ring-primary focus-visible:ring-1.",
+    "badges": "Flat color backgrounds, stark contrasting text, 1px solid border matching the status color.",
+    "navigation": "Sticky top bar, glassmorphism disabled. Solid off-white bg with bottom border. Minimal links, distinct login/register CTA.",
+    "wizard": "9 steps. Use a horizontal progress bar at the top. 1 question/section per view if possible, simple Next/Back buttons.",
+    "filter_drawer": "On mobile, use Shadcn Sheet (drawer) triggered by a 'Filters' button. On desktop, sticky left sidebar.",
+    "animations": "Subtle hover micro-animations: -translate-y-1, opacity transitions. Avoid heavy 3D or parallax."
+  },
+  "testing": {
+    "data_testid": "MANDATORY on all interactive elements (buttons, inputs, links, badges) using kebab-case role-based names (e.g., data-testid='catalog-filter-button')."
+  },
+  "media_urls": {
+    "logo": [
+      {
+        "url": "https://customer-assets.emergentagent.com/job_limbo-stage/artifacts/4up3hemt_IL.jpg",
+        "description": "In Limbo Logo (Black wordmark with cut-off glyphs)",
+        "category": "brand_logo"
+      }
+    ],
+    "hero_backgrounds": [
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/40e00778-584d-41f8-b6ee-4e48e961daf5/images/b211452b858296af0d927f008d058751bc1853be53d87eb88b8cc901809dbac6.png",
+        "description": "Minimalist architectural raw materials in off-white/grey",
+        "category": "hero_image"
+      },
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/40e00778-584d-41f8-b6ee-4e48e961daf5/images/f8edf3516ebf0c78341fbae43b3712e853ce1c44018a7efaac24f6ae7c9dbb7d.png",
+        "description": "Abstract eco-texture, pressed paper and raw fibers",
+        "category": "background_texture"
+      }
+    ],
+    "catalog_placeholders": [
+      {
+        "url": "https://images.unsplash.com/photo-1678184095759-db539ff697a2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwzfHx3b3Jrc2hvcCUyMHJhdyUyMG1hdGVyaWFscyUyMHdvb2QlMjBtZXRhbHxlbnwwfHx8fDE3Nzk4MjA3NDV8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Pile of wood on floor",
+        "category": "product_placeholder"
+      },
+      {
+        "url": "https://images.pexels.com/photos/18420594/pexels-photo-18420594.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Vertically piled wooden materials",
+        "category": "product_placeholder"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1596441560141-87a7c7b3a443?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHw0fHx3b3Jrc2hvcCUyMHJhdyUyMG1hdGVyaWFscyUyMHdvb2QlMjBtZXRhbHxlbnwwfHx8fDE3Nzk4MjA3NDV8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Brown metal machine",
+        "category": "product_placeholder"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1576544403918-c47d52572a9a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwyfHx0aGVhdHJlJTIwc3RhZ2UlMjBiYWNrc3RhZ2UlMjBwcm9wc3xlbnwwfHx8fDE3Nzk4MjA3Njd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Empty chair/stage prop",
+        "category": "product_placeholder"
+      }
+    ],
+    "user_avatars": [
+      {
+        "url": "https://images.pexels.com/photos/29071850/pexels-photo-29071850.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Moody B&W portrait",
+        "category": "avatar_placeholder"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1768471126011-2e2002832826?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2ODl8MHwxfHNlYXJjaHwzfHxjcmVhdGl2ZSUyMHBlcnNvbiUyMHBvcnRyYWl0JTIwbWluaW1hbHxlbnwwfHx8fDE3Nzk4MjA3Njd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Young woman drawing at desk",
+        "category": "avatar_placeholder"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Build standard React components using .js/.jsx extensions.",
+    "Do not use generic UI cards. Adopt a 'Vinted' style catalog minimalism—images taking full width of grid cell, title and price underneath with lots of whitespace.",
+    "Implement the 9-step wizard with standard Shadcn Form primitives but restyle them sharply without rounded corners to fit the brutalist/industrial theme.",
+    "Use Phosphor icons via @phosphor-icons/react for clean, line-based iconography.",
+    "Adhere exactly to the specific Dutch language naming (Beschikbaar, In afwachting, Herbestemd, In magazijn) and color mapping for badges.",
+    "Maintain strict accessibility (WCAG 2.1 AA). Colors provided above already meet contrast ratios for dark text on light backgrounds."
+  ]
+}
