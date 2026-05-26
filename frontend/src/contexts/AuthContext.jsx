@@ -9,9 +9,16 @@ export function AuthProvider({ children }) {
 
   const refresh = useCallback(async () => {
     try {
-      const { data } = await api.get('/auth/me');
-      setUser(data);
-      return data;
+      // Probe /me silently — anonymous visits will 401, which is expected.
+      const { data } = await api.get('/auth/me', {
+        validateStatus: (s) => (s >= 200 && s < 300) || s === 401,
+      });
+      if (data && typeof data === 'object' && data.id) {
+        setUser(data);
+        return data;
+      }
+      setUser(false);
+      return null;
     } catch {
       setUser(false);
       return null;
