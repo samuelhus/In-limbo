@@ -1,0 +1,41 @@
+{
+  "summary": "Frontend-only iteration: Mobile hamburger menu in Header.jsx tested across 4 auth states (anonymous, validated user Lotte, admin, pending user) at two viewports (390x844 mobile, 1920x800 desktop). All 30+ assertions pass. Header correctly hides desktop nav <768px, shows hamburger; dropdown contains only role-appropriate links; outside-click and route-change both close dropdown; aria-expanded/aria-label toggle correctly; logout via mobile button clears il_token cookie and redirects.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/frontend/src/components/Header.jsx"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Header.jsx (253 lines) is clean and well-structured. Desktop section uses 'hidden md:flex'; mobile section uses 'md:hidden' — no visibility overlap.",
+    "Outside-click handler is correctly scoped: listener only registered while mobileOpen=true and removed on cleanup. Uses both mobileMenuRef and hamburgerRef to avoid the toggle-button re-closing race.",
+    "Route change closes dropdown via useEffect on location.pathname — correctly handles edge case where user is already on target route (NavLink click still triggers re-render).",
+    "mobileNavItems config-driven approach with role-based 'show' flag is DRY. isValidated (user.status === 'validated') gates the four member-only links; isAdmin adds admin link; isLoggedIn adds Mijn profiel.",
+    "Pending user correctly sees only Catalogus + Mijn profiel + Uitloggen (verified live with freshly registered pending user — status='pending' returned from /api/auth/register/new-org).",
+    "aria-label toggles 'Menu openen' ↔ 'Menu sluiten' and aria-expanded reflects state — verified live. Hamburger button is keyboard focusable (native <button>).",
+    "All required data-testids present: hamburger-button, mobile-menu-dropdown, mobile-nav-{catalogus,new-listing,aanvragen,mijn-aanbiedingen,my-org,admin,profiel}, mobile-header-{login-link,register-link,logout-btn}.",
+    "Minor nit: register/new-org POST schema in this codebase uses FLAT keys (email, password, firstName, lastName, orgName, orgDescription, orgCategory, acceptedTerms) — not nested {user:{}, organisation:{}} as one might infer from review-request hint. Documenting for next agent."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "100% (30/30 assertions)"},
+  "test_credentials": "admin@inlimbo.be / Admin123!, lotte@atelier-brussel.example / User123!. Created fresh pending user testpending_1779837381@example.com / Pending123! (org TEST_org_1779837381) — both user and org are status=pending. This pending user remains in DB for any retest needs.",
+  "seed_data_creation": "Registered one new pending user+org pair via POST /api/auth/register/new-org (flat-keys schema): email=testpending_1779837381@example.com, orgName=TEST_org_1779837381, category=Ander. Both pending. No other data created. Seed users untouched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile hamburger Header.jsx iteration is complete and green. To register a fresh pending user, POST /api/auth/register/new-org with FLAT keys: {email, password, firstName, lastName, orgName, orgDescription, orgCategory, acceptedTerms}. Returned status='pending'. After login, pending user is redirected to /wachtkamer but can still navigate to / via direct URL; mobile menu correctly limits links to Catalogus + Mijn profiel + Uitloggen.",
+  "playwright_test_summary": {
+    "mobile_anon": "hamburger visible, desktop nav hidden, dropdown opens with Catalogus+Inloggen+Word lid (no Uitloggen), outside-click closes, Catalogus link navigates+closes, aria-expanded=true & aria-label='Menu sluiten' when open",
+    "mobile_lotte": "dropdown shows 'Ingelogd als Lotte Vandenberghe' + Catalogus + Nieuwe aanbieding + Mijn aanvragen + Mijn aanbiedingen + Mijn organisatie + Mijn profiel + Uitloggen; no Admin; Mijn aanbiedingen link navigates+closes; Uitloggen clears il_token cookie + dropdown closes",
+    "mobile_admin": "dropdown additionally shows Admin link alongside the user links",
+    "mobile_pending": "dropdown shows only Catalogus + Mijn profiel + Uitloggen — confirmed no Nieuwe aanbieding, no Mijn aanvragen, no Mijn aanbiedingen, no Mijn organisatie, no Admin",
+    "desktop_anon_1920": "hamburger NOT visible; nav-catalogus + header-login-link + header-register-link all visible",
+    "desktop_lotte_1920": "hamburger NOT visible; header-profile-link + header-logout-btn visible"
+  }
+}
