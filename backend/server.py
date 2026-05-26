@@ -341,6 +341,34 @@ async def list_listings(
     return {"total": total, "items": items, "skip": skip, "limit": limit}
 
 
+@api.get("/listings/mine")
+async def my_listings(user: dict = Depends(get_validated_user)):
+    """Return all listings owned by the authenticated user, with open application counts."""
+    cursor = db.listings.find({"userId": user["id"]}).sort("createdAt", -1)
+    items = []
+    async for l in cursor:
+        items.append(strip_mongo(l))
+    if not items:
+        return []
+
+    # Count open applications per listing
+    listing_ids = [it["id"] for it in items]
+    counts: dict[str, int] = {lid: 0 for lid in listing_ids}
+    pipeline = [
+        {"$match": {"listingId": {"$in": listing_ids}, "status": "open"}},
+        {"$group": {"_id": "$listingId", "n": {"$sum": 1}}},
+    ]
+    async for row in db.applications.aggregate(pipeline):
+        counts[row["_id"]] = row["n"]
+
+    for it in items:
+        it["openApplicationCount"] = counts.get(it["id"], 0)
+        # Keep response light — only first photo
+        if it.get("photos"):
+            it["photos"] = [it["photos"][0]]
+    return items
+
+
 @api.get("/listings/{listing_id}")
 async def get_listing(listing_id: str, request: Request):
     listing = await db.listings.find_one({"id": listing_id})

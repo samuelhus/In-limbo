@@ -33,6 +33,14 @@ naar wie het kan gebruiken.
 
 ## What's been implemented
 
+### 2026-01-XX — Mijn aanbiedingen-pagina ✅
+- **`/mijn-aanbiedingen`**: persoonlijke aanbiedingen-overzichtspagina voor gevalideerde users
+- Aanbiedingen gegroepeerd per status (beschikbaar → in_afwachting → herbestemd → in_magazijn → gearchiveerd)
+- **Open aanvragen-counter** zichtbaar bij `beschikbaar` en `in_afwachting` (verborgen voor andere statussen)
+- Lege staat met directe CTA naar de wizard
+- Nieuwe **`GET /api/listings/mine`** endpoint met aggregatie van open application counts
+- Nav-link in header (alleen voor gevalideerde users)
+
 ### 2026-01-XX — Fase 2a (Aanvraagflow + admin-magazijn) ✅
 - **Aanvragen**: indienen met motivatie (max 500 tekens), intrekken, herinvoeren — alleen op niet-recurrente aanbiedingen en niet op aanbiedingen van eigen organisatie
 - **Selectie**: aanbieder selecteert een ontvanger → status `in_afwachting`, ander aanvragen blijven open, contactgegevens (email + phone + naam) gedeeld tussen aanbieder en geselecteerde

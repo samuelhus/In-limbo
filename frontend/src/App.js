@@ -20,6 +20,7 @@ import OrganisationPage from '@/pages/OrganisationPage';
 import Profiel from '@/pages/Profiel';
 import MijnOrganisatie from '@/pages/MijnOrganisatie';
 import MijnAanvragen from '@/pages/MijnAanvragen';
+import MijnAanbiedingen from '@/pages/MijnAanbiedingen';
 import AdminPanel from '@/pages/AdminPanel';
 
 function NotFound() {
@@ -94,6 +95,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <MijnAanvragen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mijn-aanbiedingen"
+                element={
+                  <ProtectedRoute>
+                    <MijnAanbiedingen />
                   </ProtectedRoute>
                 }
               />
