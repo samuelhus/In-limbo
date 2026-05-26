@@ -88,6 +88,11 @@ class ListingBase(BaseModel):
     transport: Optional[str] = None
 
 
+class ListingCreateBody(ListingBase):
+    """Body for POST /api/listings. Admins may set placeInWarehouse=True."""
+    placeInWarehouse: bool = False
+
+
 class ListingPublic(ListingBase):
     id: str
     status: ListingStatus = "beschikbaar"
@@ -136,6 +141,18 @@ class LoginRequest(BaseModel):
 class AdminDecision(BaseModel):
     decision: Literal["approve", "reject"]
     rejectionReason: Optional[str] = None
+
+
+# ---------- Applications ----------
+ApplicationStatus = Literal["open", "selected", "not_selected", "withdrawn"]
+
+
+class ApplicationCreate(BaseModel):
+    motivation: str = Field(..., max_length=500, min_length=1)
+
+
+class SelectApplicantBody(BaseModel):
+    applicationId: str
 
 
 # ---------- Update bodies ----------

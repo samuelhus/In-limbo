@@ -20,10 +20,9 @@ export default function Landing() {
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-16 sm:pt-24 pb-24 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
           <div className="md:col-span-7 animate-fade-in">
-            <p className="overline mb-6">Materiaal in transit / Bruxelles · Brussel</p>
+            {/* <p className="overline mb-6">Materiaal in transit / Bruxelles · Brussel</p>*/}
             <h1 className="text-5xl sm:text-6xl lg:text-7xl tracking-tightest font-bold leading-[0.95]">
-              Tussen wat <em className="not-italic underline decoration-2 underline-offset-8">was</em> en
-              <br /> wat <em className="not-italic underline decoration-2 underline-offset-8">komt</em>.
+              Hergebruik in de brusselse socio-culturele sector.
             </h1>
             <p className="mt-8 text-lg text-foreground/80 max-w-xl leading-relaxed">
               In Limbo is een marktplaats die Brusselse socio-culturele

@@ -1,19 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api } from '@/lib/api';
+import { api, formatApiError } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
 import { cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
+import ApplyModal from '@/components/ApplyModal';
+
+const APP_STATUS_LABELS = {
+  open: 'Open',
+  selected: 'Geselecteerd',
+  not_selected: 'Niet geselecteerd',
+  withdrawn: 'Ingetrokken',
+};
 
 export default function ListingDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const [item, setItem] = useState(null);
   const [active, setActive] = useState(0);
+  const [applyOpen, setApplyOpen] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api.get(`/listings/${id}`).then(({ data }) => setItem(data)).catch(() => setItem(false));
   }, [id]);
+
+  useEffect(() => { load(); }, [load]);
 
   if (item === null) {
     return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground" data-testid="listing-loading">Laden…</div>;
@@ -24,6 +35,13 @@ export default function ListingDetail() {
 
   const limited = item.limited;
   const photos = item.photos || [];
+  const isValidated = user && typeof user === 'object' && user.status === 'validated';
+  const isOwner = !!item.isOwner;
+  const isAdmin = isValidated && user.role === 'admin';
+  const canManage = isOwner || isAdmin;
+
+  const sameOrg = isValidated && item.organisation && user.organisationId === item.organisation.id;
+  const myApp = item.myApplication;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12" data-testid="listing-detail-page">
@@ -136,15 +154,319 @@ export default function ListingDetail() {
                 </div>
               )}
 
-              {user && user.status === 'validated' && (
-                <p className="mt-10 text-xs text-muted-foreground italic">
-                  Aanvraagflow komt in een volgende iteratie van in—limbo.
-                </p>
+              {/* Selected contact banner (applicant side) */}
+              {!isOwner && item.selectedApplicantContact && myApp?.status === 'selected' && (
+                <SelectedContactBanner contact={item.selectedApplicantContact} title="Jij bent gekozen!" />
+              )}
+
+              {/* Applicant flow */}
+              {isValidated && !isOwner && (
+                <ApplicantPanel
+                  listing={item}
+                  myApp={myApp}
+                  sameOrg={sameOrg}
+                  onOpenApply={() => setApplyOpen(true)}
+                  onChanged={load}
+                />
+              )}
+
+              {/* Owner/admin management */}
+              {canManage && (
+                <OwnerPanel listing={item} onChanged={load} />
               )}
             </>
           )}
         </div>
       </div>
+
+      {applyOpen && (
+        <ApplyModal
+          listing={item}
+          onClose={() => setApplyOpen(false)}
+          onSubmitted={() => { setApplyOpen(false); load(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Applicant panel — shows for non-owner validated viewers
+// ---------------------------------------------------------------------------
+function ApplicantPanel({ listing, myApp, sameOrg, onOpenApply, onChanged }) {
+  const [busy, setBusy] = useState(false);
+
+  if (listing.isRecurrent) return null;
+  if (listing.status === 'gearchiveerd' || listing.status === 'in_magazijn') return null;
+
+  if (sameOrg && !myApp) {
+    return (
+      <div className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground" data-testid="apply-disabled-same-org">
+        Je kan geen aanvragen indienen voor aanbiedingen van je eigen organisatie.
+      </div>
+    );
+  }
+
+  // If listing is in_afwachting and you're not the selected applicant
+  if (listing.status === 'in_afwachting' && (!myApp || myApp.status !== 'selected')) {
+    return (
+      <div className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground" data-testid="apply-disabled-in-afwachting">
+        Deze aanbieding is gereserveerd voor een andere aanvrager.
+      </div>
+    );
+  }
+
+  // Herbestemd — show appropriate message
+  if (listing.status === 'herbestemd') {
+    if (myApp?.status === 'not_selected') {
+      return (
+        <div className="mt-8 border-t border-border pt-6 text-sm text-foreground/75" data-testid="apply-not-selected">
+          Je aanvraag was niet geselecteerd. De aanbieder heeft deze aanbieding herbestemd.
+        </div>
+      );
+    }
+    return (
+      <div className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground" data-testid="apply-disabled-herbestemd">
+        Deze aanbieding is reeds herbestemd.
+      </div>
+    );
+  }
+
+  // My application states
+  if (myApp && myApp.status === 'open') {
+    const withdraw = async () => {
+      if (!window.confirm('Aanvraag intrekken?')) return;
+      setBusy(true);
+      try {
+        await api.post(`/applications/${myApp.id}/withdraw`);
+        onChanged?.();
+      } catch (e) { alert(formatApiError(e)); }
+      finally { setBusy(false); }
+    };
+    return (
+      <div className="mt-8 border-t border-border pt-6 space-y-3" data-testid="apply-submitted-state">
+        <p className="text-sm font-medium">Je aanvraag is ingediend.</p>
+        <p className="text-xs text-muted-foreground italic">Motivatie: "{myApp.motivation}"</p>
+        <button onClick={withdraw} disabled={busy} className="btn-secondary !py-2 text-xs" data-testid="apply-withdraw-btn">
+          Aanvraag intrekken
+        </button>
+      </div>
+    );
+  }
+
+  if (myApp && myApp.status === 'not_selected') {
+    return (
+      <div className="mt-8 border-t border-border pt-6 text-sm text-foreground/75" data-testid="apply-not-selected">
+        Je aanvraag was niet geselecteerd.
+      </div>
+    );
+  }
+
+  if (myApp && myApp.status === 'withdrawn') {
+    // Can re-apply
+    return (
+      <div className="mt-8 border-t border-border pt-6 space-y-3" data-testid="apply-withdrawn-state">
+        <p className="text-sm text-muted-foreground">Je hebt eerder een aanvraag ingetrokken voor deze aanbieding.</p>
+        {listing.status === 'beschikbaar' && (
+          <button onClick={onOpenApply} className="btn-primary" data-testid="apply-reapply-btn">
+            Opnieuw aanvragen
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // No application yet — show apply button if available
+  if (listing.status === 'beschikbaar') {
+    return (
+      <div className="mt-8 border-t border-border pt-6" data-testid="apply-cta-block">
+        <button onClick={onOpenApply} className="btn-primary" data-testid="apply-open-modal-btn">
+          Aanvraag indienen →
+        </button>
+      </div>
+    );
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Owner / admin panel
+// ---------------------------------------------------------------------------
+function OwnerPanel({ listing, onChanged }) {
+  const [apps, setApps] = useState([]);
+  const [busy, setBusy] = useState(false);
+
+  const loadApps = useCallback(async () => {
+    try {
+      const { data } = await api.get(`/listings/${listing.id}/applications`);
+      setApps(data);
+    } catch (e) {
+      console.warn('load apps failed', e);
+    }
+  }, [listing.id]);
+
+  useEffect(() => { loadApps(); }, [loadApps, listing.status, listing.selectedApplicantId]);
+
+  const visibleApps = apps.filter((a) => ['open', 'selected'].includes(a.status));
+  const openApps = apps.filter((a) => a.status === 'open');
+  const selected = apps.find((a) => a.id === listing.selectedApplicantId);
+  const formatDate = (iso) => new Date(iso).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const callAction = async (path) => {
+    setBusy(true);
+    try {
+      await api.post(path);
+      onChanged?.();
+    } catch (e) { alert(formatApiError(e)); }
+    finally { setBusy(false); }
+  };
+
+  const selectApplicant = async (applicationId) => {
+    setBusy(true);
+    try {
+      await api.post(`/listings/${listing.id}/select-applicant`, { applicationId });
+      onChanged?.();
+    } catch (e) { alert(formatApiError(e)); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div className="mt-10 border-t border-border pt-6" data-testid="owner-panel">
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+        <p className="overline">Aanvragen · {visibleApps.length}</p>
+        {/* Mark-as-rehomed available from beschikbaar or in_afwachting */}
+        {(listing.status === 'beschikbaar' || listing.status === 'in_afwachting') && (
+          <button
+            onClick={() => {
+              if (!window.confirm('Markeer als herbestemd? Andere openstaande aanvragen worden afgewezen.')) return;
+              callAction(`/listings/${listing.id}/mark-rehomed`);
+            }}
+            disabled={busy}
+            className="btn-primary !py-2 text-xs"
+            data-testid="owner-mark-rehomed-btn"
+          >
+            Markeer als herbestemd
+          </button>
+        )}
+        {listing.status === 'herbestemd' && (
+          <button
+            onClick={() => {
+              if (!window.confirm('Herbestemming ongedaan maken? Aanbieding wordt terug beschikbaar.')) return;
+              callAction(`/listings/${listing.id}/unrehome`);
+            }}
+            disabled={busy}
+            className="btn-secondary !py-2 text-xs"
+            data-testid="owner-unrehome-btn"
+          >
+            Herbestemming ongedaan maken
+          </button>
+        )}
+      </div>
+
+      {listing.status === 'in_afwachting' && selected && (
+        <div className="mb-6 border border-foreground bg-surface p-5" data-testid="owner-selected-block">
+          <p className="overline mb-2">Geselecteerde ontvanger</p>
+          <p className="font-medium">
+            {selected.applicant.firstName} {selected.applicant.lastName}{' '}
+            <span className="text-muted-foreground font-normal">
+              · {selected.applicant.organisationName}
+            </span>
+          </p>
+          {selected.applicant.email && (
+            <p className="text-sm mt-2">
+              <a href={`mailto:${selected.applicant.email}`} className="industrial-link">{selected.applicant.email}</a>
+            </p>
+          )}
+          {selected.applicant.phone && (
+            <p className="text-sm">
+              <a href={`tel:${selected.applicant.phone}`} className="industrial-link">{selected.applicant.phone}</a>
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground italic mt-3">"{selected.motivation}"</p>
+          <button
+            onClick={() => {
+              if (!window.confirm('Reservatie ongedaan maken?')) return;
+              callAction(`/listings/${listing.id}/unselect`);
+            }}
+            disabled={busy}
+            className="btn-secondary !py-1.5 px-3 text-xs mt-4"
+            data-testid="owner-unselect-btn"
+          >
+            Reservatie ongedaan maken
+          </button>
+        </div>
+      )}
+
+      {openApps.length === 0 && listing.status === 'beschikbaar' && (
+        <p className="text-sm text-muted-foreground" data-testid="owner-no-apps">Nog geen aanvragen ontvangen.</p>
+      )}
+
+      {openApps.length > 0 && listing.status === 'beschikbaar' && (
+        <ul className="divide-y divide-border border-y border-border">
+          {openApps.map((a) => (
+            <li key={a.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4" data-testid={`owner-app-${a.id}`}>
+              <div className="md:col-span-8">
+                <p className="font-medium">
+                  {a.applicant.firstName} {a.applicant.lastName}
+                  {' · '}
+                  <Link
+                    to={`/organisaties/${a.applicant.organisationId}`}
+                    className="industrial-link text-foreground/85"
+                  >
+                    {a.applicant.organisationName}
+                  </Link>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">{formatDate(a.createdAt)}</p>
+                <p className="text-sm mt-2 text-foreground/80 italic">"{a.motivation}"</p>
+              </div>
+              <div className="md:col-span-4 md:flex md:justify-end items-start">
+                <button
+                  onClick={() => selectApplicant(a.id)}
+                  disabled={busy}
+                  className="btn-primary !py-2 text-xs"
+                  data-testid={`owner-select-${a.id}`}
+                >
+                  Selecteer als ontvanger
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// "Jij bent gekozen!" banner
+// ---------------------------------------------------------------------------
+function SelectedContactBanner({ contact, title }) {
+  return (
+    <div
+      className="mt-8 border-l-4 border-l-green-600 border border-border bg-green-50 p-5"
+      data-testid="selected-contact-banner"
+    >
+      <p className="overline text-green-900 mb-2">{title}</p>
+      <p className="text-foreground/90 text-sm mb-3">
+        Je bent geselecteerd als ontvanger. Hieronder vind je de contactgegevens van de aanbieder
+        om een afspraak te maken.
+      </p>
+      <p className="font-medium">
+        {contact.firstName} {contact.lastName}
+        {contact.organisationName && (
+          <span className="text-muted-foreground font-normal"> · {contact.organisationName}</span>
+        )}
+      </p>
+      {contact.email && (
+        <p className="text-sm mt-2">
+          <a href={`mailto:${contact.email}`} className="industrial-link" data-testid="selected-contact-email">{contact.email}</a>
+        </p>
+      )}
+      {contact.phone && (
+        <p className="text-sm">
+          <a href={`tel:${contact.phone}`} className="industrial-link" data-testid="selected-contact-phone">{contact.phone}</a>
+        </p>
+      )}
     </div>
   );
 }

@@ -21,7 +21,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from models import (
     RegisterNewOrg, RegisterExistingOrg, LoginRequest, AdminDecision,
-    ListingBase, OrgUpdate, UserUpdate,
+    ListingBase, ListingCreateBody, OrgUpdate, UserUpdate,
+    ApplicationCreate, SelectApplicantBody,
 )
 from auth import (
     hash_password, verify_password, create_access_token,
@@ -75,6 +76,9 @@ async def startup() -> None:
     await db.listings.create_index("status")
     await db.listings.create_index("organisationId")
     await db.listings.create_index("deadline")
+    await db.applications.create_index("listingId")
+    await db.applications.create_index("applicantUserId")
+    await db.applications.create_index([("listingId", 1), ("applicantUserId", 1)])
     await seed(db)
     archived = await archive_expired_listings(db)
     inactive = await mark_inactive_orgs(db)
@@ -358,21 +362,72 @@ async def get_listing(listing_id: str, request: Request):
             view["offererFirstName"] = owner.get("firstName")
             if listing.get("isRecurrent"):
                 view["offererEmail"] = owner["email"]
+
+        # Application-related context for validated viewers
+        if viewer:
+            is_owner = viewer["id"] == listing["userId"]
+            view["isOwner"] = is_owner
+
+            # Viewer's own application (most recent non-withdrawn first)
+            my_app = await db.applications.find_one(
+                {"listingId": listing_id, "applicantUserId": viewer["id"]},
+                sort=[("createdAt", -1)],
+            )
+            if my_app:
+                view["myApplication"] = {
+                    "id": my_app["id"],
+                    "status": my_app["status"],
+                    "motivation": my_app.get("motivation"),
+                    "createdAt": my_app.get("createdAt"),
+                }
+
+            # Shared contact when there is a selection and the viewer is owner OR the selected applicant
+            selected_app_id = listing.get("selectedApplicantId")
+            if selected_app_id:
+                selected_app = await db.applications.find_one({"id": selected_app_id})
+                if selected_app:
+                    is_selected = my_app and my_app["id"] == selected_app_id and my_app["status"] == "selected"
+                    if is_owner:
+                        # Show selected applicant's contact to the owner
+                        applicant_user = await db.users.find_one({"id": selected_app["applicantUserId"]})
+                        applicant_org = await db.organisations.find_one({"id": selected_app["applicantOrganisationId"]})
+                        if applicant_user:
+                            view["selectedApplicantContact"] = {
+                                "firstName": applicant_user.get("firstName"),
+                                "lastName": applicant_user.get("lastName"),
+                                "email": applicant_user.get("email"),
+                                "phone": applicant_user.get("phone"),
+                                "organisationName": applicant_org.get("name") if applicant_org else None,
+                                "organisationId": applicant_org.get("id") if applicant_org else None,
+                            }
+                    elif is_selected and owner:
+                        # Show offerer's contact to the selected applicant
+                        view["selectedApplicantContact"] = {
+                            "firstName": owner.get("firstName"),
+                            "lastName": owner.get("lastName"),
+                            "email": owner.get("email"),
+                            "phone": owner.get("phone"),
+                            "organisationName": (org or {}).get("name"),
+                            "organisationId": (org or {}).get("id"),
+                        }
     return view
 
 
 @api.post("/listings")
-async def create_listing(body: ListingBase, user: dict = Depends(get_validated_user)):
+async def create_listing(body: ListingCreateBody, user: dict = Depends(get_validated_user)):
     if body.isRecurrent:
         body.deadline = None
     if not body.photos:
         raise HTTPException(400, "Minstens één foto is vereist")
     listing_id = str(uuid.uuid4())
     now = now_iso()
-    doc = body.model_dump()
+    # Only admins may opt-in to placing in magazijn at creation time
+    initial_status = "in_magazijn" if (body.placeInWarehouse and user.get("role") == "admin") else "beschikbaar"
+    doc = body.model_dump(exclude={"placeInWarehouse"})
     doc.update({
         "id": listing_id,
-        "status": "beschikbaar",
+        "status": initial_status,
+        "selectedApplicantId": None,
         "userId": user["id"],
         "organisationId": user["organisationId"],
         "createdAt": now,
@@ -391,6 +446,222 @@ async def listings_by_org(org_id: str, request: Request):
     async for l in cursor:
         out.append(_public_listing_view(l, viewer))
     return out
+
+
+# --------------------------------------------------------------------------
+# APPLICATIONS — request flow
+# --------------------------------------------------------------------------
+async def _require_listing_owner_or_admin(listing_id: str, user: dict) -> dict:
+    listing = await db.listings.find_one({"id": listing_id})
+    if not listing:
+        raise HTTPException(404, "Aanbieding niet gevonden")
+    if user["id"] != listing["userId"] and user.get("role") != "admin":
+        raise HTTPException(403, "Alleen de aanbieder kan deze actie uitvoeren")
+    return listing
+
+
+@api.post("/listings/{listing_id}/apply")
+async def apply_to_listing(
+    listing_id: str, body: ApplicationCreate, user: dict = Depends(get_validated_user),
+):
+    listing = await db.listings.find_one({"id": listing_id})
+    if not listing:
+        raise HTTPException(404, "Aanbieding niet gevonden")
+    if listing["status"] != "beschikbaar":
+        raise HTTPException(400, "Aanvragen kan enkel op beschikbare aanbiedingen")
+    if listing.get("isRecurrent"):
+        raise HTTPException(400, "Recurrente aanbiedingen aanvaarden geen aanvragen")
+    if listing["userId"] == user["id"]:
+        raise HTTPException(400, "Je kan geen aanvraag indienen op je eigen aanbieding")
+    if listing["organisationId"] == user["organisationId"]:
+        raise HTTPException(400, "Je kan geen aanvragen indienen voor aanbiedingen van je eigen organisatie")
+
+    existing = await db.applications.find_one({
+        "listingId": listing_id,
+        "applicantUserId": user["id"],
+        "status": {"$ne": "withdrawn"},
+    })
+    if existing:
+        raise HTTPException(409, "Je hebt al een lopende aanvraag voor deze aanbieding")
+
+    now = now_iso()
+    app_doc = {
+        "id": str(uuid.uuid4()),
+        "listingId": listing_id,
+        "applicantUserId": user["id"],
+        "applicantOrganisationId": user["organisationId"],
+        "motivation": body.motivation,
+        "status": "open",
+        "createdAt": now,
+        "updatedAt": now,
+    }
+    await db.applications.insert_one(app_doc)
+    return strip_mongo(app_doc)
+
+
+@api.post("/applications/{application_id}/withdraw")
+async def withdraw_application(application_id: str, user: dict = Depends(get_validated_user)):
+    app_doc = await db.applications.find_one({"id": application_id})
+    if not app_doc:
+        raise HTTPException(404, "Aanvraag niet gevonden")
+    if app_doc["applicantUserId"] != user["id"]:
+        raise HTTPException(403, "Niet toegestaan")
+    if app_doc["status"] == "withdrawn":
+        return {"ok": True}
+    if app_doc["status"] == "selected":
+        raise HTTPException(400, "Een geselecteerde aanvraag kan niet ingetrokken worden")
+    await db.applications.update_one(
+        {"id": application_id},
+        {"$set": {"status": "withdrawn", "updatedAt": now_iso()}},
+    )
+    return {"ok": True}
+
+
+@api.get("/applications/mine")
+async def my_applications(user: dict = Depends(get_validated_user)):
+    cursor = db.applications.find({"applicantUserId": user["id"]}).sort("createdAt", -1)
+    apps = [strip_mongo(a) async for a in cursor]
+    if not apps:
+        return []
+    listing_ids = list({a["listingId"] for a in apps})
+    listings_map: dict[str, dict] = {}
+    async for l in db.listings.find({"id": {"$in": listing_ids}}):
+        listings_map[l["id"]] = strip_mongo(l)
+    org_ids = list({l["organisationId"] for l in listings_map.values()})
+    orgs_map: dict[str, dict] = {}
+    async for o in db.organisations.find({"id": {"$in": org_ids}}, {"_id": 0, "id": 1, "name": 1}):
+        orgs_map[o["id"]] = o
+    for a in apps:
+        l = listings_map.get(a["listingId"])
+        if l:
+            a["listing"] = {
+                "id": l["id"],
+                "title": l["title"],
+                "photo": (l.get("photos") or [None])[0],
+                "status": l["status"],
+                "organisationId": l["organisationId"],
+                "organisationName": (orgs_map.get(l["organisationId"]) or {}).get("name"),
+            }
+    return apps
+
+
+@api.get("/listings/{listing_id}/applications")
+async def list_listing_applications(listing_id: str, user: dict = Depends(get_validated_user)):
+    listing = await _require_listing_owner_or_admin(listing_id, user)
+    cursor = db.applications.find(
+        {"listingId": listing_id, "status": {"$in": ["open", "selected", "not_selected"]}}
+    ).sort("createdAt", 1)
+    apps = [strip_mongo(a) async for a in cursor]
+    if not apps:
+        return []
+    user_ids = list({a["applicantUserId"] for a in apps})
+    org_ids = list({a["applicantOrganisationId"] for a in apps})
+    users_map: dict[str, dict] = {}
+    async for u in db.users.find({"id": {"$in": user_ids}}):
+        users_map[u["id"]] = u
+    orgs_map: dict[str, dict] = {}
+    async for o in db.organisations.find({"id": {"$in": org_ids}}):
+        orgs_map[o["id"]] = strip_mongo(o)
+
+    selected_id = listing.get("selectedApplicantId")
+    out = []
+    for a in apps:
+        u = users_map.get(a["applicantUserId"]) or {}
+        o = orgs_map.get(a["applicantOrganisationId"]) or {}
+        is_selected = a["id"] == selected_id and a["status"] == "selected"
+        entry = {
+            **a,
+            "applicant": {
+                "firstName": u.get("firstName"),
+                "lastName": u.get("lastName"),
+                "organisationId": o.get("id"),
+                "organisationName": o.get("name"),
+                "organisationDescription": o.get("description"),
+            },
+        }
+        if is_selected:
+            entry["applicant"]["email"] = u.get("email")
+            entry["applicant"]["phone"] = u.get("phone")
+        out.append(entry)
+    return out
+
+
+@api.post("/listings/{listing_id}/select-applicant")
+async def select_applicant(
+    listing_id: str, body: SelectApplicantBody, user: dict = Depends(get_validated_user),
+):
+    listing = await _require_listing_owner_or_admin(listing_id, user)
+    if listing["status"] != "beschikbaar":
+        raise HTTPException(400, "Selectie kan enkel op een beschikbare aanbieding")
+    app_doc = await db.applications.find_one({"id": body.applicationId})
+    if not app_doc or app_doc["listingId"] != listing_id:
+        raise HTTPException(404, "Aanvraag niet gevonden")
+    if app_doc["status"] != "open":
+        raise HTTPException(400, "Deze aanvraag is niet meer open")
+    now = now_iso()
+    await db.applications.update_one(
+        {"id": body.applicationId},
+        {"$set": {"status": "selected", "updatedAt": now}},
+    )
+    await db.listings.update_one(
+        {"id": listing_id},
+        {"$set": {"status": "in_afwachting", "selectedApplicantId": body.applicationId, "updatedAt": now}},
+    )
+    return {"ok": True}
+
+
+@api.post("/listings/{listing_id}/unselect")
+async def unselect_applicant(listing_id: str, user: dict = Depends(get_validated_user)):
+    listing = await _require_listing_owner_or_admin(listing_id, user)
+    if listing["status"] != "in_afwachting":
+        raise HTTPException(400, "Geen actieve reservatie om ongedaan te maken")
+    selected_id = listing.get("selectedApplicantId")
+    now = now_iso()
+    if selected_id:
+        await db.applications.update_one(
+            {"id": selected_id},
+            {"$set": {"status": "open", "updatedAt": now}},
+        )
+    await db.listings.update_one(
+        {"id": listing_id},
+        {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
+    )
+    return {"ok": True}
+
+
+@api.post("/listings/{listing_id}/mark-rehomed")
+async def mark_rehomed(listing_id: str, user: dict = Depends(get_validated_user)):
+    listing = await _require_listing_owner_or_admin(listing_id, user)
+    if listing["status"] not in ("beschikbaar", "in_afwachting"):
+        raise HTTPException(400, "Aanbieding kan niet naar herbestemd gezet worden vanuit deze status")
+    now = now_iso()
+    await db.applications.update_many(
+        {"listingId": listing_id, "status": "open"},
+        {"$set": {"status": "not_selected", "updatedAt": now}},
+    )
+    await db.listings.update_one(
+        {"id": listing_id},
+        {"$set": {"status": "herbestemd", "updatedAt": now}},
+    )
+    return {"ok": True}
+
+
+@api.post("/listings/{listing_id}/unrehome")
+async def unrehome(listing_id: str, user: dict = Depends(get_validated_user)):
+    listing = await _require_listing_owner_or_admin(listing_id, user)
+    if listing["status"] != "herbestemd":
+        raise HTTPException(400, "Deze aanbieding is niet herbestemd")
+    now = now_iso()
+    await db.applications.update_many(
+        {"listingId": listing_id, "status": {"$in": ["not_selected", "selected"]}},
+        {"$set": {"status": "open", "updatedAt": now}},
+    )
+    await db.listings.update_one(
+        {"id": listing_id},
+        {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
+    )
+    return {"ok": True}
+
 
 
 # --------------------------------------------------------------------------

@@ -19,6 +19,7 @@ import ListingWizard from '@/pages/ListingWizard';
 import OrganisationPage from '@/pages/OrganisationPage';
 import Profiel from '@/pages/Profiel';
 import MijnOrganisatie from '@/pages/MijnOrganisatie';
+import MijnAanvragen from '@/pages/MijnAanvragen';
 import AdminPanel from '@/pages/AdminPanel';
 
 function NotFound() {
@@ -85,6 +86,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <MijnOrganisatie />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/aanvragen"
+                element={
+                  <ProtectedRoute>
+                    <MijnAanvragen />
                   </ProtectedRoute>
                 }
               />

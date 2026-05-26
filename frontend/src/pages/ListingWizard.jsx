@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, formatApiError } from '@/lib/api';
 import { uploadToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
+import { useAuth } from '@/contexts/AuthContext';
 
 const MATERIALS = [
   'Hout', 'Metaal', 'Plastic', 'Steen', 'Textiel',
@@ -15,6 +16,8 @@ const STEPS = [
 
 export default function ListingWizard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user && user.role === 'admin';
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -22,7 +25,7 @@ export default function ListingWizard() {
   const [data, setData] = useState({
     photos: [], title: '', description: '', weight: '',
     material: 'Hout', deadline: '', isRecurrent: false,
-    dimensions: '', transport: '',
+    dimensions: '', transport: '', placeInWarehouse: false,
   });
 
   const [uploading, setUploading] = useState(false);
@@ -85,6 +88,7 @@ export default function ListingWizard() {
         isRecurrent: data.isRecurrent,
         dimensions: data.dimensions || null,
         transport: data.transport || null,
+        placeInWarehouse: isAdmin ? data.placeInWarehouse : false,
       };
       const { data: created } = await api.post('/listings', payload);
       navigate(`/aanbieding/${created.id}`);
@@ -252,6 +256,24 @@ export default function ListingWizard() {
               kunnen opnemen.
             </p>
           )}
+
+          {isAdmin && (
+            <div className="mt-6 border-t border-border pt-4" data-testid="wizard-admin-magazijn-block">
+              <p className="overline mb-2">Admin-optie</p>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={data.placeInWarehouse}
+                  onChange={(e) => setData({ ...data, placeInWarehouse: e.target.checked })}
+                  data-testid="wizard-place-in-warehouse-toggle"
+                />
+                <span className="text-sm">Plaats direct in magazijn (status: In magazijn)</span>
+              </label>
+              <p className="text-xs text-muted-foreground mt-2">
+                Aanbieding wordt onmiddellijk gemarkeerd als <em>In magazijn</em> in plaats van <em>Beschikbaar</em>.
+              </p>
+            </div>
+          )}
         </section>
       )}
 
@@ -295,6 +317,7 @@ export default function ListingWizard() {
             <Row label="Gewicht" value={`${data.weight} kg`} />
             <Row label="Materiaal" value={data.material} />
             <Row label="Deadline" value={data.isRecurrent ? 'Recurrent — geen deadline' : data.deadline} />
+            {isAdmin && data.placeInWarehouse && <Row label="Magazijn" value="Direct in magazijn plaatsen" />}
             {data.dimensions && <Row label="Afmetingen" value={data.dimensions} />}
             {data.transport && <Row label="Transport" value={data.transport} />}
           </dl>

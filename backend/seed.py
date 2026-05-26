@@ -168,9 +168,15 @@ async def seed(db) -> None:
     future_date = (datetime.now(timezone.utc) + timedelta(days=30)).date().isoformat()
     far_future = (datetime.now(timezone.utc) + timedelta(days=90)).date().isoformat()
 
+    listing_lariks_id = str(uuid.uuid4())
+    listing_gordijnen_id = str(uuid.uuid4())
+    listing_staal_id = str(uuid.uuid4())
+    listing_paletten_id = str(uuid.uuid4())
+    listing_lampen_id = str(uuid.uuid4())
+
     await db.listings.insert_many([
         {
-            "id": str(uuid.uuid4()),
+            "id": listing_lariks_id,
             "title": "Lariks balken — 4 stuks",
             "description": "Vier balken in lariks, ca. 240 cm lang. Resten van een tentoonstellingsbouw. Geschikt voor decor, meubel of bouwprojecten.",
             "weight": 22.0,
@@ -183,13 +189,14 @@ async def seed(db) -> None:
             "dimensions": "240 x 8 x 8 cm",
             "transport": "Ophalen in Molenbeek",
             "status": "beschikbaar",
+            "selectedApplicantId": None,
             "userId": user1_id,
             "organisationId": org1_id,
             "createdAt": _iso_now(),
             "updatedAt": _iso_now(),
         },
         {
-            "id": str(uuid.uuid4()),
+            "id": listing_gordijnen_id,
             "title": "Rode fluwelen gordijnen",
             "description": "Twee zware fluwelen gordijnen, gebruikt voor onze laatste productie. In goede staat, donkerrood, 4m hoog.",
             "weight": 18.0,
@@ -202,13 +209,14 @@ async def seed(db) -> None:
             "dimensions": "400 x 220 cm",
             "transport": "Af te halen of binnen Brussel te leveren",
             "status": "beschikbaar",
+            "selectedApplicantId": None,
             "userId": user2_id,
             "organisationId": org2_id,
             "createdAt": _iso_now(),
             "updatedAt": _iso_now(),
         },
         {
-            "id": str(uuid.uuid4()),
+            "id": listing_staal_id,
             "title": "Stalen H-profielen",
             "description": "Restanten van een installatie. Vier stukken staal met H-profiel, lengtes tussen 1m en 2m. Lichte oppervlakteroest.",
             "weight": 65.0,
@@ -221,13 +229,14 @@ async def seed(db) -> None:
             "dimensions": None,
             "transport": None,
             "status": "beschikbaar",
+            "selectedApplicantId": None,
             "userId": user1_id,
             "organisationId": org1_id,
             "createdAt": _iso_now(),
             "updatedAt": _iso_now(),
         },
         {
-            "id": str(uuid.uuid4()),
+            "id": listing_paletten_id,
             "title": "Houten paletten (15x)",
             "description": "Vijftien euro-paletten in goede staat. Ideaal voor tijdelijke constructies, decor of meubilair.",
             "weight": 300.0,
@@ -240,13 +249,14 @@ async def seed(db) -> None:
             "dimensions": "120 x 80 x 14 cm per stuk",
             "transport": "Ophalen met bestelwagen",
             "status": "in_magazijn",
+            "selectedApplicantId": None,
             "userId": user1_id,
             "organisationId": org1_id,
             "createdAt": _iso_now(),
             "updatedAt": _iso_now(),
         },
         {
-            "id": str(uuid.uuid4()),
+            "id": listing_lampen_id,
             "title": "Wandlampen — vintage",
             "description": "Set van zes vintage wandlampen uit een afgelopen voorstelling. Werkende E27-fittingen.",
             "weight": 4.5,
@@ -259,9 +269,22 @@ async def seed(db) -> None:
             "dimensions": None,
             "transport": None,
             "status": "herbestemd",
+            "selectedApplicantId": None,
             "userId": user2_id,
             "organisationId": org2_id,
             "createdAt": _iso_now(),
             "updatedAt": _iso_now(),
         },
     ])
+
+    # 5. Seed application — Samir (Vagebond) applies to Lotte's Lariks balken
+    await db.applications.insert_one({
+        "id": str(uuid.uuid4()),
+        "listingId": listing_lariks_id,
+        "applicantUserId": user2_id,
+        "applicantOrganisationId": org2_id,
+        "motivation": "We bouwen volgende maand een nieuw decor voor een buitenvoorstelling in het Josaphatpark. De lariks balken zouden perfect zijn als kader voor de coulissen. We kunnen ze ophalen met onze bestelwagen.",
+        "status": "open",
+        "createdAt": _iso_now(),
+        "updatedAt": _iso_now(),
+    })

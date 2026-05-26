@@ -41,6 +41,15 @@ export default function Header() {
           )}
           {isValidated && (
             <NavLink
+              to="/aanvragen"
+              data-testid="nav-aanvragen"
+              className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
+            >
+              Mijn aanvragen
+            </NavLink>
+          )}
+          {isValidated && (
+            <NavLink
               to="/organisatie"
               data-testid="nav-my-org"
               className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
