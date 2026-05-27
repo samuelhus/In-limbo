@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api, formatApiError } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
 import { cloudinaryThumb } from '@/lib/cloudinary';
@@ -293,8 +293,11 @@ function ApplicantPanel({ listing, myApp, sameOrg, onOpenApply, onChanged }) {
 // Owner / admin panel
 // ---------------------------------------------------------------------------
 function OwnerPanel({ listing, onChanged }) {
+  const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const loadApps = useCallback(async () => {
     try {
@@ -330,37 +333,66 @@ function OwnerPanel({ listing, onChanged }) {
     finally { setBusy(false); }
   };
 
+  const confirmDelete = async () => {
+    setBusy(true);
+    setDeleteError('');
+    try {
+      await api.delete(`/listings/${listing.id}`);
+      setDeleteOpen(false);
+      navigate('/mijn-aanbiedingen');
+    } catch (e) {
+      setDeleteError(formatApiError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const canDelete = listing.status !== 'herbestemd';
+
   return (
     <div className="mt-10 border-t border-border pt-6" data-testid="owner-panel">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
         <p className="overline">Aanvragen · {visibleApps.length}</p>
-        {/* Mark-as-rehomed available from beschikbaar or in_afwachting */}
-        {(listing.status === 'beschikbaar' || listing.status === 'in_afwachting') && (
-          <button
-            onClick={() => {
-              if (!window.confirm('Markeer als herbestemd? Andere openstaande aanvragen worden afgewezen.')) return;
-              callAction(`/listings/${listing.id}/mark-rehomed`);
-            }}
-            disabled={busy}
-            className="btn-primary !py-2 text-xs"
-            data-testid="owner-mark-rehomed-btn"
-          >
-            Markeer als herbestemd
-          </button>
-        )}
-        {listing.status === 'herbestemd' && (
-          <button
-            onClick={() => {
-              if (!window.confirm('Herbestemming ongedaan maken? Aanbieding wordt terug beschikbaar.')) return;
-              callAction(`/listings/${listing.id}/unrehome`);
-            }}
-            disabled={busy}
-            className="btn-secondary !py-2 text-xs"
-            data-testid="owner-unrehome-btn"
-          >
-            Herbestemming ongedaan maken
-          </button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {/* Mark-as-rehomed available from beschikbaar or in_afwachting */}
+          {(listing.status === 'beschikbaar' || listing.status === 'in_afwachting') && (
+            <button
+              onClick={() => {
+                if (!window.confirm('Markeer als herbestemd? Andere openstaande aanvragen worden afgewezen.')) return;
+                callAction(`/listings/${listing.id}/mark-rehomed`);
+              }}
+              disabled={busy}
+              className="btn-primary !py-2 text-xs"
+              data-testid="owner-mark-rehomed-btn"
+            >
+              Markeer als herbestemd
+            </button>
+          )}
+          {listing.status === 'herbestemd' && (
+            <button
+              onClick={() => {
+                if (!window.confirm('Herbestemming ongedaan maken? Aanbieding wordt terug beschikbaar.')) return;
+                callAction(`/listings/${listing.id}/unrehome`);
+              }}
+              disabled={busy}
+              className="btn-secondary !py-2 text-xs"
+              data-testid="owner-unrehome-btn"
+            >
+              Herbestemming ongedaan maken
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => { setDeleteError(''); setDeleteOpen(true); }}
+              disabled={busy}
+              data-testid="delete-listing-button"
+              className="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-xs font-medium tracking-wide transition-all duration-200 hover:bg-red-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+              style={{ borderRadius: 2 }}
+            >
+              Verwijder aanbieding
+            </button>
+          )}
+        </div>
       </div>
 
       {listing.status === 'in_afwachting' && selected && (
@@ -433,6 +465,68 @@ function OwnerPanel({ listing, onChanged }) {
           ))}
         </ul>
       )}
+
+      {deleteOpen && (
+        <DeleteConfirmModal
+          busy={busy}
+          error={deleteError}
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={confirmDelete}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Delete confirmation modal
+// ---------------------------------------------------------------------------
+function DeleteConfirmModal({ busy, error, onCancel, onConfirm }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fade-in"
+      onClick={onCancel}
+      data-testid="delete-modal-overlay"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full sm:max-w-md bg-surface p-6 sm:p-8 border-t sm:border border-border"
+        data-testid="delete-modal"
+      >
+        <h2 className="text-2xl font-bold tracking-tight mb-3">Aanbieding verwijderen</h2>
+        <p className="text-foreground/80 leading-relaxed text-sm mb-6">
+          Ben je zeker dat je deze aanbieding wil verwijderen? Deze actie kan
+          niet ongedaan worden gemaakt.
+        </p>
+
+        {error && (
+          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/40 px-3 py-2 mb-4" data-testid="delete-error">
+            {error}
+          </p>
+        )}
+
+        <div className="flex justify-between gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="btn-ghost"
+            data-testid="cancel-delete-button"
+          >
+            Annuleren
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            data-testid="confirm-delete-button"
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-red-600 text-white text-sm font-medium tracking-wide transition-all duration-200 hover:bg-red-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+            style={{ borderRadius: 2 }}
+          >
+            {busy ? 'Verwijderen…' : 'Definitief verwijderen'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -691,6 +691,16 @@ async def unrehome(listing_id: str, user: dict = Depends(get_validated_user)):
     return {"ok": True}
 
 
+@api.delete("/listings/{listing_id}")
+async def delete_listing(listing_id: str, user: dict = Depends(get_validated_user)):
+    listing = await _require_listing_owner_or_admin(listing_id, user)
+    if listing["status"] == "herbestemd":
+        raise HTTPException(403, "Herbestemde aanbiedingen kunnen niet verwijderd worden.")
+    await db.applications.delete_many({"listingId": listing_id})
+    await db.listings.delete_one({"id": listing_id})
+    return {"success": True}
+
+
 
 # --------------------------------------------------------------------------
 # CLOUDINARY SIGNATURE
