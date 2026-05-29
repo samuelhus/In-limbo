@@ -380,7 +380,7 @@ async def list_listings(
 
     viewer = await get_current_user_optional(request)
     filt: dict = {"status": {"$ne": "gearchiveerd"}}
-    if status and status in ("beschikbaar", "in_afwachting", "herbestemd", "in_magazijn"):
+    if status and status in ("beschikbaar", "herbestemd", "in_magazijn"):
         filt["status"] = status
 
     total = await db.listings.count_documents(filt)
@@ -468,9 +468,9 @@ async def get_listing(listing_id: str, request: Request):
                     "createdAt": my_app.get("createdAt"),
                 }
 
-            # Shared contact when there is a selection and the viewer is owner OR the selected applicant
+            # Shared contact when listing is herbestemd AND there is a selected application
             selected_app_id = listing.get("selectedApplicantId")
-            if selected_app_id:
+            if selected_app_id and listing.get("status") == "herbestemd":
                 selected_app = await db.applications.find_one({"id": selected_app_id})
                 if selected_app:
                     is_selected = my_app and my_app["id"] == selected_app_id and my_app["status"] == "selected"
@@ -600,12 +600,24 @@ async def withdraw_application(application_id: str, user: dict = Depends(get_val
         raise HTTPException(403, "Niet toegestaan")
     if app_doc["status"] == "withdrawn":
         return {"ok": True}
-    if app_doc["status"] == "selected":
-        raise HTTPException(400, "Een geselecteerde aanvraag kan niet ingetrokken worden")
+    was_selected = app_doc["status"] == "selected"
     await db.applications.update_one(
         {"id": application_id},
         {"$set": {"status": "withdrawn", "updatedAt": now_iso()}},
     )
+    if was_selected:
+        # Same logic as unrehome: reopen all not_selected, set listing back to beschikbaar.
+        # withdrawn stays withdrawn (the one we just set).
+        listing_id = app_doc["listingId"]
+        now = now_iso()
+        await db.applications.update_many(
+            {"listingId": listing_id, "status": "not_selected"},
+            {"$set": {"status": "open", "updatedAt": now}},
+        )
+        await db.listings.update_one(
+            {"id": listing_id},
+            {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
+        )
     return {"ok": True}
 
 
@@ -691,40 +703,57 @@ async def select_applicant(
     if app_doc["status"] != "open":
         raise HTTPException(400, "Deze aanvraag is niet meer open")
     now = now_iso()
+    # Selected applicant → selected
     await db.applications.update_one(
         {"id": body.applicationId},
         {"$set": {"status": "selected", "updatedAt": now}},
     )
+    # All other open applications on this listing → not_selected
+    await db.applications.update_many(
+        {"listingId": listing_id, "status": "open", "id": {"$ne": body.applicationId}},
+        {"$set": {"status": "not_selected", "updatedAt": now}},
+    )
+    # Listing → herbestemd directly
     await db.listings.update_one(
         {"id": listing_id},
-        {"$set": {"status": "in_afwachting", "selectedApplicantId": body.applicationId, "updatedAt": now}},
+        {"$set": {"status": "herbestemd", "selectedApplicantId": body.applicationId, "updatedAt": now}},
     )
     return {"ok": True}
 
 
-@api.post("/listings/{listing_id}/unselect")
-async def unselect_applicant(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
-    listing = await _require_listing_owner_or_admin(listing_id, user)
-    if listing["status"] != "in_afwachting":
-        raise HTTPException(400, "Geen actieve reservatie om ongedaan te maken")
-    selected_id = listing.get("selectedApplicantId")
+async def _reset_listing_to_available(listing_id: str) -> None:
+    """Reset herbestemde listing back to beschikbaar + reopen selected/not_selected applications (withdrawn blijft withdrawn)."""
     now = now_iso()
-    if selected_id:
-        await db.applications.update_one(
-            {"id": selected_id},
-            {"$set": {"status": "open", "updatedAt": now}},
-        )
+    await db.applications.update_many(
+        {"listingId": listing_id, "status": {"$in": ["selected", "not_selected"]}},
+        {"$set": {"status": "open", "updatedAt": now}},
+    )
     await db.listings.update_one(
         {"id": listing_id},
         {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
     )
+
+
+@api.post("/listings/{listing_id}/unrehome")
+async def unrehome(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
+    listing = await _require_listing_owner_or_admin(listing_id, user)
+    if listing["status"] != "herbestemd":
+        raise HTTPException(400, "Deze aanbieding is niet herbestemd")
+    await _reset_listing_to_available(listing_id)
     return {"ok": True}
+
+
+# Backwards-compat alias for older clients
+@api.post("/listings/{listing_id}/unselect")
+async def unselect_applicant(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
+    return await unrehome(listing_id, user)
 
 
 @api.post("/listings/{listing_id}/mark-rehomed")
 async def mark_rehomed(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
+    """Aanbieder herbestemt zonder iemand te selecteren (materiaal buiten platform weggegeven)."""
     listing = await _require_listing_owner_or_admin(listing_id, user)
-    if listing["status"] not in ("beschikbaar", "in_afwachting"):
+    if listing["status"] != "beschikbaar":
         raise HTTPException(400, "Aanbieding kan niet naar herbestemd gezet worden vanuit deze status")
     now = now_iso()
     await db.applications.update_many(
@@ -734,23 +763,6 @@ async def mark_rehomed(listing_id: str, user: dict = Depends(get_donnateur_or_va
     await db.listings.update_one(
         {"id": listing_id},
         {"$set": {"status": "herbestemd", "updatedAt": now}},
-    )
-    return {"ok": True}
-
-
-@api.post("/listings/{listing_id}/unrehome")
-async def unrehome(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
-    listing = await _require_listing_owner_or_admin(listing_id, user)
-    if listing["status"] != "herbestemd":
-        raise HTTPException(400, "Deze aanbieding is niet herbestemd")
-    now = now_iso()
-    await db.applications.update_many(
-        {"listingId": listing_id, "status": {"$in": ["not_selected", "selected"]}},
-        {"$set": {"status": "open", "updatedAt": now}},
-    )
-    await db.listings.update_one(
-        {"id": listing_id},
-        {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
     )
     return {"ok": True}
 

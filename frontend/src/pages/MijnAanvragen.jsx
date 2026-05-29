@@ -6,14 +6,12 @@ import { cloudinaryThumb } from '@/lib/cloudinary';
 const STATUS_GROUPS = [
   { key: 'selected', label: 'Geselecteerd', tone: 'border-green-500 bg-green-50' },
   { key: 'open', label: 'In behandeling', tone: 'border-foreground bg-surface' },
-  { key: 'not_selected', label: 'Niet geselecteerd', tone: 'border-border bg-muted' },
   { key: 'withdrawn', label: 'Ingetrokken', tone: 'border-border bg-muted/50 opacity-70' },
 ];
 
 const APP_STATUS_LABELS = {
   open: 'In behandeling',
   selected: 'Geselecteerd',
-  not_selected: 'Niet geselecteerd',
   withdrawn: 'Ingetrokken',
 };
 

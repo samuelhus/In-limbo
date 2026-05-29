@@ -10,7 +10,7 @@ async def archive_expired_listings(db) -> int:
         {
             "isRecurrent": False,
             "deadline": {"$ne": None, "$lt": today_iso},
-            "status": {"$in": ["beschikbaar", "in_afwachting"]},
+            "status": "beschikbaar",
         },
         {"$set": {"status": "gearchiveerd", "updatedAt": datetime.now(timezone.utc).isoformat()}},
     )

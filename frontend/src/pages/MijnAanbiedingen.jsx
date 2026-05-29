@@ -6,13 +6,12 @@ import StatusBadge from '@/components/StatusBadge';
 
 const STATUS_GROUPS = [
   { key: 'beschikbaar', label: 'Beschikbaar' },
-  { key: 'in_afwachting', label: 'In afwachting' },
   { key: 'herbestemd', label: 'Herbestemd' },
   { key: 'in_magazijn', label: 'In magazijn' },
   { key: 'gearchiveerd', label: 'Gearchiveerd' },
 ];
 
-const COUNT_VISIBLE_STATUSES = new Set(['beschikbaar', 'in_afwachting']);
+const COUNT_VISIBLE_STATUSES = new Set(['beschikbaar']);
 
 const formatDate = (iso) => {
   try {

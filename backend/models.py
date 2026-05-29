@@ -27,7 +27,7 @@ UserStatus = Literal["pending", "validated", "rejected"]
 UserRole = Literal["user", "admin", "donnateur"]
 OrgStatus = Literal["pending", "validated", "rejected", "active", "inactive"]
 ListingStatus = Literal[
-    "beschikbaar", "in_afwachting", "herbestemd", "in_magazijn", "gearchiveerd"
+    "beschikbaar", "herbestemd", "in_magazijn", "gearchiveerd"
 ]
 
 

@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 const STATUS_OPTIONS = [
   { v: '', l: 'Alle' },
   { v: 'beschikbaar', l: 'Beschikbaar' },
-  { v: 'in_afwachting', l: 'In afwachting' },
   { v: 'herbestemd', l: 'Herbestemd' },
   { v: 'in_magazijn', l: 'In magazijn' },
 ];

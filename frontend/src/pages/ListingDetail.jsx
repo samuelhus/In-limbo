@@ -217,17 +217,11 @@ function ApplicantPanel({ listing, myApp, sameOrg, onOpenApply, onChanged }) {
     );
   }
 
-  // If listing is in_afwachting and you're not the selected applicant
-  if (listing.status === 'in_afwachting' && (!myApp || myApp.status !== 'selected')) {
-    return (
-      <div className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground" data-testid="apply-disabled-in-afwachting">
-        Deze aanbieding is gereserveerd voor een andere aanvrager.
-      </div>
-    );
-  }
-
   // Herbestemd — show appropriate message
   if (listing.status === 'herbestemd') {
+    if (myApp?.status === 'selected') {
+      return null; // selected applicant sees contact block instead
+    }
     if (myApp?.status === 'not_selected') {
       return (
         <div className="mt-8 border-t border-border pt-6 text-sm text-foreground/75" data-testid="apply-not-selected">
@@ -334,7 +328,8 @@ function OwnerPanel({ listing, onChanged }) {
     finally { setBusy(false); }
   };
 
-  const selectApplicant = async (applicationId) => {
+  const selectApplicant = async (applicationId, applicantName) => {
+    if (!window.confirm(`Selecteer ${applicantName || 'deze aanvrager'} als ontvanger? De aanbieding wordt direct gemarkeerd als herbestemd en andere openstaande aanvragen worden afgewezen.`)) return;
     setBusy(true);
     try {
       await api.post(`/listings/${listing.id}/select-applicant`, { applicationId });
@@ -364,11 +359,10 @@ function OwnerPanel({ listing, onChanged }) {
       <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
         <p className="overline">Aanvragen · {visibleApps.length}</p>
         <div className="flex flex-wrap gap-2">
-          {/* Mark-as-rehomed available from beschikbaar or in_afwachting */}
-          {(listing.status === 'beschikbaar' || listing.status === 'in_afwachting') && (
+          {listing.status === 'beschikbaar' && (
             <button
               onClick={() => {
-                if (!window.confirm('Markeer als herbestemd? Andere openstaande aanvragen worden afgewezen.')) return;
+                if (!window.confirm('Markeer als herbestemd zonder iemand te selecteren? Andere openstaande aanvragen worden afgewezen.')) return;
                 callAction(`/listings/${listing.id}/mark-rehomed`);
               }}
               disabled={busy}
@@ -381,7 +375,7 @@ function OwnerPanel({ listing, onChanged }) {
           {listing.status === 'herbestemd' && (
             <button
               onClick={() => {
-                if (!window.confirm('Herbestemming ongedaan maken? Aanbieding wordt terug beschikbaar.')) return;
+                if (!window.confirm('Herbestemming ongedaan maken? Aanbieding wordt terug beschikbaar en aanvragen worden heropend.')) return;
                 callAction(`/listings/${listing.id}/unrehome`);
               }}
               disabled={busy}
@@ -405,7 +399,7 @@ function OwnerPanel({ listing, onChanged }) {
         </div>
       </div>
 
-      {listing.status === 'in_afwachting' && selected && (
+      {listing.status === 'herbestemd' && selected && (
         <div className="mb-6 border border-foreground bg-surface p-5" data-testid="owner-selected-block">
           <p className="overline mb-2">Geselecteerde ontvanger</p>
           <p className="font-medium">
@@ -427,14 +421,14 @@ function OwnerPanel({ listing, onChanged }) {
           <p className="text-xs text-muted-foreground italic mt-3">"{selected.motivation}"</p>
           <button
             onClick={() => {
-              if (!window.confirm('Reservatie ongedaan maken?')) return;
-              callAction(`/listings/${listing.id}/unselect`);
+              if (!window.confirm('Herbestemming ongedaan maken? Aanvraag van deze ontvanger en alle eerder afgewezen aanvragen worden terug op "open" gezet.')) return;
+              callAction(`/listings/${listing.id}/unrehome`);
             }}
             disabled={busy}
             className="btn-secondary !py-1.5 px-3 text-xs mt-4"
             data-testid="owner-unselect-btn"
           >
-            Reservatie ongedaan maken
+            Herbestemming ongedaan maken
           </button>
         </div>
       )}
@@ -463,12 +457,12 @@ function OwnerPanel({ listing, onChanged }) {
               </div>
               <div className="md:col-span-4 md:flex md:justify-end items-start">
                 <button
-                  onClick={() => selectApplicant(a.id)}
+                  onClick={() => selectApplicant(a.id, `${a.applicant.firstName} ${a.applicant.lastName || ''}`.trim())}
                   disabled={busy}
                   className="btn-primary !py-2 text-xs"
                   data-testid={`owner-select-${a.id}`}
                 >
-                  Selecteer als ontvanger
+                  Selecteer & herbestem
                 </button>
               </div>
             </li>

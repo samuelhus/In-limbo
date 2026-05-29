@@ -192,14 +192,14 @@ def test_listing(lotte, samir):
 
 class TestTransitions:
     def test_select_and_contact_visibility(self, lotte, samir, test_listing):
-        # Select
+        # Select → listing goes directly to herbestemd
         r = lotte.post(f"{API}/listings/{test_listing['id']}/select-applicant",
                        json={"applicationId": test_listing["applicationId"]})
         assert r.status_code == 200, r.text
 
-        # Owner sees selected applicant contact
+        # Owner sees selected applicant contact (contact shared in herbestemd)
         det_owner = lotte.get(f"{API}/listings/{test_listing['id']}").json()
-        assert det_owner["status"] == "in_afwachting"
+        assert det_owner["status"] == "herbestemd"
         assert det_owner.get("selectedApplicantContact"), det_owner
         assert det_owner["selectedApplicantContact"]["email"]
         assert det_owner["selectedApplicantContact"]["firstName"]
@@ -214,14 +214,27 @@ class TestTransitions:
         assert any(a.get("applicant", {}).get("email") for a in apps if a["status"] == "selected")
 
     def test_select_when_not_beschikbaar_400(self, lotte, test_listing):
-        # Currently in_afwachting → select must fail
+        # Currently herbestemd → select must fail
         r = lotte.post(f"{API}/listings/{test_listing['id']}/select-applicant",
                        json={"applicationId": test_listing["applicationId"]})
         assert r.status_code == 400
 
-    def test_withdraw_selected_forbidden(self, samir, test_listing):
+    def test_withdraw_selected_allowed_resets_listing(self, lotte, samir, test_listing):
+        """Selected applicant can withdraw — listing resets to beschikbaar."""
         r = samir.post(f"{API}/applications/{test_listing['applicationId']}/withdraw")
-        assert r.status_code == 400
+        assert r.status_code == 200, r.text
+        det = lotte.get(f"{API}/listings/{test_listing['id']}").json()
+        assert det["status"] == "beschikbaar"
+        assert det.get("selectedApplicantId") is None
+        # Re-apply Samir for downstream tests
+        a = samir.post(f"{API}/listings/{test_listing['id']}/apply",
+                       json={"motivation": "re-apply"})
+        # Update the fixture's applicationId reference (best-effort; subsequent tests use a fresh listing)
+        if a.status_code in (200, 201):
+            test_listing["applicationId"] = a.json()["id"]
+        # And re-select for the next test (which expects herbestemd)
+        lotte.post(f"{API}/listings/{test_listing['id']}/select-applicant",
+                   json={"applicationId": test_listing["applicationId"]})
 
     def test_unselect_back_to_beschikbaar(self, lotte, test_listing):
         r = lotte.post(f"{API}/listings/{test_listing['id']}/unselect")
@@ -230,7 +243,7 @@ class TestTransitions:
         assert det["status"] == "beschikbaar"
         assert det.get("selectedApplicantId") in (None,)
 
-    def test_unselect_when_not_in_afwachting_400(self, lotte, test_listing):
+    def test_unselect_when_not_herbestemd_400(self, lotte, test_listing):
         r = lotte.post(f"{API}/listings/{test_listing['id']}/unselect")
         assert r.status_code == 400
 
@@ -322,10 +335,7 @@ def test_zz_restore_seed_state(lotte, samir):
     if not l:
         return
     lid = l["id"]
-    # If anything is in afwachting/herbestemd, reset
-    det = lotte.get(f"{API}/listings/{lid}").json()
-    if det["status"] == "in_afwachting":
-        lotte.post(f"{API}/listings/{lid}/unselect")
+    # If anything is herbestemd, reset
     det = lotte.get(f"{API}/listings/{lid}").json()
     if det["status"] == "herbestemd":
         lotte.post(f"{API}/listings/{lid}/unrehome")
