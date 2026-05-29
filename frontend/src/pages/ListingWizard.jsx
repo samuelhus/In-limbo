@@ -18,6 +18,7 @@ export default function ListingWizard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user && user.role === 'admin';
+  const isDonnateur = user && user.role === 'donnateur';
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -227,15 +228,17 @@ export default function ListingWizard() {
       {/* STEP 6: Deadline */}
       {step === 6 && (
         <section className="space-y-4" data-testid="wizard-step-deadline">
-          <label className="flex items-center gap-3 cursor-pointer mb-2">
-            <input
-              type="checkbox"
-              checked={data.isRecurrent}
-              onChange={(e) => setData({ ...data, isRecurrent: e.target.checked, deadline: e.target.checked ? '' : data.deadline })}
-              data-testid="wizard-recurrent-toggle"
-            />
-            <span className="text-sm">Dit is een terugkerende aanbieding (geen deadline)</span>
-          </label>
+          {!isDonnateur && (
+            <label className="flex items-center gap-3 cursor-pointer mb-2">
+              <input
+                type="checkbox"
+                checked={data.isRecurrent}
+                onChange={(e) => setData({ ...data, isRecurrent: e.target.checked, deadline: e.target.checked ? '' : data.deadline })}
+                data-testid="wizard-recurrent-toggle"
+              />
+              <span className="text-sm">Dit is een terugkerende aanbieding (geen deadline)</span>
+            </label>
+          )}
           {!data.isRecurrent && (
             <div>
               <label className="label-overline">Deadline</label>
@@ -247,9 +250,14 @@ export default function ListingWizard() {
                 min={new Date().toISOString().slice(0, 10)}
                 onChange={(e) => setData({ ...data, deadline: e.target.value })}
               />
+              {isDonnateur && (
+                <p className="text-xs text-muted-foreground mt-2" data-testid="wizard-donnateur-recurrent-hint">
+                  Recurrente aanbiedingen zijn voorbehouden aan In Limbo-partners.
+                </p>
+              )}
             </div>
           )}
-          {data.isRecurrent && (
+          {data.isRecurrent && !isDonnateur && (
             <p className="text-sm text-foreground/75 leading-relaxed border-l-2 border-border pl-4">
               Bij recurrente aanbiedingen wordt jouw e-mailadres zichtbaar voor andere
               gevalideerde gebruikers op de detailpagina, zodat ze rechtstreeks contact

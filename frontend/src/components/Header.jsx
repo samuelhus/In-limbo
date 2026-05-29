@@ -14,7 +14,7 @@ export default function Header() {
   const isDonnateur = isLoggedIn && user.role === 'donnateur';
   const isValidated = isLoggedIn && user.status === 'validated' && !isDonnateur;
   const canCreateListings = isValidated || isDonnateur;
-  const displayName = isDonnateur ? user.username : user.firstName;
+  const displayName = isLoggedIn ? (isDonnateur ? user.username : user.firstName) : '';
 
   const navLink =
     'text-sm tracking-wide text-foreground/80 hover:text-foreground transition-colors industrial-link';

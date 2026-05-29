@@ -22,6 +22,7 @@ import MijnOrganisatie from '@/pages/MijnOrganisatie';
 import MijnAanvragen from '@/pages/MijnAanvragen';
 import MijnAanbiedingen from '@/pages/MijnAanbiedingen';
 import AdminPanel from '@/pages/AdminPanel';
+import DonnateurRegister from '@/pages/DonnateurRegister';
 
 function NotFound() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registreer" element={<Register />} />
+              <Route path="/donnateur/registreer" element={<DonnateurRegister />} />
 
               <Route
                 path="/wachtkamer"
@@ -69,7 +71,7 @@ export default function App() {
               <Route
                 path="/aanbieding/nieuw"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowDonnateur>
                     <ListingWizard />
                   </ProtectedRoute>
                 }
@@ -101,7 +103,7 @@ export default function App() {
               <Route
                 path="/mijn-aanbiedingen"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowDonnateur>
                     <MijnAanbiedingen />
                   </ProtectedRoute>
                 }

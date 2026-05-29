@@ -41,6 +41,19 @@ export default function AdminPanel() {
     }
   };
 
+  const deleteDonnateur = async (userId, username) => {
+    if (!window.confirm(`Donnateur "${username}" verwijderen? Hun aanbiedingen worden gearchiveerd. Deze actie is onomkeerbaar.`)) return;
+    setBusy(true);
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      await load();
+    } catch (e) {
+      alert(formatApiError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const runMaintenance = async () => {
     setBusy(true);
     try {
@@ -150,6 +163,38 @@ export default function AdminPanel() {
                   data-testid={`admin-reject-org-${o.id}`}
                 >
                   Afwijzen
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Donnateurs */}
+      <section className="mt-16">
+        <p className="overline mb-4">Donnateurs · {queue?.donnateurs?.length || 0}</p>
+        {(!queue?.donnateurs || queue.donnateurs.length === 0) && (
+          <p className="text-muted-foreground" data-testid="admin-no-donnateurs">Geen donnateurs geregistreerd.</p>
+        )}
+        <ul className="divide-y divide-border border-y border-border">
+          {queue?.donnateurs?.map((d) => (
+            <li key={d.id} className="py-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-start" data-testid={`admin-donnateur-${d.id}`}>
+              <div className="md:col-span-8">
+                <p className="font-medium">{d.username}</p>
+                <p className="text-sm text-muted-foreground">{d.email}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Aangemaakt op {new Date(d.createdAt).toLocaleDateString('nl-BE')}
+                </p>
+              </div>
+              <div className="md:col-span-4 flex flex-wrap gap-2 md:justify-end">
+                <button
+                  onClick={() => deleteDonnateur(d.id, d.username)}
+                  disabled={busy}
+                  data-testid={`admin-delete-donnateur-${d.id}`}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-xs font-medium tracking-wide transition-all duration-200 hover:bg-red-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                  style={{ borderRadius: 2 }}
+                >
+                  Verwijderen
                 </button>
               </div>
             </li>

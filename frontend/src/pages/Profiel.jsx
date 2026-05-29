@@ -4,9 +4,12 @@ import { api, formatApiError } from '@/lib/api';
 
 export default function Profiel() {
   const { user, refresh } = useAuth();
+  const isDonnateur = user.role === 'donnateur';
+
   const [form, setForm] = useState({
     firstName: user.firstName || '',
     lastName: user.lastName || '',
+    username: user.username || '',
     email: user.email || '',
     phone: user.phone || '',
     password: '',
@@ -21,6 +24,13 @@ export default function Profiel() {
     try {
       const payload = { ...form };
       if (!payload.password) delete payload.password;
+      if (isDonnateur) {
+        delete payload.firstName;
+        delete payload.lastName;
+        delete payload.phone;
+      } else {
+        delete payload.username;
+      }
       await api.patch('/users/me', payload);
       await refresh();
       setMsg('Wijzigingen opgeslagen.');
@@ -38,23 +48,40 @@ export default function Profiel() {
       <h1 className="text-4xl font-bold tracking-tight mb-10">Jouw gegevens</h1>
 
       <form onSubmit={save} className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {isDonnateur ? (
           <div>
-            <label className="label-overline">Voornaam</label>
-            <input className="input-flat" value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} data-testid="profiel-firstname" />
+            <label className="label-overline">Gebruikersnaam</label>
+            <input
+              className="input-flat"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              data-testid="profiel-username"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Deze naam is publiek zichtbaar bij je aanbiedingen.
+            </p>
           </div>
-          <div>
-            <label className="label-overline">Achternaam</label>
-            <input className="input-flat" value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} data-testid="profiel-lastname" />
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="label-overline">Voornaam</label>
+                <input className="input-flat" value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} data-testid="profiel-firstname" />
+              </div>
+              <div>
+                <label className="label-overline">Achternaam</label>
+                <input className="input-flat" value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} data-testid="profiel-lastname" />
+              </div>
+            </div>
+            <div>
+              <label className="label-overline">Telefoon</label>
+              <input className="input-flat" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} data-testid="profiel-phone" />
+            </div>
+          </>
+        )}
         <div>
           <label className="label-overline">E-mail</label>
           <input type="email" className="input-flat" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} data-testid="profiel-email" />
-        </div>
-        <div>
-          <label className="label-overline">Telefoon</label>
-          <input className="input-flat" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} data-testid="profiel-phone" />
         </div>
         <div>
           <label className="label-overline">Nieuw wachtwoord <span className="text-muted-foreground normal-case">(laat leeg om niet te wijzigen)</span></label>

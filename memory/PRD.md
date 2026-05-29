@@ -33,6 +33,15 @@ naar wie het kan gebruiken.
 
 ## What's been implemented
 
+### 2026-01-XX — Donnateur-rol (individuele schenkers) ✅
+- **Nieuwe rol** `donnateur`: individu kan materiaal aanbieden zonder organisatie. Username i.p.v. firstName/lastName.
+- **Backend**: `POST /auth/register/donnateur` (3 velden: username + email + password), `GET /admin/validation-queue` includes `donnateurs[]`, `DELETE /admin/users/{id}` (archiveert listings cascadewise), `get_donnateur_or_validated_user`-dependency op alle owner-acties, `/apply` blokkeert donnateurs expliciet (403).
+- **Catalogus**: donnateur-aanbiedingen tonen *"Aangeboden door [username] (geen In Limbo partner)"*.
+- **ListingDetail**: voor validated users → toont donnateur-block met username; voor donnateur-viewers → owner-info gestript door backend; "Aanvraag indienen"-knop verborgen voor donnateurs.
+- **ListingWizard**: recurrent-toggle verborgen voor donnateurs, server-side geforceerd `isRecurrent=false`.
+- **Frontend**: nieuwe `/donnateur/registreer` 3-staps wizard (voorwaarden → account → bevestiging), Header conditioneel ("Doe een gift" voor visitors, beperkte nav voor donnateurs), Profiel toont username-veld i.p.v. firstName/lastName, AdminPanel sectie "Donnateurs" met delete-knop, App.js route + `allowDonnateur` props.
+- **Seed**: 1 donnateur (`donna@inlimbo.be` / `test1234`, username `dana_doneert`) + 1 aanbieding ("Oude verfresten — 8 potten").
+
 ### 2026-01-XX — Mobile hamburger menu ✅
 - Responsive header met **hamburger-icoon** (lucide-react) op schermen < 768px
 - **Dropdown** met alle rol-afhankelijke nav-items + Uitloggen (logged-in) of Inloggen + Word lid (anoniem)

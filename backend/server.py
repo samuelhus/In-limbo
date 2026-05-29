@@ -554,6 +554,8 @@ async def _require_listing_owner_or_admin(listing_id: str, user: dict) -> dict:
 async def apply_to_listing(
     listing_id: str, body: ApplicationCreate, user: dict = Depends(get_validated_user),
 ):
+    if user.get("role") == "donnateur":
+        raise HTTPException(403, "Donnateurs kunnen geen aanvragen indienen")
     listing = await db.listings.find_one({"id": listing_id})
     if not listing:
         raise HTTPException(404, "Aanbieding niet gevonden")
