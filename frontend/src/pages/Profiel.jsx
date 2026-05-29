@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
 
@@ -95,6 +96,18 @@ export default function Profiel() {
           {saving ? 'Opslaan…' : 'Wijzigingen opslaan'}
         </button>
       </form>
+
+      {!isDonnateur && (
+        <div className="mt-16 border-t border-border pt-6" data-testid="profiel-organisatie-section">
+          <p className="overline mb-2">Organisatie</p>
+          <p className="text-sm text-muted-foreground mb-3">
+            Beheer de gegevens van je organisatie.
+          </p>
+          <Link to="/organisatie" className="industrial-link text-foreground text-sm" data-testid="profiel-organisatie-link">
+            Mijn organisatie →
+          </Link>
+        </div>
+      )}
 
       <div className="mt-16 border-t border-border pt-6 text-sm">
         <p className="overline mb-2">Account</p>

@@ -53,7 +53,6 @@ export default function Header() {
     { to: '/aanbieding/nieuw', label: 'Nieuwe aanbieding', testId: 'mobile-nav-new-listing', show: canCreateListings },
     { to: '/aanvragen', label: 'Mijn aanvragen', testId: 'mobile-nav-aanvragen', show: isValidated },
     { to: '/mijn-aanbiedingen', label: 'Mijn aanbiedingen', testId: 'mobile-nav-mijn-aanbiedingen', show: canCreateListings },
-    { to: '/organisatie', label: 'Mijn organisatie', testId: 'mobile-nav-my-org', show: isValidated },
     { to: '/admin', label: 'Admin', testId: 'mobile-nav-admin', show: isAdmin },
     { to: '/profiel', label: 'Mijn profiel', testId: 'mobile-nav-profiel', show: isLoggedIn },
   ].filter((i) => i.show);
@@ -108,15 +107,6 @@ export default function Header() {
               className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
             >
               Mijn aanbiedingen
-            </NavLink>
-          )}
-          {isValidated && (
-            <NavLink
-              to="/organisatie"
-              data-testid="nav-my-org"
-              className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
-            >
-              Mijn organisatie
             </NavLink>
           )}
           {isAdmin && (
