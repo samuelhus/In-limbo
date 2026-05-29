@@ -24,7 +24,7 @@ ListingMaterial = Literal[
 ]
 
 UserStatus = Literal["pending", "validated", "rejected"]
-UserRole = Literal["user", "admin"]
+UserRole = Literal["user", "admin", "donnateur"]
 OrgStatus = Literal["pending", "validated", "rejected", "active", "inactive"]
 ListingStatus = Literal[
     "beschikbaar", "in_afwachting", "herbestemd", "in_magazijn", "gearchiveerd"
@@ -38,8 +38,8 @@ def now_utc_iso() -> str:
 # ---------- User ----------
 class UserBase(BaseModel):
     email: EmailStr
-    firstName: str
-    lastName: str
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
     phone: Optional[str] = None
 
 
@@ -48,7 +48,8 @@ class UserPublic(UserBase):
     role: UserRole = "user"
     status: UserStatus = "pending"
     rejectionReason: Optional[str] = None
-    organisationId: str
+    organisationId: Optional[str] = None
+    username: Optional[str] = None
     dateLastLogin: Optional[str] = None
     createdAt: str
 
@@ -138,6 +139,14 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RegisterDonnateur(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    username: str
+    email: EmailStr
+    password: str = Field(..., min_length=6)
+    acceptedTerms: bool
+
+
 class AdminDecision(BaseModel):
     decision: Literal["approve", "reject"]
     rejectionReason: Optional[str] = None
@@ -162,6 +171,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     password: Optional[str] = Field(None, min_length=6)
+    username: Optional[str] = None
 
 
 class OrgUpdate(BaseModel):

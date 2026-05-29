@@ -59,6 +59,16 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const registerDonnateur = async (payload) => {
+    try {
+      await api.post('/auth/register/donnateur', payload);
+      await refresh();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: formatApiError(e) };
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post('/auth/logout');
@@ -70,7 +80,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, refresh, login, logout, registerNewOrg, registerExistingOrg }}
+      value={{ user, setUser, refresh, login, logout, registerNewOrg, registerExistingOrg, registerDonnateur }}
     >
       {children}
     </AuthContext.Provider>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function ProtectedRoute({ children, requireValidated = true, requireAdmin = false }) {
+export default function ProtectedRoute({ children, requireValidated = true, requireAdmin = false, allowDonnateur = false }) {
   const { user } = useAuth();
 
   if (user === null) {
@@ -20,6 +20,7 @@ export default function ProtectedRoute({ children, requireValidated = true, requ
   }
 
   if (requireValidated && user.status !== 'validated') {
+    if (allowDonnateur && user.role === 'donnateur') return children;
     if (user.status === 'pending') return <Navigate to="/wachtkamer" replace />;
     if (user.status === 'rejected') return <Navigate to="/afgewezen" replace />;
   }

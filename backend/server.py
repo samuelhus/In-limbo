@@ -20,7 +20,7 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from models import (
-    RegisterNewOrg, RegisterExistingOrg, LoginRequest, AdminDecision,
+    RegisterNewOrg, RegisterExistingOrg, RegisterDonnateur, LoginRequest, AdminDecision,
     ListingBase, ListingCreateBody, OrgUpdate, UserUpdate,
     ApplicationCreate, SelectApplicantBody,
 )
@@ -29,6 +29,7 @@ from auth import (
     set_auth_cookie, clear_auth_cookie,
     get_current_user, get_current_user_optional,
     get_validated_user, get_admin_user,
+    get_donnateur_or_validated_user,
 )
 from seed import seed
 from tasks import archive_expired_listings, mark_inactive_orgs
@@ -72,6 +73,7 @@ def strip_mongo(d: dict) -> dict:
 async def startup() -> None:
     await db.users.create_index("email", unique=True)
     await db.users.create_index("organisationId")
+    await db.users.create_index("username", unique=True, sparse=True)
     await db.organisations.create_index("status")
     await db.listings.create_index("status")
     await db.listings.create_index("organisationId")
@@ -177,6 +179,37 @@ async def register_existing_org(body: RegisterExistingOrg, response: Response):
     return {"ok": True, "userId": user_id, "status": "pending"}
 
 
+@api.post("/auth/register/donnateur")
+async def register_donnateur(body: RegisterDonnateur, response: Response):
+    if not body.acceptedTerms:
+        raise HTTPException(400, "Je moet de voorwaarden aanvaarden")
+    email = body.email.lower()
+    if await db.users.find_one({"email": email}):
+        raise HTTPException(409, "Dit e-mailadres is al geregistreerd")
+    if await db.users.find_one({"username": body.username}):
+        raise HTTPException(409, "Deze gebruikersnaam is al in gebruik")
+    user_id = str(uuid.uuid4())
+    now = now_iso()
+    await db.users.insert_one({
+        "id": user_id,
+        "email": email,
+        "passwordHash": hash_password(body.password),
+        "username": body.username,
+        "firstName": None,
+        "lastName": None,
+        "phone": None,
+        "role": "donnateur",
+        "status": "validated",
+        "rejectionReason": None,
+        "organisationId": None,
+        "dateLastLogin": None,
+        "createdAt": now,
+    })
+    token = create_access_token(user_id, email, "donnateur")
+    set_auth_cookie(response, token)
+    return {"ok": True, "userId": user_id, "status": "validated"}
+
+
 @api.post("/auth/login")
 async def login(body: LoginRequest, response: Response):
     email = body.email.lower()
@@ -273,11 +306,21 @@ async def update_me(body: UserUpdate, user: dict = Depends(get_current_user)):
 # LISTINGS
 # --------------------------------------------------------------------------
 def _public_listing_view(listing: dict, viewer: dict | None) -> dict:
-    """For non-validated viewers, strip the listing to title/photo/material/status only."""
+    """Three visibility levels: validated user/admin (full), donnateur (full minus offerer identity), visitor/pending (limited)."""
     l = strip_mongo(dict(listing))
-    if viewer and viewer.get("status") == "validated":
+    # Validated users (role user of admin)
+    if viewer and viewer.get("status") == "validated" and viewer.get("role") != "donnateur":
         return l
-    # Visitors / pending users: limited view
+    # Donnateurs
+    if viewer and viewer.get("role") == "donnateur":
+        l.pop("userId", None)
+        l.pop("offererFirstName", None)
+        l.pop("offererUsername", None)
+        l.pop("offererIsDonnateur", None)
+        l.pop("organisationId", None)
+        l.pop("organisation", None)
+        return l
+    # Visitors / pending users
     return {
         "id": l["id"],
         "title": l["title"],
@@ -290,8 +333,8 @@ def _public_listing_view(listing: dict, viewer: dict | None) -> dict:
 
 
 async def _enrich_listings(items: list[dict]) -> list[dict]:
-    """Attach offererFirstName + organisation {id, name} to non-limited views."""
-    full = [it for it in items if not it.get("limited")]
+    """Attach offerer info to non-limited views. Donnateurs get offererUsername + offererIsDonnateur; regular users get offererFirstName + organisation."""
+    full = [it for it in items if not it.get("limited") and it.get("userId")]
     if not full:
         return items
     user_ids = list({it["userId"] for it in full if it.get("userId")})
@@ -299,7 +342,10 @@ async def _enrich_listings(items: list[dict]) -> list[dict]:
 
     users_map: dict[str, dict] = {}
     if user_ids:
-        async for u in db.users.find({"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "firstName": 1}):
+        async for u in db.users.find(
+            {"id": {"$in": user_ids}},
+            {"_id": 0, "id": 1, "firstName": 1, "role": 1, "username": 1},
+        ):
             users_map[u["id"]] = u
     orgs_map: dict[str, dict] = {}
     if org_ids:
@@ -308,11 +354,16 @@ async def _enrich_listings(items: list[dict]) -> list[dict]:
 
     for it in full:
         owner = users_map.get(it.get("userId"))
-        if owner:
+        if not owner:
+            continue
+        if owner.get("role") == "donnateur":
+            it["offererUsername"] = owner.get("username")
+            it["offererIsDonnateur"] = True
+        else:
             it["offererFirstName"] = owner.get("firstName")
-        org = orgs_map.get(it.get("organisationId"))
-        if org:
-            it["organisation"] = {"id": org["id"], "name": org["name"]}
+            org = orgs_map.get(it.get("organisationId"))
+            if org:
+                it["organisation"] = {"id": org["id"], "name": org["name"]}
     return items
 
 
@@ -342,7 +393,7 @@ async def list_listings(
 
 
 @api.get("/listings/mine")
-async def my_listings(user: dict = Depends(get_validated_user)):
+async def my_listings(user: dict = Depends(get_donnateur_or_validated_user)):
     """Return all listings owned by the authenticated user, with open application counts."""
     cursor = db.listings.find({"userId": user["id"]}).sort("createdAt", -1)
     items = []
@@ -377,19 +428,27 @@ async def get_listing(listing_id: str, request: Request):
     viewer = await get_current_user_optional(request)
     view = _public_listing_view(listing, viewer)
 
-    # For full view, also attach organisation summary + offerer first name + recurrent contact email
+    # For full view, also attach organisation summary + offerer info + recurrent contact email
     if not view.get("limited"):
-        org = await db.organisations.find_one({"id": listing["organisationId"]})
-        if org:
-            view["organisation"] = {
-                "id": org["id"],
-                "name": org["name"],
-            }
         owner = await db.users.find_one({"id": listing["userId"]})
         if owner:
-            view["offererFirstName"] = owner.get("firstName")
-            if listing.get("isRecurrent"):
-                view["offererEmail"] = owner["email"]
+            if owner.get("role") == "donnateur":
+                view["offererUsername"] = owner.get("username")
+                view["offererIsDonnateur"] = True
+            else:
+                view["offererFirstName"] = owner.get("firstName")
+                org = await db.organisations.find_one({"id": listing.get("organisationId")}) if listing.get("organisationId") else None
+                if org:
+                    view["organisation"] = {
+                        "id": org["id"],
+                        "name": org["name"],
+                    }
+                if listing.get("isRecurrent"):
+                    view["offererEmail"] = owner["email"]
+        # For donnateur viewers, strip owner identity again (handled in _public_listing_view but redundant attached fields)
+        if viewer and viewer.get("role") == "donnateur":
+            for k in ("offererFirstName", "offererUsername", "offererIsDonnateur", "organisation", "offererEmail"):
+                view.pop(k, None)
 
         # Application-related context for validated viewers
         if viewer:
@@ -442,7 +501,10 @@ async def get_listing(listing_id: str, request: Request):
 
 
 @api.post("/listings")
-async def create_listing(body: ListingCreateBody, user: dict = Depends(get_validated_user)):
+async def create_listing(body: ListingCreateBody, user: dict = Depends(get_donnateur_or_validated_user)):
+    is_donnateur = user.get("role") == "donnateur"
+    if is_donnateur:
+        body.isRecurrent = False  # donnateurs cannot create recurrent listings
     if body.isRecurrent:
         body.deadline = None
     if not body.photos:
@@ -457,7 +519,7 @@ async def create_listing(body: ListingCreateBody, user: dict = Depends(get_valid
         "status": initial_status,
         "selectedApplicantId": None,
         "userId": user["id"],
-        "organisationId": user["organisationId"],
+        "organisationId": None if is_donnateur else user.get("organisationId"),
         "createdAt": now,
         "updatedAt": now,
     })
@@ -501,7 +563,7 @@ async def apply_to_listing(
         raise HTTPException(400, "Recurrente aanbiedingen aanvaarden geen aanvragen")
     if listing["userId"] == user["id"]:
         raise HTTPException(400, "Je kan geen aanvraag indienen op je eigen aanbieding")
-    if listing["organisationId"] == user["organisationId"]:
+    if listing.get("organisationId") and user.get("organisationId") and listing["organisationId"] == user["organisationId"]:
         raise HTTPException(400, "Je kan geen aanvragen indienen voor aanbiedingen van je eigen organisatie")
 
     existing = await db.applications.find_one({
@@ -574,7 +636,7 @@ async def my_applications(user: dict = Depends(get_validated_user)):
 
 
 @api.get("/listings/{listing_id}/applications")
-async def list_listing_applications(listing_id: str, user: dict = Depends(get_validated_user)):
+async def list_listing_applications(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
     listing = await _require_listing_owner_or_admin(listing_id, user)
     cursor = db.applications.find(
         {"listingId": listing_id, "status": {"$in": ["open", "selected", "not_selected"]}}
@@ -616,7 +678,7 @@ async def list_listing_applications(listing_id: str, user: dict = Depends(get_va
 
 @api.post("/listings/{listing_id}/select-applicant")
 async def select_applicant(
-    listing_id: str, body: SelectApplicantBody, user: dict = Depends(get_validated_user),
+    listing_id: str, body: SelectApplicantBody, user: dict = Depends(get_donnateur_or_validated_user),
 ):
     listing = await _require_listing_owner_or_admin(listing_id, user)
     if listing["status"] != "beschikbaar":
@@ -639,7 +701,7 @@ async def select_applicant(
 
 
 @api.post("/listings/{listing_id}/unselect")
-async def unselect_applicant(listing_id: str, user: dict = Depends(get_validated_user)):
+async def unselect_applicant(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
     listing = await _require_listing_owner_or_admin(listing_id, user)
     if listing["status"] != "in_afwachting":
         raise HTTPException(400, "Geen actieve reservatie om ongedaan te maken")
@@ -658,7 +720,7 @@ async def unselect_applicant(listing_id: str, user: dict = Depends(get_validated
 
 
 @api.post("/listings/{listing_id}/mark-rehomed")
-async def mark_rehomed(listing_id: str, user: dict = Depends(get_validated_user)):
+async def mark_rehomed(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
     listing = await _require_listing_owner_or_admin(listing_id, user)
     if listing["status"] not in ("beschikbaar", "in_afwachting"):
         raise HTTPException(400, "Aanbieding kan niet naar herbestemd gezet worden vanuit deze status")
@@ -675,7 +737,7 @@ async def mark_rehomed(listing_id: str, user: dict = Depends(get_validated_user)
 
 
 @api.post("/listings/{listing_id}/unrehome")
-async def unrehome(listing_id: str, user: dict = Depends(get_validated_user)):
+async def unrehome(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
     listing = await _require_listing_owner_or_admin(listing_id, user)
     if listing["status"] != "herbestemd":
         raise HTTPException(400, "Deze aanbieding is niet herbestemd")
@@ -692,7 +754,7 @@ async def unrehome(listing_id: str, user: dict = Depends(get_validated_user)):
 
 
 @api.delete("/listings/{listing_id}")
-async def delete_listing(listing_id: str, user: dict = Depends(get_validated_user)):
+async def delete_listing(listing_id: str, user: dict = Depends(get_donnateur_or_validated_user)):
     listing = await _require_listing_owner_or_admin(listing_id, user)
     if listing["status"] == "herbestemd":
         raise HTTPException(403, "Herbestemde aanbiedingen kunnen niet verwijderd worden.")
@@ -706,7 +768,7 @@ async def delete_listing(listing_id: str, user: dict = Depends(get_validated_use
 # CLOUDINARY SIGNATURE
 # --------------------------------------------------------------------------
 @api.get("/cloudinary/signature")
-async def cloudinary_signature(user: dict = Depends(get_validated_user)):
+async def cloudinary_signature(user: dict = Depends(get_donnateur_or_validated_user)):
     folder = f"in-limbo/{user['id']}"
     timestamp = int(time.time())
     params = {"timestamp": timestamp, "folder": folder}
@@ -727,11 +789,11 @@ async def cloudinary_signature(user: dict = Depends(get_validated_user)):
 # --------------------------------------------------------------------------
 @api.get("/admin/validation-queue")
 async def admin_queue(admin: dict = Depends(get_admin_user)):
-    """Returns pending users + pending orgs. Groups new-org registrations."""
+    """Returns pending users + pending orgs + donnateurs. Groups new-org registrations."""
     pending_users = []
     async for u in db.users.find({"status": "pending"}).sort("createdAt", -1):
         u = strip_mongo(u)
-        org = await db.organisations.find_one({"id": u["organisationId"]})
+        org = await db.organisations.find_one({"id": u.get("organisationId")}) if u.get("organisationId") else None
         u["organisation"] = strip_mongo(org) if org else None
         # Find any previously rejected applications for context
         previous = await db.users.count_documents({
@@ -744,7 +806,11 @@ async def admin_queue(admin: dict = Depends(get_admin_user)):
     async for o in db.organisations.find({"status": "pending"}).sort("createdAt", -1):
         pending_orgs.append(strip_mongo(o))
 
-    return {"pendingUsers": pending_users, "pendingOrgs": pending_orgs}
+    donnateurs = []
+    async for u in db.users.find({"role": "donnateur"}).sort("createdAt", -1):
+        donnateurs.append(strip_mongo(u))
+
+    return {"pendingUsers": pending_users, "pendingOrgs": pending_orgs, "donnateurs": donnateurs}
 
 
 @api.post("/admin/users/{user_id}/decision")
@@ -805,6 +871,16 @@ async def admin_decide_org(
         {"id": org_id},
         {"$set": {"status": "rejected", "rejectionReason": body.rejectionReason, "updatedAt": now_iso()}},
     )
+    return {"ok": True}
+
+
+@api.delete("/admin/users/{user_id}")
+async def admin_delete_user(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Delete a donnateur account. Archives all their listings."""
+    result = await db.users.delete_one({"id": user_id, "role": "donnateur"})
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Donnateur niet gevonden of geen donnateur-account")
+    await db.listings.update_many({"userId": user_id}, {"$set": {"status": "gearchiveerd", "updatedAt": now_iso()}})
     return {"ok": True}
 
 

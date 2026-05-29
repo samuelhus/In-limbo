@@ -42,6 +42,7 @@ function FilterPanel({ status, setStatus, onClose }) {
 function ListingTile({ item, isValidated }) {
   const navigate = useNavigate();
   const photo = item.photos?.[0];
+  const isDonnateurOffer = !item.limited && item.offererIsDonnateur && item.offererUsername;
   const showOfferer = !item.limited && item.offererFirstName && item.organisation;
 
   const goToListing = () => navigate(`/aanbieding/${item.id}`);
@@ -87,6 +88,12 @@ function ListingTile({ item, isValidated }) {
           {item.title}
         </h3>
         <p className="mt-1 text-xs text-muted-foreground uppercase tracking-wider">{item.material}</p>
+        {isDonnateurOffer && (
+          <p className="mt-1 text-xs text-muted-foreground" data-testid={`listing-tile-donnateur-${item.id}`}>
+            Aangeboden door <span className="font-medium text-foreground/85">{item.offererUsername}</span>{' '}
+            <span className="text-muted-foreground italic">(geen In Limbo partner)</span>
+          </p>
+        )}
         {showOfferer && (
           <p className="mt-1 text-xs text-muted-foreground" data-testid={`listing-tile-offerer-${item.id}`}>
             Aangeboden door {item.offererFirstName} van{' '}

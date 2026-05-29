@@ -11,7 +11,10 @@ export default function Header() {
 
   const isLoggedIn = user && typeof user === 'object';
   const isAdmin = isLoggedIn && user.role === 'admin';
-  const isValidated = isLoggedIn && user.status === 'validated';
+  const isDonnateur = isLoggedIn && user.role === 'donnateur';
+  const isValidated = isLoggedIn && user.status === 'validated' && !isDonnateur;
+  const canCreateListings = isValidated || isDonnateur;
+  const displayName = isDonnateur ? user.username : user.firstName;
 
   const navLink =
     'text-sm tracking-wide text-foreground/80 hover:text-foreground transition-colors industrial-link';
@@ -47,9 +50,9 @@ export default function Header() {
   // Visible nav items based on auth (same logic as desktop)
   const mobileNavItems = [
     { to: '/catalogus', label: 'Catalogus', testId: 'mobile-nav-catalogus', show: true },
-    { to: '/aanbieding/nieuw', label: 'Nieuwe aanbieding', testId: 'mobile-nav-new-listing', show: isValidated },
+    { to: '/aanbieding/nieuw', label: 'Nieuwe aanbieding', testId: 'mobile-nav-new-listing', show: canCreateListings },
     { to: '/aanvragen', label: 'Mijn aanvragen', testId: 'mobile-nav-aanvragen', show: isValidated },
-    { to: '/mijn-aanbiedingen', label: 'Mijn aanbiedingen', testId: 'mobile-nav-mijn-aanbiedingen', show: isValidated },
+    { to: '/mijn-aanbiedingen', label: 'Mijn aanbiedingen', testId: 'mobile-nav-mijn-aanbiedingen', show: canCreateListings },
     { to: '/organisatie', label: 'Mijn organisatie', testId: 'mobile-nav-my-org', show: isValidated },
     { to: '/admin', label: 'Admin', testId: 'mobile-nav-admin', show: isAdmin },
     { to: '/profiel', label: 'Mijn profiel', testId: 'mobile-nav-profiel', show: isLoggedIn },
@@ -80,7 +83,7 @@ export default function Header() {
           >
             Catalogus
           </NavLink>
-          {isValidated && (
+          {canCreateListings && (
             <NavLink
               to="/aanbieding/nieuw"
               data-testid="nav-new-listing"
@@ -98,7 +101,7 @@ export default function Header() {
               Mijn aanvragen
             </NavLink>
           )}
-          {isValidated && (
+          {canCreateListings && (
             <NavLink
               to="/mijn-aanbiedingen"
               data-testid="nav-mijn-aanbiedingen"
@@ -139,6 +142,13 @@ export default function Header() {
                 Inloggen
               </Link>
               <Link
+                to="/donnateur/registreer"
+                data-testid="header-donnateur-btn"
+                className="text-sm text-foreground/80 hover:text-foreground transition"
+              >
+                Doe een gift
+              </Link>
+              <Link
                 to="/registreer"
                 data-testid="header-register-link"
                 className="btn-primary !py-2 !px-4 text-xs"
@@ -154,7 +164,7 @@ export default function Header() {
                 data-testid="header-profile-link"
                 className="text-sm text-foreground/80 hover:text-foreground transition hidden sm:inline"
               >
-                {user.firstName}
+                {displayName}
               </Link>
               <button
                 onClick={async () => {
@@ -193,7 +203,9 @@ export default function Header() {
               {isLoggedIn && (
                 <div className="px-5 py-3 border-b border-border bg-muted/40">
                   <p className="text-xs text-muted-foreground uppercase tracking-widest">Ingelogd als</p>
-                  <p className="text-sm font-medium mt-0.5 truncate">{user.firstName} {user.lastName}</p>
+                  <p className="text-sm font-medium mt-0.5 truncate">
+                    {isDonnateur ? user.username : `${user.firstName || ''} ${user.lastName || ''}`.trim()}
+                  </p>
                 </div>
               )}
 
@@ -212,7 +224,7 @@ export default function Header() {
                 </NavLink>
               ))}
 
-              {/* Anonymous: login + register */}
+              {/* Anonymous: login + register + donnateur */}
               {!isLoggedIn && (
                 <>
                   <Link
@@ -222,6 +234,14 @@ export default function Header() {
                     className={mobileItemClass}
                   >
                     Inloggen
+                  </Link>
+                  <Link
+                    to="/donnateur/registreer"
+                    onClick={() => setMobileOpen(false)}
+                    data-testid="mobile-header-donnateur-btn"
+                    className={mobileItemClass}
+                  >
+                    Doe een gift
                   </Link>
                   <Link
                     to="/registreer"

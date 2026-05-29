@@ -36,6 +36,9 @@ export default function Landing() {
               <Link to="/registreer" className="btn-secondary" data-testid="hero-register-btn">
                 Word lid
               </Link>
+              <Link to="/donnateur/registreer" className="btn-ghost" data-testid="hero-donnateur-btn">
+                Doe een gift
+              </Link>
             </div>
           </div>
 
@@ -86,9 +89,14 @@ export default function Landing() {
           <h2 className="text-4xl sm:text-5xl font-bold tracking-tight max-w-2xl">
             Klaar om materiaal in beweging te zetten?
           </h2>
-          <Link to="/registreer" className="btn-primary" data-testid="cta-register-btn">
-            Registreer je organisatie →
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/registreer" className="btn-primary" data-testid="cta-register-btn">
+              Registreer je organisatie →
+            </Link>
+            <Link to="/donnateur/registreer" className="btn-secondary" data-testid="cta-donnateur-btn">
+              Doe een gift →
+            </Link>
+          </div>
         </div>
       </section>
     </div>

@@ -288,3 +288,43 @@ async def seed(db) -> None:
         "createdAt": _iso_now(),
         "updatedAt": _iso_now(),
     })
+
+    # 6. Donnateur — individu die materiaal doneert
+    donnateur_id = str(uuid.uuid4())
+    await db.users.insert_one({
+        "id": donnateur_id,
+        "email": "donna@inlimbo.be",
+        "passwordHash": hash_password("test1234"),
+        "username": "dana_doneert",
+        "firstName": None,
+        "lastName": None,
+        "phone": None,
+        "role": "donnateur",
+        "status": "validated",
+        "rejectionReason": None,
+        "organisationId": None,
+        "dateLastLogin": None,
+        "createdAt": _iso_now(),
+    })
+
+    # 7. Donnateur-aanbieding — toont "geen In Limbo partner"-label
+    await db.listings.insert_one({
+        "id": str(uuid.uuid4()),
+        "title": "Oude verfresten — 8 potten",
+        "description": "Acht halfvolle potten muurverf (wit, beige, grijs) uit een renovatie. Nog perfect bruikbaar voor schilder- of decorprojecten. Ophalen in Schaarbeek.",
+        "weight": 12.0,
+        "material": "Vloeistof",
+        "photos": [
+            "https://images.unsplash.com/photo-1562259949-e8e7689d7828?crop=entropy&cs=srgb&fm=jpg&w=1200&q=80"
+        ],
+        "deadline": future_date,
+        "isRecurrent": False,
+        "dimensions": None,
+        "transport": "Op te halen in Schaarbeek",
+        "status": "beschikbaar",
+        "selectedApplicantId": None,
+        "userId": donnateur_id,
+        "organisationId": None,
+        "createdAt": _iso_now(),
+        "updatedAt": _iso_now(),
+    })
