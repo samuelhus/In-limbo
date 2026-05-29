@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
 
 const ORG_CATEGORIES = [
-  'Beeldende kunsten', 'Jeugdwerk', 'Podiumkunsten', 'Squad',
+  'Beeldende kunsten', 'Jeugdwerk', 'Podiumkunsten', 'Squat',
   'Sociaal werk', 'Sport', 'Educatie', 'Ander',
 ];
 

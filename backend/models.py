@@ -11,7 +11,7 @@ OrgCategory = Literal[
     "Beeldende kunsten",
     "Jeugdwerk",
     "Podiumkunsten",
-    "Squad",
+    "Squat",
     "Sociaal werk",
     "Sport",
     "Educatie",

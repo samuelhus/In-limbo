@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { uploadToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
 
 const CATS = [
-  'Beeldende kunsten', 'Jeugdwerk', 'Podiumkunsten', 'Squad',
+  'Beeldende kunsten', 'Jeugdwerk', 'Podiumkunsten', 'Squat',
   'Sociaal werk', 'Sport', 'Educatie', 'Ander',
 ];
 
