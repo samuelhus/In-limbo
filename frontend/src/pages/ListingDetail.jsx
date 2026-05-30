@@ -175,6 +175,7 @@ export default function ListingDetail() {
                   listing={item}
                   myApp={myApp}
                   sameOrg={sameOrg}
+                  isAdmin={isAdmin}
                   onOpenApply={() => setApplyOpen(true)}
                   onChanged={load}
                 />
@@ -203,12 +204,13 @@ export default function ListingDetail() {
 // ---------------------------------------------------------------------------
 // Applicant panel — shows for non-owner validated viewers
 // ---------------------------------------------------------------------------
-function ApplicantPanel({ listing, myApp, sameOrg, onOpenApply, onChanged }) {
+function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChanged }) {
   const [busy, setBusy] = useState(false);
 
+  const isOwnerOrAdmin = listing.isOwner || isAdmin;
   if (listing.isRecurrent) return null;
   if (listing.status === 'in_magazijn') return null;
-  if (listing.status === 'gearchiveerd') return null;
+  if (listing.status === 'gearchiveerd' && !isOwnerOrAdmin) return null;
 
   if (sameOrg && !myApp) {
     return (
