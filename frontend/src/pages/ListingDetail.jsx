@@ -373,7 +373,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
                 callAction(`/listings/${listing.id}/mark-rehomed`);
               }}
               disabled={busy}
-              className="btn-primary !py-2 text-xs"
+              className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-xs font-medium tracking-wide transition-all duration-200 hover:bg-green-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
               data-testid="owner-mark-rehomed-btn"
             >
               Markeer als herbestemd
