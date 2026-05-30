@@ -10,8 +10,8 @@ const MATERIALS = [
 ];
 
 const STEPS = [
-  'Foto\'s', 'Titel', 'Beschrijving', 'Gewicht',
-  'Materiaal', 'Deadline', 'Afmetingen', 'Transport', 'Bevestigen',
+  'Foto\'s', 'Titel', 'Beschrijving', 'Deadline',
+  'Gewicht', 'Materiaal', 'Afmetingen', 'Transport', 'Bevestigen',
 ];
 
 export default function ListingWizard({ editMode = false }) {
@@ -92,17 +92,33 @@ export default function ListingWizard({ editMode = false }) {
     setData((d) => ({ ...d, photos: d.photos.filter((_, i) => i !== idx) }));
   };
 
-  const next = () => setStep((s) => Math.min(STEPS.length, s + 1));
-  const back = () => setStep((s) => Math.max(1, s - 1));
+  const next = () => {
+    setStep((s) => {
+      // Admin magazijn shortcut in create mode: jump from step 4 to step 9
+      if (s === 4 && isAdmin && data.placeInWarehouse && !editMode) {
+        return STEPS.length; // 9
+      }
+      return Math.min(STEPS.length, s + 1);
+    });
+  };
+  const back = () => {
+    setStep((s) => {
+      // Mirror the skip when going back from the confirm step
+      if (s === STEPS.length && isAdmin && data.placeInWarehouse && !editMode) {
+        return 4;
+      }
+      return Math.max(1, s - 1);
+    });
+  };
 
   const canNext = () => {
     switch (step) {
       case 1: return data.photos.length >= 1;
       case 2: return data.title.trim().length > 0 && data.title.length <= 35;
       case 3: return data.description.trim().length > 0 && data.description.length <= 400;
-      case 4: return parseFloat(data.weight) > 0;
-      case 5: return MATERIALS.includes(data.material);
-      case 6: return data.isRecurrent || !!data.deadline;
+      case 4: return data.isRecurrent || !!data.deadline || (isAdmin && data.placeInWarehouse);
+      case 5: return parseFloat(data.weight) > 0 || (isAdmin && data.placeInWarehouse);
+      case 6: return MATERIALS.includes(data.material);
       default: return true;
     }
   };
@@ -111,13 +127,16 @@ export default function ListingWizard({ editMode = false }) {
     setSubmitting(true);
     setError('');
     try {
+      const warehouseShortcut = isAdmin && data.placeInWarehouse;
+      const parsedWeight = parseFloat(data.weight);
+      const hasWeight = !isNaN(parsedWeight) && parsedWeight > 0;
       const payload = {
         title: data.title.trim(),
         description: data.description.trim(),
-        weight: parseFloat(data.weight),
-        material: data.material,
+        weight: hasWeight ? parsedWeight : (warehouseShortcut ? 0 : parsedWeight),
+        material: hasWeight ? data.material : (warehouseShortcut ? 'Ander' : data.material),
         photos: data.photos,
-        deadline: data.isRecurrent ? null : data.deadline,
+        deadline: data.isRecurrent ? null : (data.deadline || null),
         isRecurrent: data.isRecurrent,
         dimensions: data.dimensions || null,
         transport: data.transport || null,
@@ -231,61 +250,26 @@ export default function ListingWizard({ editMode = false }) {
         </section>
       )}
 
-      {/* STEP 4: Weight */}
+      {/* STEP 4: Deadline (+ admin magazijn-toggle) */}
       {step === 4 && (
-        <section className="space-y-3" data-testid="wizard-step-weight">
-          <label className="label-overline">Gewicht in kilogram</label>
-          <input
-            type="number"
-            step="0.1"
-            min="0.1"
-            className="input-flat text-lg"
-            data-testid="wizard-weight-input"
-            value={data.weight}
-            onChange={(e) => setData({ ...data, weight: e.target.value })}
-            autoFocus
-          />
-        </section>
-      )}
-
-      {/* STEP 5: Material */}
-      {step === 5 && (
-        <section className="space-y-3" data-testid="wizard-step-material">
-          <label className="label-overline">Hoofdmateriaal</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {MATERIALS.map((m) => (
-              <button
-                key={m}
-                onClick={() => setData({ ...data, material: m })}
-                data-testid={`wizard-material-${m}`}
-                className={`px-4 py-3 border transition-all text-sm ${
-                  data.material === m
-                    ? 'bg-foreground text-background border-foreground'
-                    : 'border-border bg-surface hover:border-foreground'
-                }`}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* STEP 6: Deadline */}
-      {step === 6 && (
         <section className="space-y-4" data-testid="wizard-step-deadline">
           {!isDonnateur && (
             <label className="flex items-center gap-3 cursor-pointer mb-2">
               <input
                 type="checkbox"
                 checked={data.isRecurrent}
-                onChange={(e) => setData({ ...data, isRecurrent: e.target.checked, deadline: e.target.checked ? '' : data.deadline })}
+                onChange={(e) => setData({
+                  ...data,
+                  isRecurrent: e.target.checked,
+                  deadline: e.target.checked ? '' : data.deadline,
+                  placeInWarehouse: e.target.checked ? false : data.placeInWarehouse,
+                })}
                 data-testid="wizard-recurrent-toggle"
               />
               <span className="text-sm">Dit is een terugkerende aanbieding (geen deadline)</span>
             </label>
           )}
-          {!data.isRecurrent && (
+          {!data.isRecurrent && !(isAdmin && data.placeInWarehouse) && (
             <div>
               <label className="label-overline">Deadline</label>
               <input
@@ -318,16 +302,62 @@ export default function ListingWizard({ editMode = false }) {
                 <input
                   type="checkbox"
                   checked={data.placeInWarehouse}
-                  onChange={(e) => setData({ ...data, placeInWarehouse: e.target.checked })}
+                  onChange={(e) => setData({
+                    ...data,
+                    placeInWarehouse: e.target.checked,
+                    deadline: e.target.checked ? '' : data.deadline,
+                    isRecurrent: e.target.checked ? false : data.isRecurrent,
+                  })}
                   data-testid="wizard-place-in-warehouse-toggle"
                 />
                 <span className="text-sm">Plaats direct in magazijn (status: In magazijn)</span>
               </label>
               <p className="text-xs text-muted-foreground mt-2">
                 Aanbieding wordt onmiddellijk gemarkeerd als <em>In magazijn</em> in plaats van <em>Beschikbaar</em>.
+                {!editMode && ' De stappen Gewicht, Materiaal, Afmetingen en Transport worden overgeslagen.'}
               </p>
             </div>
           )}
+        </section>
+      )}
+
+      {/* STEP 5: Weight */}
+      {step === 5 && (
+        <section className="space-y-3" data-testid="wizard-step-weight">
+          <label className="label-overline">Gewicht in kilogram</label>
+          <input
+            type="number"
+            step="0.1"
+            min="0.1"
+            className="input-flat text-lg"
+            data-testid="wizard-weight-input"
+            value={data.weight}
+            onChange={(e) => setData({ ...data, weight: e.target.value })}
+            autoFocus
+          />
+        </section>
+      )}
+
+      {/* STEP 6: Material */}
+      {step === 6 && (
+        <section className="space-y-3" data-testid="wizard-step-material">
+          <label className="label-overline">Hoofdmateriaal</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {MATERIALS.map((m) => (
+              <button
+                key={m}
+                onClick={() => setData({ ...data, material: m })}
+                data-testid={`wizard-material-${m}`}
+                className={`px-4 py-3 border transition-all text-sm ${
+                  data.material === m
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'border-border bg-surface hover:border-foreground'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
         </section>
       )}
 
@@ -368,17 +398,21 @@ export default function ListingWizard({ editMode = false }) {
             <Row label="Foto's" value={`${data.photos.length} foto(s)`} />
             <Row label="Titel" value={data.title} />
             <Row label="Beschrijving" value={data.description} />
-            <Row label="Gewicht" value={`${data.weight} kg`} />
-            <Row label="Materiaal" value={data.material} />
             <Row label="Deadline" value={data.isRecurrent ? 'Recurrent — geen deadline' : data.deadline} />
+            {data.weight && parseFloat(data.weight) > 0 && (
+              <Row label="Gewicht" value={`${data.weight} kg`} />
+            )}
+            {data.material && parseFloat(data.weight) > 0 && (
+              <Row label="Materiaal" value={data.material} />
+            )}
+            {data.dimensions && <Row label="Afmetingen" value={data.dimensions} />}
+            {data.transport && <Row label="Transport" value={data.transport} />}
             {isAdmin && data.placeInWarehouse && (
               <Row
                 label="Magazijn"
                 value={editMode ? 'Blijft in magazijn' : 'Direct in magazijn plaatsen'}
               />
             )}
-            {data.dimensions && <Row label="Afmetingen" value={data.dimensions} />}
-            {data.transport && <Row label="Transport" value={data.transport} />}
           </dl>
           {error && <p className="text-sm text-destructive" data-testid="wizard-submit-error">{error}</p>}
         </section>
