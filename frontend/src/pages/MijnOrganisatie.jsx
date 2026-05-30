@@ -73,7 +73,7 @@ export default function MijnOrganisatie() {
     <div className="max-w-3xl mx-auto px-4 py-16" data-testid="mijn-organisatie-page">
       <p className="overline mb-3">Organisatie</p>
       <h1 className="text-4xl font-bold tracking-tight mb-2">{org.name}</h1>
-      <Link to={`/organisaties/${orgId}`} className="industrial-link text-sm text-muted-foreground" data-testid="mijn-org-public-link">
+      <Link to={`/organisaties/${orgId}`} className="btn-primary inline-block" data-testid="mijn-org-public-link">
         Bekijk publieke pagina →
       </Link>
 

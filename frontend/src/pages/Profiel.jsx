@@ -103,16 +103,17 @@ export default function Profiel() {
           <p className="text-sm text-muted-foreground mb-3">
             Beheer de gegevens van je organisatie.
           </p>
-          <Link to="/organisatie" className="industrial-link text-foreground text-sm" data-testid="profiel-organisatie-link">
+          <Link to="/organisatie" className="btn-primary inline-block" data-testid="profiel-organisatie-link">
             Mijn organisatie →
           </Link>
         </div>
       )}
 
+      {/*
       <div className="mt-16 border-t border-border pt-6 text-sm">
         <p className="overline mb-2">Account</p>
         <p className="text-muted-foreground">Rol: {user.role} · Status: {user.status}</p>
-      </div>
+      </div>*/}
     </div>
   );
 }

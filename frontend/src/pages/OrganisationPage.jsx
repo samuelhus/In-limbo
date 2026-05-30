@@ -22,8 +22,9 @@ export default function OrganisationPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-12" data-testid="organisation-page">
-      <p className="overline mb-3">Organisatie · {org.category}</p>
+      
       <h1 className="text-5xl font-bold tracking-tight">{org.name}</h1>
+      <p className="text-3xl font-bold tracking-tight">-{org.category}-</p>
 
       {org.photos?.[0] && (
         <div className="mt-10 aspect-[21/9] overflow-hidden bg-muted">
