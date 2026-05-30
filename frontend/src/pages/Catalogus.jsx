@@ -155,8 +155,8 @@ export default function Catalogus() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
         <div>
-          <p className="overline">Catalogus · {total} aanbiedingen</p>
-          <h1 className="mt-2 text-5xl font-bold tracking-tight">Materiaal in transit</h1>
+          <h1 className="mt-2 text-5xl font-bold tracking-tight">Catalogus</h1>
+          <p className="overline"> {total} aanbiedingen</p>
         </div>
         <button
           className="md:hidden btn-secondary !py-2"
