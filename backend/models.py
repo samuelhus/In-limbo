@@ -80,7 +80,7 @@ class OrgPublic(OrgBase):
 class ListingBase(BaseModel):
     title: str = Field(..., max_length=35)
     description: str = Field(..., max_length=400)
-    weight: float = Field(..., gt=0)
+    weight: Optional[float] = Field(None, ge=0)
     material: ListingMaterial
     photos: List[str] = Field(default_factory=list, max_length=5)
     deadline: Optional[str] = None  # ISO date string
@@ -187,7 +187,7 @@ class ListingUpdate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     title: Optional[str] = Field(None, max_length=35)
     description: Optional[str] = Field(None, max_length=400)
-    weight: Optional[float] = Field(None, gt=0)
+    weight: Optional[float] = Field(None, ge=0)
     material: Optional[ListingMaterial] = None
     photos: Optional[List[str]] = None
     dimensions: Optional[str] = None
