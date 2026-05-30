@@ -93,16 +93,16 @@ export default function MijnAanbiedingen() {
                       <p className="font-medium truncate">{it.title}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Geplaatst op {formatDate(it.createdAt)}
-                        {showCount && (
-                          <span data-testid={`mijn-aanbiedingen-count-${it.id}`}>
-                            {' · '}
-                            <span className="text-foreground/80 font-medium">
-                              {it.openApplicationCount} {it.openApplicationCount === 1 ? 'aanvraag' : 'aanvragen'}
-                            </span>
-                          </span>
-                        )}
                       </p>
                     </div>
+                    {showCount && it.openApplicationCount > 0 && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 border border-orange-300 px-2.5 py-0.5 text-xs font-medium whitespace-nowrap"
+                        data-testid={`mijn-aanbiedingen-badge-${it.id}`}
+                      >
+                        ● {it.openApplicationCount} {it.openApplicationCount === 1 ? 'aanvraag' : 'aanvragen'}
+                      </span>
+                    )}
                     {['beschikbaar', 'gearchiveerd'].includes(it.status) && (
                       <Link
                         to={`/aanbieding/${it.id}/bewerken`}
