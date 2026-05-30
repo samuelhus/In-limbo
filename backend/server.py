@@ -21,7 +21,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from models import (
     RegisterNewOrg, RegisterExistingOrg, RegisterDonnateur, LoginRequest, AdminDecision,
-    ListingBase, ListingCreateBody, OrgUpdate, UserUpdate,
+    ListingBase, ListingCreateBody, ListingUpdate, OrgUpdate, UserUpdate,
     ApplicationCreate, SelectApplicantBody,
 )
 from auth import (
@@ -530,6 +530,70 @@ async def create_listing(body: ListingCreateBody, user: dict = Depends(get_donna
     })
     await db.listings.insert_one(doc)
     return strip_mongo(doc)
+
+
+@api.patch("/listings/{listing_id}")
+async def update_listing(
+    listing_id: str,
+    body: ListingUpdate,
+    user: dict = Depends(get_donnateur_or_validated_user),
+):
+    listing = await db.listings.find_one({"id": listing_id})
+    if not listing:
+        raise HTTPException(404, "Aanbieding niet gevonden")
+
+    # Enkel eigenaar of admin
+    if listing["userId"] != user["id"] and user.get("role") != "admin":
+        raise HTTPException(403, "Geen toegang")
+
+    # Statuscheck: admin mag ook in_magazijn bewerken
+    editable_statuses = {"beschikbaar", "gearchiveerd"}
+    if user.get("role") == "admin":
+        editable_statuses.add("in_magazijn")
+    if listing["status"] not in editable_statuses:
+        raise HTTPException(400, "Deze aanbieding kan niet bewerkt worden")
+
+    now = now_iso()
+    update: dict = {"updatedAt": now}
+
+    if body.title is not None:
+        update["title"] = body.title.strip()
+    if body.description is not None:
+        update["description"] = body.description.strip()
+    if body.weight is not None:
+        update["weight"] = body.weight
+    if body.material is not None:
+        update["material"] = body.material
+    if body.photos is not None:
+        update["photos"] = body.photos
+    if body.dimensions is not None:
+        update["dimensions"] = body.dimensions
+    if body.transport is not None:
+        update["transport"] = body.transport
+    if body.isRecurrent is not None:
+        update["isRecurrent"] = body.isRecurrent
+        if body.isRecurrent:
+            update["deadline"] = None
+    if body.deadline is not None:
+        update["deadline"] = body.deadline
+    if body.placeInWarehouse is not None and user.get("role") == "admin":
+        update["placeInWarehouse"] = body.placeInWarehouse
+
+    # Donnateur kan isRecurrent niet op True zetten
+    if user.get("role") == "donnateur" and update.get("isRecurrent"):
+        update["isRecurrent"] = False
+        update["deadline"] = update.get("deadline") or listing.get("deadline")
+
+    # Auto-heractiveer gearchiveerde aanbieding
+    if listing["status"] == "gearchiveerd":
+        deadline = update.get("deadline") if "deadline" in update else listing.get("deadline")
+        is_recurrent = update.get("isRecurrent", listing.get("isRecurrent", False))
+        if is_recurrent or (deadline and deadline >= now[:10]):
+            update["status"] = "beschikbaar"
+
+    await db.listings.update_one({"id": listing_id}, {"$set": update})
+    updated = await db.listings.find_one({"id": listing_id})
+    return strip_mongo(updated)
 
 
 @api.get("/organisations/{org_id}/listings")

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api, formatApiError } from '@/lib/api';
 import { uploadToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,20 +14,52 @@ const STEPS = [
   'Materiaal', 'Deadline', 'Afmetingen', 'Transport', 'Bevestigen',
 ];
 
-export default function ListingWizard() {
+export default function ListingWizard({ editMode = false }) {
   const navigate = useNavigate();
+  const { id: listingId } = useParams();
   const { user } = useAuth();
   const isAdmin = user && user.role === 'admin';
   const isDonnateur = user && user.role === 'donnateur';
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [loadingListing, setLoadingListing] = useState(editMode);
 
   const [data, setData] = useState({
     photos: [], title: '', description: '', weight: '',
     material: 'Hout', deadline: '', isRecurrent: false,
     dimensions: '', transport: '', placeInWarehouse: false,
   });
+
+  useEffect(() => {
+    if (!editMode || !listingId) return;
+    api.get(`/listings/${listingId}`)
+      .then(({ data: listing }) => {
+        // Permission + status guard
+        const isOwner = listing.isOwner;
+        const editable = ['beschikbaar', 'gearchiveerd'].includes(listing.status)
+          || (isAdmin && listing.status === 'in_magazijn');
+        if (!editable || (!isOwner && !isAdmin)) {
+          navigate(`/aanbieding/${listingId}`);
+          return;
+        }
+        setData({
+          photos: listing.photos || [],
+          title: listing.title || '',
+          description: listing.description || '',
+          weight: listing.weight?.toString() || '',
+          material: listing.material || 'Hout',
+          deadline: listing.deadline || '',
+          isRecurrent: listing.isRecurrent || false,
+          dimensions: listing.dimensions || '',
+          transport: listing.transport || '',
+          placeInWarehouse: listing.placeInWarehouse || (listing.status === 'in_magazijn'),
+        });
+        setLoadingListing(false);
+      })
+      .catch(() => navigate(`/aanbieding/${listingId}`));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editMode, listingId]);
 
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState('');
@@ -89,10 +121,16 @@ export default function ListingWizard() {
         isRecurrent: data.isRecurrent,
         dimensions: data.dimensions || null,
         transport: data.transport || null,
-        placeInWarehouse: isAdmin ? data.placeInWarehouse : false,
       };
-      const { data: created } = await api.post('/listings', payload);
-      navigate(`/aanbieding/${created.id}`);
+      if (editMode) {
+        if (isAdmin) payload.placeInWarehouse = data.placeInWarehouse;
+        await api.patch(`/listings/${listingId}`, payload);
+        navigate(`/aanbieding/${listingId}`);
+      } else {
+        payload.placeInWarehouse = isAdmin ? data.placeInWarehouse : false;
+        const { data: created } = await api.post('/listings', payload);
+        navigate(`/aanbieding/${created.id}`);
+      }
     } catch (e) {
       setError(formatApiError(e));
     } finally {
@@ -100,9 +138,17 @@ export default function ListingWizard() {
     }
   };
 
+  if (loadingListing) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-24 text-muted-foreground" data-testid="wizard-loading">
+        Aanbieding laden…
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-16" data-testid="wizard-page">
-      <p className="overline mb-3">Nieuwe aanbieding</p>
+      <p className="overline mb-3">{editMode ? 'Aanbieding bewerken' : 'Nieuwe aanbieding'}</p>
       <h1 className="text-4xl font-bold tracking-tight mb-2">{STEPS[step - 1]}</h1>
 
       {/* Progress */}
@@ -325,7 +371,12 @@ export default function ListingWizard() {
             <Row label="Gewicht" value={`${data.weight} kg`} />
             <Row label="Materiaal" value={data.material} />
             <Row label="Deadline" value={data.isRecurrent ? 'Recurrent — geen deadline' : data.deadline} />
-            {isAdmin && data.placeInWarehouse && <Row label="Magazijn" value="Direct in magazijn plaatsen" />}
+            {isAdmin && data.placeInWarehouse && (
+              <Row
+                label="Magazijn"
+                value={editMode ? 'Blijft in magazijn' : 'Direct in magazijn plaatsen'}
+              />
+            )}
             {data.dimensions && <Row label="Afmetingen" value={data.dimensions} />}
             {data.transport && <Row label="Transport" value={data.transport} />}
           </dl>
@@ -360,7 +411,9 @@ export default function ListingWizard() {
             className="btn-primary"
             data-testid="wizard-submit-btn"
           >
-            {submitting ? 'Aanmaken…' : 'Aanbieding plaatsen ✓'}
+            {submitting
+              ? (editMode ? 'Opslaan…' : 'Aanmaken…')
+              : (editMode ? 'Wijzigingen opslaan ✓' : 'Aanbieding plaatsen ✓')}
           </button>
         )}
       </div>

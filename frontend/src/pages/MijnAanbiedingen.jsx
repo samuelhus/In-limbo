@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { cloudinaryThumb } from '@/lib/cloudinary';
 import StatusBadge from '@/components/StatusBadge';
@@ -25,6 +25,7 @@ const formatDate = (iso) => {
 
 export default function MijnAanbiedingen() {
   const [items, setItems] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.get('/listings/mine').then(({ data }) => setItems(data)).catch(() => setItems([]));
@@ -76,9 +77,12 @@ export default function MijnAanbiedingen() {
               const showCount = COUNT_VISIBLE_STATUSES.has(it.status);
               return (
                 <li key={it.id} data-testid={`mijn-aanbiedingen-item-${it.id}`}>
-                  <Link
-                    to={`/aanbieding/${it.id}`}
-                    className="block border-l-4 border-border bg-surface px-4 py-3 flex items-center gap-4 hover:bg-muted/60 transition-colors"
+                  <div
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => navigate(`/aanbieding/${it.id}`)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/aanbieding/${it.id}`)}
+                    className="cursor-pointer border-l-4 border-border bg-surface px-4 py-3 flex items-center gap-4 hover:bg-muted/60 transition-colors"
                   >
                     <div className="w-16 h-16 bg-muted overflow-hidden flex-shrink-0">
                       {photo && (
@@ -99,8 +103,18 @@ export default function MijnAanbiedingen() {
                         )}
                       </p>
                     </div>
+                    {['beschikbaar', 'gearchiveerd'].includes(it.status) && (
+                      <Link
+                        to={`/aanbieding/${it.id}/bewerken`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="btn-secondary !py-1 px-3 text-xs"
+                        data-testid={`edit-listing-btn-${it.id}`}
+                      >
+                        Bewerken
+                      </Link>
+                    )}
                     <StatusBadge status={it.status} size="xs" />
-                  </Link>
+                  </div>
                 </li>
               );
             })}

@@ -65,6 +65,14 @@ export default function App() {
               />
 
               <Route path="/catalogus" element={<Catalogus />} />
+              <Route
+                path="/aanbieding/:id/bewerken"
+                element={
+                  <ProtectedRoute allowDonnateur>
+                    <ListingWizard editMode />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/aanbieding/:id" element={<ListingDetail />} />
               <Route path="/organisaties/:id" element={<OrganisationPage />} />
 

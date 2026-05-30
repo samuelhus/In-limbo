@@ -33,6 +33,10 @@ naar wie het kan gebruiken.
 
 ## What's been implemented
 
+### 2026-01-XX — Aanbiedingen bewerken ✅
+- **Backend**: nieuw `ListingUpdate` model + `PATCH /api/listings/{id}` endpoint. Eigenaar/admin kan `beschikbaar` + `gearchiveerd` bewerken; admin extra `in_magazijn`. `herbestemd` blokkeert bewerking (400). Gearchiveerde aanbieding heractiveert automatisch naar `beschikbaar` als nieuwe deadline in toekomst ligt of `isRecurrent=true`. Donnateur kan `isRecurrent=true` niet zetten (server forceert false). Openstaande aanvragen worden niet aangetast.
+- **Frontend**: nieuwe route `/aanbieding/:id/bewerken` → `ListingWizard editMode`, prefetcht bestaande data, redirect bij niet-bewerkbare status of geen toegang, submit via PATCH met "Wijzigingen opslaan ✓"-knop. `MijnAanbiedingen` toont een Bewerken-knop op `beschikbaar`+`gearchiveerd` listings; `ListingDetail` OwnerPanel toont Bewerken-knop op alle bewerkbare statussen.
+
 ### 2026-01-XX — Status-flow vereenvoudigd: `in_afwachting` verwijderd ✅
 - **Listing-statussen**: `beschikbaar → herbestemd` (direct bij selectie). Geen `in_afwachting` meer.
 - **Backend**: `select-applicant` zet listing direct op `herbestemd`, andere open aanvragen → `not_selected`. `unselect` is een alias van `unrehome`. `mark-rehomed` blijft beschikbaar voor herbestemming zonder selectie. `withdraw` toegestaan voor `selected` aanvrager → reset listing naar `beschikbaar` + reopen `not_selected` aanvragen. Contactgegevens enkel gedeeld bij `status==herbestemd && selected applicant`. Migratie uitgevoerd: bestaande `in_afwachting`-listings → `beschikbaar`.

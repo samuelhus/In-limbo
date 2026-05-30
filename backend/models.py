@@ -181,3 +181,17 @@ class OrgUpdate(BaseModel):
     address: Optional[str] = None
     website: Optional[str] = None
     photos: Optional[List[str]] = None
+
+
+class ListingUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    title: Optional[str] = Field(None, max_length=35)
+    description: Optional[str] = Field(None, max_length=400)
+    weight: Optional[float] = Field(None, gt=0)
+    material: Optional[ListingMaterial] = None
+    photos: Optional[List[str]] = None
+    dimensions: Optional[str] = None
+    transport: Optional[str] = None
+    deadline: Optional[str] = None
+    isRecurrent: Optional[bool] = None
+    placeInWarehouse: Optional[bool] = None

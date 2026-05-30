@@ -182,7 +182,7 @@ export default function ListingDetail() {
 
               {/* Owner/admin management */}
               {canManage && (
-                <OwnerPanel listing={item} onChanged={load} />
+                <OwnerPanel listing={item} isAdmin={isAdmin} onChanged={load} />
               )}
             </>
           )}
@@ -207,7 +207,8 @@ function ApplicantPanel({ listing, myApp, sameOrg, onOpenApply, onChanged }) {
   const [busy, setBusy] = useState(false);
 
   if (listing.isRecurrent) return null;
-  if (listing.status === 'gearchiveerd' || listing.status === 'in_magazijn') return null;
+  if (listing.status === 'in_magazijn') return null;
+  if (listing.status === 'gearchiveerd') return null;
 
   if (sameOrg && !myApp) {
     return (
@@ -296,12 +297,16 @@ function ApplicantPanel({ listing, myApp, sameOrg, onOpenApply, onChanged }) {
 // ---------------------------------------------------------------------------
 // Owner / admin panel
 // ---------------------------------------------------------------------------
-function OwnerPanel({ listing, onChanged }) {
+function OwnerPanel({ listing, isAdmin, onChanged }) {
   const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  const isEditable =
+    ['beschikbaar', 'gearchiveerd'].includes(listing.status) ||
+    (isAdmin && listing.status === 'in_magazijn');
 
   const loadApps = useCallback(async () => {
     try {
@@ -383,6 +388,15 @@ function OwnerPanel({ listing, onChanged }) {
               data-testid="owner-unrehome-btn"
             >
               Herbestemming ongedaan maken
+            </button>
+          )}
+          {isEditable && (
+            <button
+              onClick={() => navigate(`/aanbieding/${listing.id}/bewerken`)}
+              className="btn-secondary !py-2 text-xs"
+              data-testid="owner-edit-btn"
+            >
+              Bewerken
             </button>
           )}
           {canDelete && (
