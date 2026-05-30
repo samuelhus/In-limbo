@@ -52,10 +52,7 @@ export default function OrganisationPage() {
               </a>
             </div>
           )}
-          <div>
-            <p className="overline mb-1">Status</p>
-            <span className="text-foreground/85 capitalize">{org.status}</span>
-          </div>
+          
         </aside>
       </div>
 

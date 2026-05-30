@@ -370,7 +370,7 @@ async def _enrich_listings(items: list[dict]) -> list[dict]:
 @api.get("/listings")
 async def list_listings(
     request: Request,
-    status: str | None = Query(None),
+    filter_key: str | None = Query(None, alias="filter"),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=50),
 ):
@@ -380,8 +380,13 @@ async def list_listings(
 
     viewer = await get_current_user_optional(request)
     filt: dict = {"status": {"$ne": "gearchiveerd"}}
-    if status and status in ("beschikbaar", "herbestemd", "in_magazijn"):
-        filt["status"] = status
+    if filter_key == "beschikbaar":
+        filt["status"] = {"$in": ["beschikbaar", "in_magazijn"]}
+    elif filter_key == "in_magazijn":
+        filt["status"] = "in_magazijn"
+    elif filter_key == "herbestemd":
+        filt["status"] = "herbestemd"
+    # Geen filter of onbekende waarde: toon alles behalve gearchiveerd (al in filt)
 
     total = await db.listings.count_documents(filt)
     cursor = db.listings.find(filt).sort("createdAt", -1).skip(skip).limit(limit)

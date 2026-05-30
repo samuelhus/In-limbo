@@ -6,10 +6,9 @@ import { cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 
 const STATUS_OPTIONS = [
-  { v: '', l: 'Alle' },
   { v: 'beschikbaar', l: 'Beschikbaar' },
-  { v: 'herbestemd', l: 'Herbestemd' },
   { v: 'in_magazijn', l: 'In magazijn' },
+  { v: 'herbestemd', l: 'Herbestemd' },
 ];
 
 function FilterPanel({ status, setStatus, onClose }) {
@@ -26,7 +25,7 @@ function FilterPanel({ status, setStatus, onClose }) {
                   name="status-filter"
                   checked={status === opt.v}
                   onChange={() => { setStatus(opt.v); onClose?.(); }}
-                  data-testid={`filter-status-${opt.v || 'all'}`}
+                  data-testid={`filter-status-${opt.v}`}
                 />
                 <span className="text-sm">{opt.l}</span>
               </label>
@@ -121,7 +120,7 @@ export default function Catalogus() {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [skip, setSkip] = useState(0);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('beschikbaar');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -133,7 +132,7 @@ export default function Catalogus() {
     const startSkip = reset ? 0 : skip;
     try {
       const { data } = await api.get('/listings', {
-        params: { status: status || undefined, skip: startSkip, limit },
+        params: { filter: status || undefined, skip: startSkip, limit },
       });
       setTotal(data.total);
       setItems((prev) => reset ? data.items : [...prev, ...data.items]);
