@@ -1,11 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Logo from '@/components/Logo';
 
 const HERO_BG =
   'https://static.prod-images.emergentagent.com/jobs/40e00778-584d-41f8-b6ee-4e48e961daf5/images/b211452b858296af0d927f008d058751bc1853be53d87eb88b8cc901809dbac6.png';
 
+function getMagazijnStatus() {
+  const now = new Date();
+  const day = now.getDay();
+  const totalMin = now.getHours() * 60 + now.getMinutes();
+  const isOpen = day === 3 && totalMin >= 600 && totalMin < 1020;
+  if (isOpen) {
+    const closeMin = 1020 - totalMin;
+    return { open: true, closeIn: `${Math.floor(closeMin / 60)}u ${closeMin % 60}m` };
+  }
+  let daysUntil = (3 - day + 7) % 7;
+  if (daysUntil === 0 && totalMin >= 1020) daysUntil = 7;
+  const next = new Date(now);
+  next.setDate(now.getDate() + daysUntil);
+  next.setHours(10, 0, 0, 0);
+  const totalSec = Math.floor((next - now) / 1000);
+  return {
+    open: false,
+    days: Math.floor(totalSec / 86400),
+    hours: Math.floor((totalSec % 86400) / 3600),
+    mins: Math.floor((totalSec % 3600) / 60),
+  };
+}
+
 export default function Landing() {
+  const [status, setStatus] = useState(getMagazijnStatus());
+
+  useEffect(() => {
+    const interval = setInterval(() => setStatus(getMagazijnStatus()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-[calc(100vh-4rem)]" data-testid="landing-page">
       {/* HERO */}
@@ -20,7 +49,6 @@ export default function Landing() {
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-16 sm:pt-24 pb-24 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
           <div className="md:col-span-7 animate-fade-in">
-            {/* <p className="overline mb-6">Materiaal in transit / Bruxelles · Brussel</p>*/}
             <h1 className="text-5xl sm:text-6xl lg:text-7xl tracking-tightest font-bold leading-[0.95]">
               Hergebruik in de brusselse socio-culturele sector.
             </h1>
@@ -42,8 +70,36 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="md:col-span-5 hidden md:flex justify-end">
-            <Logo size="xl" className="max-w-sm" />
+          {/* MAGAZIJN WIDGET in hero */}
+          <div className="md:col-span-5 hidden md:flex justify-end items-end">
+            <div className="text-right">
+              <p className="overline mb-4">Magazijn</p>
+              {status.open ? (
+                <>
+                  <p className="text-2xl font-semibold flex items-center justify-end gap-2">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+                    We zijn open
+                  </p>
+                  <p className="text-foreground/60 mt-1 text-sm">Vandaag open tot 17:00</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-foreground/60 text-sm mb-3">Volgende opening: woensdag 10:00 – 17:00</p>
+                  <div className="flex gap-3 justify-end">
+                    {[
+                      { val: status.days, label: 'dagen' },
+                      { val: status.hours, label: 'uren' },
+                      { val: status.mins, label: 'min' },
+                    ].map(({ val, label }) => (
+                      <div key={label} className="border border-border rounded-lg px-4 py-2 text-center min-w-[56px] bg-background/60 backdrop-blur-sm">
+                        <span className="block text-2xl font-semibold">{val}</span>
+                        <span className="block text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>

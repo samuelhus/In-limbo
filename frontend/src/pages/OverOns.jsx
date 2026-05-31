@@ -111,9 +111,9 @@ export default function OverOns() {
             </p>
           </div>
           <div>
-            <p className="text-6xl font-bold tracking-tight">Woe</p>
+            <p className="text-6xl font-bold tracking-tight">kom langs</p>
             <p className="mt-2 text-sm text-muted-foreground uppercase tracking-widest">
-              Elke woensdag open 10–17u
+              Elke woensdag 10–17u
             </p>
           </div>
         </div>
@@ -224,6 +224,9 @@ export default function OverOns() {
               ⚠️ Het materiaal moet in goede staat zijn en geschikt voor hergebruik.
               We aanvaarden geen voedsel of kledij.
             </div>
+            <Link to="/donnateur/registreer" className="btn-primary justify-center mt-8" data-testid="over-ons-cta-donnateur">
+  Doe een gift
+</Link>
           </div>
         </div>
       </section>
@@ -291,7 +294,7 @@ export default function OverOns() {
           if (!catOrgs?.length) return null;
           return (
             <div key={cat} className="mb-10" data-testid={`partner-category-${cat}`}>
-              <p className="overline mb-3">{cat} · {catOrgs.length}</p>
+              <p className="overline mb-3">{cat}</p>
               <div className="flex flex-wrap gap-2">
                 {catOrgs.map((org) => (
                   <Link

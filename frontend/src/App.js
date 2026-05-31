@@ -7,6 +7,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ScrollToTop from '@/components/ScrollToTop';
 
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
@@ -38,6 +39,7 @@ function NotFound() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <div className="min-h-screen flex flex-col">
           <Header />
