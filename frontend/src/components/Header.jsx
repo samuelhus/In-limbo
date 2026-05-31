@@ -49,11 +49,11 @@ export default function Header() {
 
   // Visible nav items based on auth (same logic as desktop)
   const mobileNavItems = [
-    { to: '/over-ons', label: 'Over ons', testId: 'mobile-nav-over-ons', show: true },
     { to: '/catalogus', label: 'Catalogus', testId: 'mobile-nav-catalogus', show: true },
     { to: '/aanbieding/nieuw', label: 'Nieuwe aanbieding', testId: 'mobile-nav-new-listing', show: canCreateListings },
     { to: '/aanvragen', label: 'Mijn aanvragen', testId: 'mobile-nav-aanvragen', show: isValidated },
     { to: '/mijn-aanbiedingen', label: 'Mijn aanbiedingen', testId: 'mobile-nav-mijn-aanbiedingen', show: canCreateListings },
+    { to: '/over-ons', label: 'Over ons', testId: 'mobile-nav-over-ons', show: true },
     { to: '/admin', label: 'Admin', testId: 'mobile-nav-admin', show: isAdmin },
     { to: '/profiel', label: 'Mijn profiel', testId: 'mobile-nav-profiel', show: isLoggedIn },
   ].filter((i) => i.show);
@@ -76,13 +76,6 @@ export default function Header() {
 
         {/* -------------------------- DESKTOP NAV -------------------------- */}
         <nav className="hidden md:flex items-center gap-8">
-          <NavLink
-            to="/over-ons"
-            data-testid="nav-over-ons"
-            className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
-          >
-            Over ons
-          </NavLink>
           <NavLink
             to="/catalogus"
             data-testid="nav-catalogus"
@@ -117,6 +110,13 @@ export default function Header() {
               Mijn aanbiedingen
             </NavLink>
           )}
+          <NavLink
+            to="/over-ons"
+            data-testid="nav-over-ons"
+            className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
+          >
+            Over ons
+          </NavLink>
           {isAdmin && (
             <NavLink
               to="/admin"

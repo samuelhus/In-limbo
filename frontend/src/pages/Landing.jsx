@@ -27,7 +27,7 @@ function getMagazijnStatus() {
   };
 }
 
-export default function Landing() {
+function MagazijnWidget({ align = 'right' }) {
   const [status, setStatus] = useState(getMagazijnStatus());
 
   useEffect(() => {
@@ -35,6 +35,41 @@ export default function Landing() {
     return () => clearInterval(interval);
   }, []);
 
+  const textAlign = align === 'right' ? 'text-right' : 'text-left';
+  const justify = align === 'right' ? 'justify-end' : 'justify-start';
+
+  return (
+    <div className={textAlign}>
+      {status.open ? (
+        <>
+          <p className={`text-2xl font-semibold flex items-center gap-2 ${justify}`}>
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+            We zijn open
+          </p>
+          <p className="text-foreground/60 mt-1 text-sm">Vandaag open tot 17:00</p>
+        </>
+      ) : (
+        <>
+          <p className="text-foreground/60 text-sm mb-3">Volgende opening: woensdag 10:00 – 17:00</p>
+          <div className={`flex gap-3 ${justify}`}>
+            {[
+              { val: status.days, label: 'dagen' },
+              { val: status.hours, label: 'uren' },
+              { val: status.mins, label: 'min' },
+            ].map(({ val, label }) => (
+              <div key={label} className="border border-border rounded-lg px-4 py-2 text-center min-w-[56px] bg-background/60 backdrop-blur-sm">
+                <span className="block text-2xl font-semibold">{val}</span>
+                <span className="block text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function Landing() {
   return (
     <div className="min-h-[calc(100vh-4rem)]" data-testid="landing-page">
       {/* HERO */}
@@ -64,42 +99,20 @@ export default function Landing() {
               <Link to="/registreer" className="btn-secondary" data-testid="hero-register-btn">
                 Word lid
               </Link>
-              <Link to="/donnateur/registreer" className="btn-ghost" data-testid="hero-donnateur-btn">
+              <Link to="/donnateur/registreer" className="btn-secondary" data-testid="hero-donnateur-btn">
                 Doe een gift
               </Link>
             </div>
+
+            {/* MOBILE: widget onder knoppen */}
+            <div className="mt-10 md:hidden">
+              <MagazijnWidget align="left" />
+            </div>
           </div>
 
-          {/* MAGAZIJN WIDGET in hero */}
+          {/* DESKTOP: widget rechts in hero */}
           <div className="md:col-span-5 hidden md:flex justify-end items-end">
-            <div className="text-right">
-              <p className="overline mb-4">Magazijn</p>
-              {status.open ? (
-                <>
-                  <p className="text-2xl font-semibold flex items-center justify-end gap-2">
-                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                    We zijn open
-                  </p>
-                  <p className="text-foreground/60 mt-1 text-sm">Vandaag open tot 17:00</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-foreground/60 text-sm mb-3">Volgende opening: woensdag 10:00 – 17:00</p>
-                  <div className="flex gap-3 justify-end">
-                    {[
-                      { val: status.days, label: 'dagen' },
-                      { val: status.hours, label: 'uren' },
-                      { val: status.mins, label: 'min' },
-                    ].map(({ val, label }) => (
-                      <div key={label} className="border border-border rounded-lg px-4 py-2 text-center min-w-[56px] bg-background/60 backdrop-blur-sm">
-                        <span className="block text-2xl font-semibold">{val}</span>
-                        <span className="block text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+            <MagazijnWidget align="right" />
           </div>
         </div>
       </section>
