@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from './Logo';
 
@@ -15,19 +15,21 @@ export default function Header() {
   const isValidated = isLoggedIn && user.status === 'validated' && !isDonnateur;
   const canCreateListings = isValidated || isDonnateur;
   const displayName = isLoggedIn ? (isDonnateur ? user.username : user.firstName) : '';
+  const showAanbiedingen = canCreateListings || isValidated;
 
   const navLink =
     'text-sm tracking-wide text-foreground/80 hover:text-foreground transition-colors industrial-link';
   const activeLink = 'text-foreground';
 
-  // -----------------------------------------------------------
-  // Mobile menu state — separate from desktop nav, no overlap
-  // -----------------------------------------------------------
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [aanbiedingenOpen, setAanbiedingenOpen] = useState(false);
+  const [mobileAanbiedingenOpen, setMobileAanbiedingenOpen] = useState(false);
+
   const mobileMenuRef = useRef(null);
   const hamburgerRef = useRef(null);
+  const aanbiedingenRef = useRef(null);
 
-  // Close dropdown on outside click
+  // Sluit mobiel menu bij klik buiten
   useEffect(() => {
     if (!mobileOpen) return;
     const onMouseDown = (e) => {
@@ -42,24 +44,29 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', onMouseDown);
   }, [mobileOpen]);
 
-  // Close dropdown on route change
+  // Sluit desktop dropdown bij klik buiten
+  useEffect(() => {
+    if (!aanbiedingenOpen) return;
+    const onMouseDown = (e) => {
+      if (aanbiedingenRef.current && !aanbiedingenRef.current.contains(e.target)) {
+        setAanbiedingenOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, [aanbiedingenOpen]);
+
+  // Sluit alles bij navigatie
   useEffect(() => {
     setMobileOpen(false);
+    setAanbiedingenOpen(false);
+    setMobileAanbiedingenOpen(false);
   }, [location.pathname]);
-
-  // Visible nav items based on auth (same logic as desktop)
-  const mobileNavItems = [
-    { to: '/catalogus', label: 'Catalogus', testId: 'mobile-nav-catalogus', show: true },
-    { to: '/aanbieding/nieuw', label: 'Nieuwe aanbieding', testId: 'mobile-nav-new-listing', show: canCreateListings },
-    { to: '/aanvragen', label: 'Mijn aanvragen', testId: 'mobile-nav-aanvragen', show: isValidated },
-    { to: '/mijn-aanbiedingen', label: 'Mijn aanbiedingen', testId: 'mobile-nav-mijn-aanbiedingen', show: canCreateListings },
-    { to: '/over-ons', label: 'Over ons', testId: 'mobile-nav-over-ons', show: true },
-    { to: '/admin', label: 'Admin', testId: 'mobile-nav-admin', show: isAdmin },
-    { to: '/profiel', label: 'Mijn profiel', testId: 'mobile-nav-profiel', show: isLoggedIn },
-  ].filter((i) => i.show);
 
   const mobileItemClass =
     'block px-5 py-3 text-sm tracking-wide text-foreground/80 hover:text-foreground hover:bg-muted transition-colors border-b border-border last:border-b-0';
+  const mobileSubItemClass =
+    'block px-8 py-2.5 text-sm text-foreground/70 hover:text-foreground hover:bg-muted transition-colors border-b border-border';
 
   const handleMobileLogout = async () => {
     setMobileOpen(false);
@@ -74,7 +81,7 @@ export default function Header() {
           <Logo size="md" />
         </Link>
 
-        {/* -------------------------- DESKTOP NAV -------------------------- */}
+        {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-8">
           <NavLink
             to="/catalogus"
@@ -83,33 +90,60 @@ export default function Header() {
           >
             Catalogus
           </NavLink>
-          {canCreateListings && (
-            <NavLink
-              to="/aanbieding/nieuw"
-              data-testid="nav-new-listing"
-              className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
-            >
-              Nieuwe aanbieding
-            </NavLink>
+
+          {showAanbiedingen && (
+            <div className="relative" ref={aanbiedingenRef}>
+              <button
+                onClick={() => setAanbiedingenOpen((v) => !v)}
+                className={`${navLink} flex items-center gap-1`}
+                data-testid="nav-aanbiedingen-dropdown"
+              >
+                Aanbiedingen
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 ${aanbiedingenOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {aanbiedingenOpen && (
+                <div className="absolute left-0 top-full mt-2 w-52 bg-background border border-border shadow-lg z-50">
+                  {canCreateListings && (
+                    <NavLink
+                      to="/aanbieding/nieuw"
+                      data-testid="nav-new-listing"
+                      className={({ isActive }) =>
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-muted transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                      }
+                    >
+                      Nieuwe aanbieding
+                    </NavLink>
+                  )}
+                  {canCreateListings && (
+                    <NavLink
+                      to="/mijn-aanbiedingen"
+                      data-testid="nav-mijn-aanbiedingen"
+                      className={({ isActive }) =>
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-muted transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                      }
+                    >
+                      Mijn aanbiedingen
+                    </NavLink>
+                  )}
+                  {isValidated && (
+                    <NavLink
+                      to="/aanvragen"
+                      data-testid="nav-aanvragen"
+                      className={({ isActive }) =>
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-muted transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
+                      }
+                    >
+                      Mijn aanvragen
+                    </NavLink>
+                  )}
+                </div>
+              )}
+            </div>
           )}
-          {isValidated && (
-            <NavLink
-              to="/aanvragen"
-              data-testid="nav-aanvragen"
-              className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
-            >
-              Mijn aanvragen
-            </NavLink>
-          )}
-          {canCreateListings && (
-            <NavLink
-              to="/mijn-aanbiedingen"
-              data-testid="nav-mijn-aanbiedingen"
-              className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
-            >
-              Mijn aanbiedingen
-            </NavLink>
-          )}
+
           <NavLink
             to="/over-ons"
             data-testid="nav-over-ons"
@@ -117,6 +151,7 @@ export default function Header() {
           >
             Over ons
           </NavLink>
+
           {isAdmin && (
             <NavLink
               to="/admin"
@@ -128,47 +163,28 @@ export default function Header() {
           )}
         </nav>
 
-        {/* -------------------------- DESKTOP RIGHT GROUP -------------------------- */}
+        {/* DESKTOP RIGHT GROUP */}
         <div className="hidden md:flex items-center gap-3">
           {!isLoggedIn && (
             <>
-              <Link
-                to="/login"
-                data-testid="header-login-link"
-                className="text-sm text-foreground/80 hover:text-foreground transition"
-              >
+              <Link to="/login" data-testid="header-login-link" className="text-sm text-foreground/80 hover:text-foreground transition">
                 Inloggen
               </Link>
-              <Link
-                to="/donnateur/registreer"
-                data-testid="header-donnateur-btn"
-                className="text-sm text-foreground/80 hover:text-foreground transition"
-              >
+              <Link to="/donnateur/registreer" data-testid="header-donnateur-btn" className="text-sm text-foreground/80 hover:text-foreground transition">
                 Doe een gift
               </Link>
-              <Link
-                to="/registreer"
-                data-testid="header-register-link"
-                className="btn-primary !py-2 !px-4 text-xs"
-              >
+              <Link to="/registreer" data-testid="header-register-link" className="btn-primary !py-2 !px-4 text-xs">
                 Word lid
               </Link>
             </>
           )}
           {isLoggedIn && (
             <>
-              <Link
-                to="/profiel"
-                data-testid="header-profile-link"
-                className="text-sm text-foreground/80 hover:text-foreground transition hidden sm:inline"
-              >
+              <Link to="/profiel" data-testid="header-profile-link" className="text-sm text-foreground/80 hover:text-foreground transition hidden sm:inline">
                 {displayName}
               </Link>
               <button
-                onClick={async () => {
-                  await logout();
-                  navigate('/');
-                }}
+                onClick={async () => { await logout(); navigate('/'); }}
                 data-testid="header-logout-btn"
                 className="text-sm text-foreground/70 hover:text-foreground transition"
               >
@@ -178,7 +194,7 @@ export default function Header() {
           )}
         </div>
 
-        {/* -------------------------- MOBILE HAMBURGER -------------------------- */}
+        {/* MOBILE HAMBURGER */}
         <div className="md:hidden relative">
           <button
             ref={hamburgerRef}
@@ -197,7 +213,6 @@ export default function Header() {
               data-testid="mobile-menu-dropdown"
               className="absolute right-0 top-full mt-2 w-64 bg-background border border-border shadow-lg animate-fade-in"
             >
-              {/* Logged-in user info row */}
               {isLoggedIn && (
                 <div className="px-5 py-3 border-b border-border bg-muted/40">
                   <p className="text-xs text-muted-foreground uppercase tracking-widest">Ingelogd als</p>
@@ -207,52 +222,110 @@ export default function Header() {
                 </div>
               )}
 
-              {/* Navigation links */}
-              {mobileNavItems.map((it) => (
-                <NavLink
-                  key={it.to}
-                  to={it.to}
-                  data-testid={it.testId}
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`
-                  }
-                >
-                  {it.label}
-                </NavLink>
-              ))}
+              <NavLink
+                to="/catalogus"
+                data-testid="mobile-nav-catalogus"
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+              >
+                Catalogus
+              </NavLink>
 
-              {/* Anonymous: login + register + donnateur */}
+              {showAanbiedingen && (
+                <>
+                  <button
+                    onClick={() => setMobileAanbiedingenOpen((v) => !v)}
+                    className={`${mobileItemClass} w-full text-left flex items-center justify-between`}
+                    data-testid="mobile-nav-aanbiedingen"
+                  >
+                    Aanbiedingen
+                    <ChevronDown
+                      size={14}
+                      className={`transition-transform duration-200 ${mobileAanbiedingenOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {mobileAanbiedingenOpen && (
+                    <>
+                      {canCreateListings && (
+                        <NavLink
+                          to="/aanbieding/nieuw"
+                          data-testid="mobile-nav-new-listing"
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                        >
+                          → Nieuwe aanbieding
+                        </NavLink>
+                      )}
+                      {canCreateListings && (
+                        <NavLink
+                          to="/mijn-aanbiedingen"
+                          data-testid="mobile-nav-mijn-aanbiedingen"
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                        >
+                          → Mijn aanbiedingen
+                        </NavLink>
+                      )}
+                      {isValidated && (
+                        <NavLink
+                          to="/aanvragen"
+                          data-testid="mobile-nav-aanvragen"
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                        >
+                          → Mijn aanvragen
+                        </NavLink>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+
+              <NavLink
+                to="/over-ons"
+                data-testid="mobile-nav-over-ons"
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+              >
+                Over ons
+              </NavLink>
+
+              {isAdmin && (
+                <NavLink
+                  to="/admin"
+                  data-testid="mobile-nav-admin"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+                >
+                  Admin
+                </NavLink>
+              )}
+
+              {isLoggedIn && (
+                <NavLink
+                  to="/profiel"
+                  data-testid="mobile-nav-profiel"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+                >
+                  Mijn profiel
+                </NavLink>
+              )}
+
               {!isLoggedIn && (
                 <>
-                  <Link
-                    to="/login"
-                    onClick={() => setMobileOpen(false)}
-                    data-testid="mobile-header-login-link"
-                    className={mobileItemClass}
-                  >
+                  <Link to="/login" onClick={() => setMobileOpen(false)} data-testid="mobile-header-login-link" className={mobileItemClass}>
                     Inloggen
                   </Link>
-                  <Link
-                    to="/donnateur/registreer"
-                    onClick={() => setMobileOpen(false)}
-                    data-testid="mobile-header-donnateur-btn"
-                    className={mobileItemClass}
-                  >
+                  <Link to="/donnateur/registreer" onClick={() => setMobileOpen(false)} data-testid="mobile-header-donnateur-btn" className={mobileItemClass}>
                     Doe een gift
                   </Link>
-                  <Link
-                    to="/registreer"
-                    onClick={() => setMobileOpen(false)}
-                    data-testid="mobile-header-register-link"
-                    className={`${mobileItemClass} font-medium text-foreground`}
-                  >
+                  <Link to="/registreer" onClick={() => setMobileOpen(false)} data-testid="mobile-header-register-link" className={`${mobileItemClass} font-medium text-foreground`}>
                     Word lid →
                   </Link>
                 </>
               )}
 
-              {/* Logged-in: logout */}
               {isLoggedIn && (
                 <button
                   onClick={handleMobileLogout}
