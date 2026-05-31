@@ -195,3 +195,34 @@ class ListingUpdate(BaseModel):
     deadline: Optional[str] = None
     isRecurrent: Optional[bool] = None
     placeInWarehouse: Optional[bool] = None
+
+
+# ---------- News ----------
+NewsCategory = Literal['evenement', 'artikel', 'opleidingsmoment', 'oproep', 'ander']
+
+
+class NewsPostBase(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    title: str = Field(..., max_length=100)
+    category: NewsCategory
+    content: str = Field(..., max_length=5000)
+    photo: Optional[str] = None
+
+
+class NewsPostCreate(NewsPostBase):
+    pass
+
+
+class NewsPostUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    title: Optional[str] = Field(None, max_length=100)
+    category: Optional[NewsCategory] = None
+    content: Optional[str] = Field(None, max_length=5000)
+    photo: Optional[str] = None
+
+
+class NewsPostPublic(NewsPostBase):
+    id: str
+    authorId: str
+    createdAt: str
+    updatedAt: str

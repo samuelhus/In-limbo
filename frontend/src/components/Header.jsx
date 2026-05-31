@@ -91,6 +91,14 @@ export default function Header() {
             Catalogus
           </NavLink>
 
+          <NavLink
+            to="/nieuws"
+            data-testid="nav-nieuws"
+            className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
+          >
+            Nieuws
+          </NavLink>
+
           {showAanbiedingen && (
             <div className="relative" ref={aanbiedingenRef}>
               <button
@@ -229,6 +237,15 @@ export default function Header() {
                 className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
               >
                 Catalogus
+              </NavLink>
+
+              <NavLink
+                to="/nieuws"
+                data-testid="mobile-nav-nieuws"
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+              >
+                Nieuws
               </NavLink>
 
               {showAanbiedingen && (

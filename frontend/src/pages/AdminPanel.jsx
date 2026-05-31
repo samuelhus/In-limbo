@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api, formatApiError } from '@/lib/api';
+import AdminNieuws from './AdminNieuws';
 
 export default function AdminPanel() {
   const [queue, setQueue] = useState(null);
@@ -201,6 +202,8 @@ export default function AdminPanel() {
           ))}
         </ul>
       </section>
+
+      <AdminNieuws />
     </div>
   );
 }

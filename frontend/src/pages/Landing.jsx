@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '@/lib/api';
+import { CATEGORY_LABELS, CATEGORY_COLORS } from './Nieuws';
 
 const HERO_BG =
   'https://static.prod-images.emergentagent.com/jobs/40e00778-584d-41f8-b6ee-4e48e961daf5/images/b211452b858296af0d927f008d058751bc1853be53d87eb88b8cc901809dbac6.png';
@@ -70,6 +72,14 @@ function MagazijnWidget({ align = 'right' }) {
 }
 
 export default function Landing() {
+  const [news, setNews] = useState([]);
+
+  useEffect(() => {
+    api.get('/news')
+      .then(({ data }) => setNews(data.slice(0, 3)))
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-[calc(100vh-4rem)]" data-testid="landing-page">
       {/* HERO */}
@@ -151,6 +161,61 @@ export default function Landing() {
           ))}
         </div>
       </section>
+
+      {/* NIEUWS */}
+      {news.length > 0 && (
+        <section
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16 border-t border-border"
+          data-testid="landing-news-section"
+        >
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-10">
+            <p className="overline">Nieuws</p>
+            <Link
+              to="/nieuws"
+              className="industrial-link text-sm text-foreground"
+              data-testid="landing-news-all-link"
+            >
+              Alle berichten →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {news.map((p) => {
+              const color = CATEGORY_COLORS[p.category] || CATEGORY_COLORS.ander;
+              return (
+                <Link
+                  key={p.id}
+                  to={`/nieuws/${p.id}`}
+                  data-testid={`landing-news-card-${p.id}`}
+                  className="group block border border-border hover:border-foreground transition-colors bg-surface"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    {p.photo ? (
+                      <img
+                        src={p.photo}
+                        alt={p.title}
+                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center text-white text-2xl font-bold tracking-tight"
+                        style={{ backgroundColor: color }}
+                      >
+                        {CATEGORY_LABELS[p.category]}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <p className="overline" style={{ color }}>{CATEGORY_LABELS[p.category]}</p>
+                    <h3 className="mt-2 text-xl font-semibold tracking-tight leading-tight">
+                      {p.title}
+                    </h3>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 border-t border-border">

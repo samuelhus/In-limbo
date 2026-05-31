@@ -25,6 +25,8 @@ import MijnAanbiedingen from '@/pages/MijnAanbiedingen';
 import AdminPanel from '@/pages/AdminPanel';
 import DonnateurRegister from '@/pages/DonnateurRegister';
 import OverOns from '@/pages/OverOns';
+import Nieuws from '@/pages/Nieuws';
+import NieuwsDetail from '@/pages/NieuwsDetail';
 
 function NotFound() {
   return (
@@ -50,6 +52,8 @@ export default function App() {
               <Route path="/registreer" element={<Register />} />
               <Route path="/donnateur/registreer" element={<DonnateurRegister />} />
               <Route path="/over-ons" element={<OverOns />} />
+              <Route path="/nieuws" element={<Nieuws />} />
+              <Route path="/nieuws/:id" element={<NieuwsDetail />} />
 
               <Route
                 path="/wachtkamer"
