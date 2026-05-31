@@ -49,6 +49,7 @@ export default function Header() {
 
   // Visible nav items based on auth (same logic as desktop)
   const mobileNavItems = [
+    { to: '/over-ons', label: 'Over ons', testId: 'mobile-nav-over-ons', show: true },
     { to: '/catalogus', label: 'Catalogus', testId: 'mobile-nav-catalogus', show: true },
     { to: '/aanbieding/nieuw', label: 'Nieuwe aanbieding', testId: 'mobile-nav-new-listing', show: canCreateListings },
     { to: '/aanvragen', label: 'Mijn aanvragen', testId: 'mobile-nav-aanvragen', show: isValidated },
@@ -75,6 +76,13 @@ export default function Header() {
 
         {/* -------------------------- DESKTOP NAV -------------------------- */}
         <nav className="hidden md:flex items-center gap-8">
+          <NavLink
+            to="/over-ons"
+            data-testid="nav-over-ons"
+            className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
+          >
+            Over ons
+          </NavLink>
           <NavLink
             to="/catalogus"
             data-testid="nav-catalogus"

@@ -39,10 +39,10 @@ export default function OrganisationPage() {
         </div>
         <aside className="md:col-span-5 md:border-l md:border-border md:pl-10 space-y-6">
           {org.address && (
-            <div>
+            {/*<div>
               <p className="overline mb-1">Adres</p>
               <p className="text-foreground/85">{org.address}</p>
-            </div>
+            </div>*/}
           )}
           {org.website && (
             <div>

@@ -23,6 +23,7 @@ import MijnAanvragen from '@/pages/MijnAanvragen';
 import MijnAanbiedingen from '@/pages/MijnAanbiedingen';
 import AdminPanel from '@/pages/AdminPanel';
 import DonnateurRegister from '@/pages/DonnateurRegister';
+import OverOns from '@/pages/OverOns';
 
 function NotFound() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/registreer" element={<Register />} />
               <Route path="/donnateur/registreer" element={<DonnateurRegister />} />
+              <Route path="/over-ons" element={<OverOns />} />
 
               <Route
                 path="/wachtkamer"
