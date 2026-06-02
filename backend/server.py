@@ -806,13 +806,17 @@ async def select_applicant(
         receiver_user = await db.users.find_one({"id": app_doc["applicantUserId"]})
         receiver_org_id = receiver_user.get("organisationId") if receiver_user else None
         receiver_org = await db.organisations.find_one({"id": receiver_org_id}) if receiver_org_id else None
+        sender_org_id = listing.get("organisationId")
+        sender_org = await db.organisations.find_one({"id": sender_org_id}) if sender_org_id else None
         transfer_doc = {
             "id": str(uuid.uuid4()),
             "listingId": listing_id,
             "listingTitle": listing.get("title", ""),
             "material": listing["material"],
             "weightKg": float(listing["weight"]),
-            "offererOrganisationId": listing.get("organisationId"),
+            "offererOrganisationId": sender_org_id,
+            "senderOrganisationId": sender_org_id,
+            "senderOrganisationName": sender_org["name"] if sender_org else None,
             "receiverOrganisationId": receiver_org_id,
             "receiverOrganisationName": receiver_org["name"] if receiver_org else None,
             "type": "platform",
@@ -1160,6 +1164,23 @@ async def get_stats(
         org_platform.setdefault(oid, {"name": t.get("receiverOrganisationName") or "", "kg": 0})
         org_platform[oid]["kg"] = round(org_platform[oid]["kg"] + t["weightKg"], 2)
 
+    org_platform_givers: dict = {}
+    sender_name_cache: dict = {}
+    for t in transfers:
+        sender_oid = t.get("senderOrganisationId") or t.get("offererOrganisationId")
+        if not sender_oid:
+            continue
+        sender_name = t.get("senderOrganisationName")
+        if not sender_name:
+            if sender_oid in sender_name_cache:
+                sender_name = sender_name_cache[sender_oid]
+            else:
+                org_doc = await db.organisations.find_one({"id": sender_oid}, {"_id": 0, "name": 1})
+                sender_name = org_doc["name"] if org_doc else ""
+                sender_name_cache[sender_oid] = sender_name
+        org_platform_givers.setdefault(sender_oid, {"name": sender_name, "kg": 0})
+        org_platform_givers[sender_oid]["kg"] = round(org_platform_givers[sender_oid]["kg"] + t["weightKg"], 2)
+
     return {
         "totals": {
             "magazijn_kg": total_magazijn_kg,
@@ -1169,6 +1190,7 @@ async def get_stats(
         "by_material": material_stats,
         "by_org_magazijn": sorted(org_magazijn.values(), key=lambda x: x["kg"], reverse=True),
         "by_org_platform": sorted(org_platform.values(), key=lambda x: x["kg"], reverse=True),
+        "by_org_platform_givers": sorted(org_platform_givers.values(), key=lambda x: x["kg"], reverse=True),
         "checkouts_count": len(checkouts),
         "transfers_count": len(transfers),
     }

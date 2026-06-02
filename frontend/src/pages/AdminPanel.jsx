@@ -513,6 +513,28 @@ function Statistieken() {
               </table>
             </section>
           )}
+
+          {stats.by_org_platform_givers?.length > 0 && (
+            <section data-testid="admin-stats-org-platform-givers">
+              <p className="overline mb-3">Organisaties — gegeven via platform (top 20)</p>
+              <table className="w-full text-sm border-y border-border">
+                <thead>
+                  <tr className="text-xs uppercase tracking-wider text-muted-foreground">
+                    <th className="text-left py-2">Organisatie</th>
+                    <th className="text-right py-2">Kg weggegeven</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {stats.by_org_platform_givers.slice(0, 20).map((o, i) => (
+                    <tr key={i}>
+                      <td className="py-2">{o.name}</td>
+                      <td className="py-2 text-right font-medium">{o.kg.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
         </>
       )}
     </div>
