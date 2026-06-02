@@ -226,3 +226,14 @@ class NewsPostPublic(NewsPostBase):
     authorId: str
     createdAt: str
     updatedAt: str
+
+
+# ---------- Magazijn checkout ----------
+class CheckoutItem(BaseModel):
+    material: str
+    weightKg: float = Field(..., gt=0)
+
+
+class CheckoutCreate(BaseModel):
+    organisationId: str
+    items: List[CheckoutItem] = Field(..., min_length=1)

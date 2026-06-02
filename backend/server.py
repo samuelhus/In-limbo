@@ -23,6 +23,7 @@ from models import (
     RegisterNewOrg, RegisterExistingOrg, RegisterDonnateur, LoginRequest, AdminDecision,
     ListingBase, ListingCreateBody, ListingUpdate, OrgUpdate, UserUpdate,
     NewsPostCreate, NewsPostUpdate,
+    CheckoutCreate,
     ApplicationCreate, SelectApplicantBody,
 )
 from auth import (
@@ -258,6 +259,16 @@ async def list_organisations(
     async for o in cursor:
         out.append(strip_mongo(o))
     return out
+
+
+@api.get("/organisations/search")
+async def search_organisations(q: str = Query(..., min_length=2)):
+    regex = {"$regex": q, "$options": "i"}
+    docs = await db.organisations.find(
+        {"name": regex, "status": {"$in": ["validated", "active"]}},
+        {"_id": 0, "id": 1, "name": 1, "category": 1},
+    ).limit(10).to_list(10)
+    return docs
 
 
 @api.get("/organisations/{org_id}")
@@ -788,6 +799,25 @@ async def select_applicant(
         {"id": listing_id},
         {"$set": {"status": "herbestemd", "selectedApplicantId": body.applicationId, "updatedAt": now}},
     )
+
+    # Platform transfer registreren voor statistieken
+    if listing.get("weight") and listing.get("material"):
+        receiver_user = await db.users.find_one({"id": app_doc["applicantUserId"]})
+        receiver_org_id = receiver_user.get("organisationId") if receiver_user else None
+        receiver_org = await db.organisations.find_one({"id": receiver_org_id}) if receiver_org_id else None
+        transfer_doc = {
+            "id": str(uuid.uuid4()),
+            "listingId": listing_id,
+            "listingTitle": listing.get("title", ""),
+            "material": listing["material"],
+            "weightKg": float(listing["weight"]),
+            "offererOrganisationId": listing.get("organisationId"),
+            "receiverOrganisationId": receiver_org_id,
+            "receiverOrganisationName": receiver_org["name"] if receiver_org else None,
+            "type": "platform",
+            "createdAt": now,
+        }
+        await db.platform_transfers.insert_one(transfer_doc)
     return {"ok": True}
 
 
@@ -939,6 +969,29 @@ async def delete_news(post_id: str, admin: dict = Depends(get_admin_user)):
 
 
 # --------------------------------------------------------------------------
+# CHECKOUT (magazijn — publiek)
+# --------------------------------------------------------------------------
+@api.post("/checkout")
+async def create_checkout(body: CheckoutCreate):
+    org = await db.organisations.find_one({"id": body.organisationId})
+    if not org or org["status"] not in ("validated", "active"):
+        raise HTTPException(404, "Organisatie niet gevonden")
+    now = now_iso()
+    total = round(sum(item.weightKg for item in body.items), 3)
+    doc = {
+        "id": str(uuid.uuid4()),
+        "organisationId": body.organisationId,
+        "organisationName": org["name"],
+        "items": [{"material": i.material, "weightKg": round(i.weightKg, 3)} for i in body.items],
+        "totalWeightKg": total,
+        "type": "magazijn",
+        "createdAt": now,
+    }
+    await db.checkouts.insert_one(doc)
+    return {"ok": True, "totalWeightKg": total}
+
+
+# --------------------------------------------------------------------------
 # ADMIN
 # --------------------------------------------------------------------------
 @api.get("/admin/validation-queue")
@@ -1043,6 +1096,81 @@ async def admin_run_maintenance(admin: dict = Depends(get_admin_user)):
     archived = await archive_expired_listings(db)
     inactive = await mark_inactive_orgs(db)
     return {"archived": archived, "inactiveOrgs": inactive}
+
+
+# --------------------------------------------------------------------------
+# ADMIN STATS
+# --------------------------------------------------------------------------
+@api.get("/admin/stats/available-periods")
+async def get_available_periods(admin: dict = Depends(get_admin_user)):
+    checkouts = await db.checkouts.find({}, {"createdAt": 1}).to_list(None)
+    transfers = await db.platform_transfers.find({}, {"createdAt": 1}).to_list(None)
+    years = set()
+    for doc in checkouts + transfers:
+        if doc.get("createdAt"):
+            years.add(doc["createdAt"][:4])
+    return {"years": sorted(years, reverse=True)}
+
+
+@api.get("/admin/stats")
+async def get_stats(
+    year: int | None = Query(None),
+    month: int | None = Query(None),
+    admin: dict = Depends(get_admin_user),
+):
+    import calendar
+    date_filter: dict = {}
+    if year and month:
+        last_day = calendar.monthrange(year, month)[1]
+        start = f"{year}-{month:02d}-01"
+        end = f"{year}-{month:02d}-{last_day:02d}T23:59:59"
+        date_filter = {"createdAt": {"$gte": start, "$lte": end}}
+    elif year:
+        date_filter = {"createdAt": {"$gte": f"{year}-01-01", "$lte": f"{year}-12-31T23:59:59"}}
+
+    checkouts = await db.checkouts.find(date_filter).to_list(None)
+    transfers = await db.platform_transfers.find(date_filter).to_list(None)
+
+    total_magazijn_kg = round(sum(c["totalWeightKg"] for c in checkouts), 2)
+    total_platform_kg = round(sum(t["weightKg"] for t in transfers), 2)
+
+    material_stats: dict = {}
+    for c in checkouts:
+        for item in c["items"]:
+            m = item["material"]
+            material_stats.setdefault(m, {"magazijn": 0, "platform": 0})
+            material_stats[m]["magazijn"] = round(material_stats[m]["magazijn"] + item["weightKg"], 3)
+    for t in transfers:
+        m = t["material"]
+        material_stats.setdefault(m, {"magazijn": 0, "platform": 0})
+        material_stats[m]["platform"] = round(material_stats[m]["platform"] + t["weightKg"], 3)
+
+    org_magazijn: dict = {}
+    for c in checkouts:
+        oid = c["organisationId"]
+        org_magazijn.setdefault(oid, {"name": c["organisationName"], "kg": 0})
+        org_magazijn[oid]["kg"] = round(org_magazijn[oid]["kg"] + c["totalWeightKg"], 2)
+
+    org_platform: dict = {}
+    for t in transfers:
+        if not t.get("receiverOrganisationId"):
+            continue
+        oid = t["receiverOrganisationId"]
+        org_platform.setdefault(oid, {"name": t.get("receiverOrganisationName") or "", "kg": 0})
+        org_platform[oid]["kg"] = round(org_platform[oid]["kg"] + t["weightKg"], 2)
+
+    return {
+        "totals": {
+            "magazijn_kg": total_magazijn_kg,
+            "platform_kg": total_platform_kg,
+            "combined_kg": round(total_magazijn_kg + total_platform_kg, 2),
+        },
+        "by_material": material_stats,
+        "by_org_magazijn": sorted(org_magazijn.values(), key=lambda x: x["kg"], reverse=True),
+        "by_org_platform": sorted(org_platform.values(), key=lambda x: x["kg"], reverse=True),
+        "checkouts_count": len(checkouts),
+        "transfers_count": len(transfers),
+    }
 
 
 # --------------------------------------------------------------------------
