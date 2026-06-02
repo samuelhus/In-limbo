@@ -506,13 +506,14 @@ async def get_listing(listing_id: str, request: Request):
                             }
                     elif is_selected and owner:
                         # Show offerer's contact to the selected applicant
+                        owner_org = await db.organisations.find_one({"id": listing.get("organisationId")}) if listing.get("organisationId") else None
                         view["selectedApplicantContact"] = {
                             "firstName": owner.get("firstName"),
                             "lastName": owner.get("lastName"),
                             "email": owner.get("email"),
                             "phone": owner.get("phone"),
-                            "organisationName": (org or {}).get("name"),
-                            "organisationId": (org or {}).get("id"),
+                            "organisationName": (owner_org or {}).get("name"),
+                            "organisationId": (owner_org or {}).get("id"),
                         }
     return view
 
