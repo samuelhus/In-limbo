@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api, formatApiError } from '@/lib/api';
+
 
 const MATERIALS = [
   'Hout', 'Metaal', 'Plastic', 'Steen', 'Textiel',
-  'Glas', 'Papier/Karton', 'Elektronica', 'Meubels', 'Ander',
+  'Electro', 'Vloeistof', 'Papier', 'Isolatie', 'Ander',
 ];
 
 function StepIndicator({ step }) {
@@ -33,6 +34,7 @@ export default function Checkout() {
   const [items, setItems] = useState([]);
   const [currentMaterial, setCurrentMaterial] = useState('Hout');
   const [currentWeight, setCurrentWeight] = useState('');
+  const materialSelectRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [confirmedTotal, setConfirmedTotal] = useState(0);
@@ -49,6 +51,10 @@ export default function Checkout() {
     return () => { cancelled = true; };
   }, [query, selectedOrg]);
 
+  useEffect(() => {
+  if (step === 2) setTimeout(() => materialSelectRef.current?.focus(), 0);
+}, [step]);
+
   const totalKg = items.reduce((s, i) => s + i.weightKg, 0);
 
   const groupedByMaterial = items.reduce((acc, i) => {
@@ -60,7 +66,8 @@ export default function Checkout() {
     const kg = parseFloat(currentWeight);
     if (!currentMaterial || isNaN(kg) || kg <= 0) return;
     setItems([...items, { material: currentMaterial, weightKg: kg }]);
-    setCurrentWeight('');
+setCurrentWeight('');
+setTimeout(() => materialSelectRef.current?.focus(), 0);
   };
 
   const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
@@ -174,6 +181,7 @@ export default function Checkout() {
               <div>
                 <label className="label-overline">Materiaal</label>
                 <select
+                  ref={materialSelectRef}
                   className="input-flat"
                   value={currentMaterial}
                   onChange={(e) => setCurrentMaterial(e.target.value)}

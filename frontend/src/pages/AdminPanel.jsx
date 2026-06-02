@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { api, formatApiError } from '@/lib/api';
 import AdminNieuws from './AdminNieuws';
+import { Link } from 'react-router-dom';
 
 const SECTIONS = [
   { key: 'validatie', label: 'Validatie' },
@@ -366,7 +367,11 @@ function Statistieken() {
             Hang deze QR-code op in het magazijn. Bezoekers scannen hem
             om materialen uit te checken.
           </p>
-          <p className="text-xs text-muted-foreground font-mono break-all">{checkoutUrl}</p>
+          
+          <p className="text-xs text-muted-foreground font-mono break-all mb-4">{checkoutUrl}</p>
+          <Link to="/checkout" className="btn-secondary !py-1.5 px-3 text-xs">
+            Checkout pagina →
+          </Link>
         </div>
       </div>
 
