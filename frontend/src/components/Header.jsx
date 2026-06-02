@@ -64,9 +64,9 @@ export default function Header() {
   }, [location.pathname]);
 
   const mobileItemClass =
-    'block px-5 py-3 text-sm tracking-wide text-foreground/80 hover:text-foreground hover:bg-muted transition-colors border-b border-border last:border-b-0';
+    'block px-5 py-3 text-sm tracking-wide text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border last:border-b-0';
   const mobileSubItemClass =
-    'block px-8 py-2.5 text-sm text-foreground/70 hover:text-foreground hover:bg-muted transition-colors border-b border-border';
+    'block px-8 py-2.5 text-sm text-foreground/70 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border';
 
   const handleMobileLogout = async () => {
     setMobileOpen(false);
@@ -119,7 +119,7 @@ export default function Header() {
                       to="/aanbieding/nieuw"
                       data-testid="nav-new-listing"
                       className={({ isActive }) =>
-                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-muted transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
                       }
                     >
                       Nieuwe aanbieding
@@ -130,7 +130,7 @@ export default function Header() {
                       to="/mijn-aanbiedingen"
                       data-testid="nav-mijn-aanbiedingen"
                       className={({ isActive }) =>
-                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-muted transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
                       }
                     >
                       Mijn aanbiedingen
@@ -141,7 +141,7 @@ export default function Header() {
                       to="/aanvragen"
                       data-testid="nav-aanvragen"
                       className={({ isActive }) =>
-                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-muted transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
                       }
                     >
                       Mijn aanvragen
@@ -179,7 +179,7 @@ export default function Header() {
                 Inloggen
               </Link>
               <Link to="/donnateur/registreer" data-testid="header-donnateur-btn" className="text-sm text-foreground/80 hover:text-foreground transition">
-                Doe een gift
+                Doneer materiaal
               </Link>
               <Link to="/registreer" data-testid="header-register-link" className="btn-primary !py-2 !px-4 text-xs">
                 Word lid

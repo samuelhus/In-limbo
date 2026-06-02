@@ -110,7 +110,7 @@ export default function Landing() {
                 Word lid
               </Link>
               <Link to="/donnateur/registreer" className="btn-secondary" data-testid="hero-donnateur-btn">
-                Doe een gift
+                Doneer materiaal
               </Link>
             </div>
 
@@ -228,7 +228,7 @@ export default function Landing() {
               Registreer je organisatie →
             </Link>
             <Link to="/donnateur/registreer" className="btn-secondary" data-testid="cta-donnateur-btn">
-              Doe een gift →
+              Doneer materiaal →
             </Link>
           </div>
         </div>

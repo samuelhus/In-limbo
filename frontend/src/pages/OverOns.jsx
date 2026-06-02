@@ -225,7 +225,7 @@ export default function OverOns() {
               We aanvaarden geen voedsel of kledij.
             </div>
             <Link to="/donnateur/registreer" className="btn-primary justify-center mt-8" data-testid="over-ons-cta-donnateur">
-  Doe een gift
+  Donneer materiaal
 </Link>
           </div>
         </div>

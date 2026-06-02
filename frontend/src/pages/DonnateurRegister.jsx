@@ -47,7 +47,7 @@ export default function DonnateurRegister() {
     <div className="max-w-2xl mx-auto px-4 py-16" data-testid="donnateur-register-page">
       <p className="overline mb-4">Donnateur</p>
       <h1 className="text-4xl font-bold tracking-tight mb-10">
-        Doe een gift.
+        Doneer materiaal.
       </h1>
 
       <StepIndicator step={step} max={3} />
