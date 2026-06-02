@@ -23,8 +23,8 @@
     --muted: 60 6% 92%;                 /* #EAEAEC */
     --muted-foreground: 0 0% 40%;
 
-    --accent: 130 11% 33%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 128 44% 80%;        /* #ADEBB3 lichtgroen */
+    --accent-foreground: 0 0% 10%;
     --destructive: 0 65% 45%;
     --destructive-foreground: 0 0% 100%;
 
@@ -57,8 +57,8 @@
   }
 
   ::selection {
-    background: #1A1A1A;
-    color: #F4F4F0;
+    background: #ADEBB3;
+    color: #1A1A1A;
   }
 }
 

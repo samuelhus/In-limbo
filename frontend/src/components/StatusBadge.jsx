@@ -8,7 +8,7 @@ const LABELS = {
 };
 
 const STYLES = {
-  beschikbaar: { bg: '#DCFCE7', text: '#166534', border: '#22C55E' },
+  beschikbaar: { bg: '#ADEBB3', text: '#1A4D22', border: '#7BC987' },
   herbestemd: { bg: '#DBEAFE', text: '#1E3A8A', border: '#3B82F6' },
   in_magazijn: { bg: '#BBF7D0', text: '#14532D', border: '#86EFAC' },
   gearchiveerd: { bg: '#E5E5E0', text: '#444', border: '#888' },
