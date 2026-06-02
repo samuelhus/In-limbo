@@ -19,7 +19,7 @@ export default function ListingWizard({ editMode = false }) {
   const { id: listingId } = useParams();
   const { user } = useAuth();
   const isAdmin = user && user.role === 'admin';
-  const isDonnateur = user && user.role === 'donnateur';
+  const isDonateur = user && user.role === 'donateur';
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -253,7 +253,7 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 4: Deadline (+ admin magazijn-toggle) */}
       {step === 4 && (
         <section className="space-y-4" data-testid="wizard-step-deadline">
-          {!isDonnateur && (
+          {!isDonateur && (
             <label className="flex items-center gap-3 cursor-pointer mb-2">
               <input
                 type="checkbox"
@@ -280,14 +280,14 @@ export default function ListingWizard({ editMode = false }) {
                 min={new Date().toISOString().slice(0, 10)}
                 onChange={(e) => setData({ ...data, deadline: e.target.value })}
               />
-              {isDonnateur && (
-                <p className="text-xs text-muted-foreground mt-2" data-testid="wizard-donnateur-recurrent-hint">
+              {isDonateur && (
+                <p className="text-xs text-muted-foreground mt-2" data-testid="wizard-donateur-recurrent-hint">
                   Recurrente aanbiedingen zijn voorbehouden aan In Limbo-partners.
                 </p>
               )}
             </div>
           )}
-          {data.isRecurrent && !isDonnateur && (
+          {data.isRecurrent && !isDonateur && (
             <p className="text-sm text-foreground/75 leading-relaxed border-l-2 border-border pl-4">
               Bij recurrente aanbiedingen wordt jouw e-mailadres zichtbaar voor andere
               gevalideerde gebruikers op de detailpagina, zodat ze rechtstreeks contact

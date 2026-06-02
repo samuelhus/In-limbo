@@ -103,12 +103,12 @@ async def get_validated_user(user: dict = Depends(get_current_user)) -> dict:
     return user
 
 
-async def get_donnateur_or_validated_user(user: dict = Depends(get_current_user)) -> dict:
-    if user.get("role") == "donnateur":
+async def get_donateur_or_validated_user(user: dict = Depends(get_current_user)) -> dict:
+    if user.get("role") == "donateur":
         return user
     if user.get("status") == "validated":
         return user
-    raise HTTPException(status_code=403, detail="Toegang vereist een gevalideerd account of donnateur-rol")
+    raise HTTPException(status_code=403, detail="Toegang vereist een gevalideerd account of donateur-rol")
 
 
 async def get_admin_user(user: dict = Depends(get_current_user)) -> dict:

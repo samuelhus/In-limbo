@@ -289,17 +289,17 @@ async def seed(db) -> None:
         "updatedAt": _iso_now(),
     })
 
-    # 6. Donnateur — individu die materiaal doneert
-    donnateur_id = str(uuid.uuid4())
+    # 6. Donateur — individu die materiaal doneert
+    donateur_id = str(uuid.uuid4())
     await db.users.insert_one({
-        "id": donnateur_id,
+        "id": donateur_id,
         "email": "donna@inlimbo.be",
         "passwordHash": hash_password("test1234"),
         "username": "dana_doneert",
         "firstName": None,
         "lastName": None,
         "phone": None,
-        "role": "donnateur",
+        "role": "donateur",
         "status": "validated",
         "rejectionReason": None,
         "organisationId": None,
@@ -307,7 +307,7 @@ async def seed(db) -> None:
         "createdAt": _iso_now(),
     })
 
-    # 7. Donnateur-aanbieding — toont "geen In Limbo partner"-label
+    # 7. Donateur-aanbieding — toont "geen In Limbo partner"-label
     await db.listings.insert_one({
         "id": str(uuid.uuid4()),
         "title": "Oude verfresten — 8 potten",
@@ -323,7 +323,7 @@ async def seed(db) -> None:
         "transport": "Op te halen in Schaarbeek",
         "status": "beschikbaar",
         "selectedApplicantId": None,
-        "userId": donnateur_id,
+        "userId": donateur_id,
         "organisationId": None,
         "createdAt": _iso_now(),
         "updatedAt": _iso_now(),

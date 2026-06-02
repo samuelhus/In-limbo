@@ -24,7 +24,7 @@ ListingMaterial = Literal[
 ]
 
 UserStatus = Literal["pending", "validated", "rejected"]
-UserRole = Literal["user", "admin", "donnateur"]
+UserRole = Literal["user", "admin", "donateur"]
 OrgStatus = Literal["pending", "validated", "rejected", "active", "inactive"]
 ListingStatus = Literal[
     "beschikbaar", "herbestemd", "in_magazijn", "gearchiveerd"
@@ -139,7 +139,7 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class RegisterDonnateur(BaseModel):
+class RegisterDonateur(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     username: str
     email: EmailStr

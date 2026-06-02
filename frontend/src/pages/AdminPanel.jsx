@@ -61,8 +61,8 @@ export default function AdminPanel() {
     }
   };
 
-  const deleteDonnateur = async (userId, username) => {
-    if (!window.confirm(`Donnateur "${username}" verwijderen? Hun aanbiedingen worden gearchiveerd. Deze actie is onomkeerbaar.`)) return;
+  const deleteDonateur = async (userId, username) => {
+    if (!window.confirm(`Donateur "${username}" verwijderen? Hun aanbiedingen worden gearchiveerd. Deze actie is onomkeerbaar.`)) return;
     setBusy(true);
     try {
       await api.delete(`/admin/users/${userId}`);
@@ -95,7 +95,7 @@ export default function AdminPanel() {
   }
 
   const sidebarItemClass = (key) =>
-    `block w-full text-left px-4 py-3 text-sm border-b border-border hover:bg-muted transition-colors ${
+    `block w-full text-left px-4 py-3 text-sm border-b border-border hover:bg-[#ADEBB3] transition-colors ${
       section === key ? 'bg-muted font-medium text-foreground' : 'text-foreground/70'
     }`;
 
@@ -252,15 +252,15 @@ export default function AdminPanel() {
               </ul>
             </section>
 
-            {/* Donnateurs */}
+            {/* Donateurs */}
             <section className="mt-16">
-              <p className="overline mb-4">Donnateurs · {queue?.donnateurs?.length || 0}</p>
-              {(!queue?.donnateurs || queue.donnateurs.length === 0) && (
-                <p className="text-muted-foreground" data-testid="admin-no-donnateurs">Geen donnateurs geregistreerd.</p>
+              <p className="overline mb-4">Donateurs · {queue?.donateurs?.length || 0}</p>
+              {(!queue?.donateurs || queue.donateurs.length === 0) && (
+                <p className="text-muted-foreground" data-testid="admin-no-donateurs">Geen donateurs geregistreerd.</p>
               )}
               <ul className="divide-y divide-border border-y border-border">
-                {queue?.donnateurs?.map((d) => (
-                  <li key={d.id} className="py-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-start" data-testid={`admin-donnateur-${d.id}`}>
+                {queue?.donateurs?.map((d) => (
+                  <li key={d.id} className="py-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-start" data-testid={`admin-donateur-${d.id}`}>
                     <div className="md:col-span-8">
                       <p className="font-medium">{d.username}</p>
                       <p className="text-sm text-muted-foreground">{d.email}</p>
@@ -270,9 +270,9 @@ export default function AdminPanel() {
                     </div>
                     <div className="md:col-span-4 flex flex-wrap gap-2 md:justify-end">
                       <button
-                        onClick={() => deleteDonnateur(d.id, d.username)}
+                        onClick={() => deleteDonateur(d.id, d.username)}
                         disabled={busy}
-                        data-testid={`admin-delete-donnateur-${d.id}`}
+                        data-testid={`admin-delete-donateur-${d.id}`}
                         className="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-xs font-medium tracking-wide transition-all duration-200 hover:bg-red-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                         style={{ borderRadius: 2 }}
                       >

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 function StepIndicator({ step, max }) {
   return (
-    <div className="flex items-center gap-2 mb-10" data-testid="donnateur-step-indicator">
+    <div className="flex items-center gap-2 mb-10" data-testid="donateur-step-indicator">
       {Array.from({ length: max }).map((_, i) => (
         <div
           key={i}
@@ -18,8 +18,8 @@ function StepIndicator({ step, max }) {
   );
 }
 
-export default function DonnateurRegister() {
-  const { registerDonnateur } = useAuth();
+export default function DonateurRegister() {
+  const { registerDonateur } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -37,15 +37,15 @@ export default function DonnateurRegister() {
   const submit = async () => {
     setSubmitting(true);
     setError('');
-    const res = await registerDonnateur({ ...form, acceptedTerms: true });
+    const res = await registerDonateur({ ...form, acceptedTerms: true });
     setSubmitting(false);
     if (!res.ok) { setError(res.error); return; }
     navigate('/catalogus');
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-16" data-testid="donnateur-register-page">
-      <p className="overline mb-4">Donnateur</p>
+    <div className="max-w-2xl mx-auto px-4 py-16" data-testid="donateur-register-page">
+      <p className="overline mb-4">Donateur</p>
       <h1 className="text-4xl font-bold tracking-tight mb-10">
         Doneer materiaal.
       </h1>
@@ -54,11 +54,11 @@ export default function DonnateurRegister() {
 
       {/* STEP 1: Terms */}
       {step === 1 && (
-        <section className="space-y-6" data-testid="donnateur-step-1">
+        <section className="space-y-6" data-testid="donateur-step-1">
           <h2 className="text-2xl font-semibold">Voorwaarden</h2>
           <div className="border-t border-border pt-6 space-y-3 text-sm text-foreground/80 leading-relaxed">
             <p>
-              Als donnateur kun je gratis materiaal aanbieden aan
+              Als donateur kun je gratis materiaal aanbieden aan
               socio-culturele organisaties in Brussel via In Limbo. Door je te
               registreren ga je akkoord dat:
             </p>
@@ -72,27 +72,27 @@ export default function DonnateurRegister() {
               <p className="font-medium mb-1">⚠️ Wil je materiaal aanvragen of de volledige catalogus zien?</p>
               <p className="text-foreground/75">
                 Dan moet je lid worden als organisatie via 'Word lid'. Als
-                donnateur heb je geen toegang tot contactgegevens van aanbieders
+                donateur heb je geen toegang tot contactgegevens van aanbieders
                 en kun je geen aanvragen indienen.
               </p>
             </div>
           </div>
-          <label className="flex items-start gap-3 cursor-pointer" data-testid="donnateur-terms-label">
+          <label className="flex items-start gap-3 cursor-pointer" data-testid="donateur-terms-label">
             <input
               type="checkbox"
               checked={terms}
               onChange={(e) => setTerms(e.target.checked)}
-              data-testid="donnateur-terms-checkbox"
+              data-testid="donateur-terms-checkbox"
               className="mt-1"
             />
             <span className="text-sm">
-              Ik aanvaard de voorwaarden en begrijp dat ik als donnateur geen
+              Ik aanvaard de voorwaarden en begrijp dat ik als donateur geen
               aanvragen kan indienen.
             </span>
           </label>
           <div className="flex justify-between">
-            <Link to="/" className="btn-ghost" data-testid="donnateur-cancel">← Annuleren</Link>
-            <button onClick={next} disabled={!canNext1} className="btn-primary" data-testid="donnateur-step1-next">
+            <Link to="/" className="btn-ghost" data-testid="donateur-cancel">← Annuleren</Link>
+            <button onClick={next} disabled={!canNext1} className="btn-primary" data-testid="donateur-step1-next">
               Volgende →
             </button>
           </div>
@@ -101,13 +101,13 @@ export default function DonnateurRegister() {
 
       {/* STEP 2: Account */}
       {step === 2 && (
-        <section className="space-y-5" data-testid="donnateur-step-2">
+        <section className="space-y-5" data-testid="donateur-step-2">
           <h2 className="text-2xl font-semibold">Jouw account</h2>
           <div>
             <label className="label-overline">Gebruikersnaam</label>
             <input
               className="input-flat"
-              data-testid="donnateur-username"
+              data-testid="donateur-username"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
               autoFocus
@@ -118,7 +118,7 @@ export default function DonnateurRegister() {
             <input
               type="email"
               className="input-flat"
-              data-testid="donnateur-email"
+              data-testid="donateur-email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
@@ -130,14 +130,14 @@ export default function DonnateurRegister() {
             <input
               type="password"
               className="input-flat"
-              data-testid="donnateur-password"
+              data-testid="donateur-password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
           </div>
           <div className="flex justify-between">
-            <button onClick={back} className="btn-ghost" data-testid="donnateur-step2-back">← Terug</button>
-            <button onClick={next} disabled={!canNext2} className="btn-primary" data-testid="donnateur-step2-next">
+            <button onClick={back} className="btn-ghost" data-testid="donateur-step2-back">← Terug</button>
+            <button onClick={next} disabled={!canNext2} className="btn-primary" data-testid="donateur-step2-next">
               Volgende →
             </button>
           </div>
@@ -146,7 +146,7 @@ export default function DonnateurRegister() {
 
       {/* STEP 3: Confirm */}
       {step === 3 && (
-        <section className="space-y-6" data-testid="donnateur-step-3">
+        <section className="space-y-6" data-testid="donateur-step-3">
           <h2 className="text-2xl font-semibold">Bevestiging</h2>
           <dl className="border-t border-border divide-y divide-border">
             <div className="flex items-start gap-6 py-3">
@@ -159,19 +159,19 @@ export default function DonnateurRegister() {
             </div>
             <div className="flex items-start gap-6 py-3">
               <dt className="overline w-40 shrink-0 pt-0.5">Type</dt>
-              <dd className="text-foreground/85">Donnateur (individuele schenker)</dd>
+              <dd className="text-foreground/85">Donateur (individuele schenker)</dd>
             </div>
           </dl>
 
           {error && (
-            <p data-testid="donnateur-error" className="text-sm text-destructive bg-destructive/10 border border-destructive/40 px-3 py-2">
+            <p data-testid="donateur-error" className="text-sm text-destructive bg-destructive/10 border border-destructive/40 px-3 py-2">
               {error}
             </p>
           )}
 
           <div className="flex justify-between">
-            <button onClick={back} className="btn-ghost" data-testid="donnateur-step3-back">← Terug</button>
-            <button onClick={submit} disabled={submitting} className="btn-primary" data-testid="donnateur-submit">
+            <button onClick={back} className="btn-ghost" data-testid="donateur-step3-back">← Terug</button>
+            <button onClick={submit} disabled={submitting} className="btn-primary" data-testid="donateur-submit">
               {submitting ? 'Aanmaken…' : 'Account aanmaken'}
             </button>
           </div>
@@ -180,7 +180,7 @@ export default function DonnateurRegister() {
 
       <p className="mt-10 text-sm text-muted-foreground">
         Al een account?{' '}
-        <Link to="/login" className="industrial-link text-foreground" data-testid="donnateur-to-login">Inloggen</Link>
+        <Link to="/login" className="industrial-link text-foreground" data-testid="donateur-to-login">Inloggen</Link>
       </p>
     </div>
   );

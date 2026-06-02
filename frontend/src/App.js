@@ -23,7 +23,7 @@ import MijnOrganisatie from '@/pages/MijnOrganisatie';
 import MijnAanvragen from '@/pages/MijnAanvragen';
 import MijnAanbiedingen from '@/pages/MijnAanbiedingen';
 import AdminPanel from '@/pages/AdminPanel';
-import DonnateurRegister from '@/pages/DonnateurRegister';
+import DonateurRegister from '@/pages/DonateurRegister';
 import OverOns from '@/pages/OverOns';
 import Nieuws from '@/pages/Nieuws';
 import NieuwsDetail from '@/pages/NieuwsDetail';
@@ -51,7 +51,7 @@ export default function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registreer" element={<Register />} />
-              <Route path="/donnateur/registreer" element={<DonnateurRegister />} />
+              <Route path="/donateur/registreer" element={<DonateurRegister />} />
               <Route path="/over-ons" element={<OverOns />} />
               <Route path="/nieuws" element={<Nieuws />} />
               <Route path="/nieuws/:id" element={<NieuwsDetail />} />
@@ -78,7 +78,7 @@ export default function App() {
               <Route
                 path="/aanbieding/:id/bewerken"
                 element={
-                  <ProtectedRoute allowDonnateur>
+                  <ProtectedRoute allowDonateur>
                     <ListingWizard editMode />
                   </ProtectedRoute>
                 }
@@ -89,7 +89,7 @@ export default function App() {
               <Route
                 path="/aanbieding/nieuw"
                 element={
-                  <ProtectedRoute allowDonnateur>
+                  <ProtectedRoute allowDonateur>
                     <ListingWizard />
                   </ProtectedRoute>
                 }
@@ -121,7 +121,7 @@ export default function App() {
               <Route
                 path="/mijn-aanbiedingen"
                 element={
-                  <ProtectedRoute allowDonnateur>
+                  <ProtectedRoute allowDonateur>
                     <MijnAanbiedingen />
                   </ProtectedRoute>
                 }

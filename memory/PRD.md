@@ -34,7 +34,7 @@ naar wie het kan gebruiken.
 ## What's been implemented
 
 ### 2026-01-XX — Aanbiedingen bewerken ✅
-- **Backend**: nieuw `ListingUpdate` model + `PATCH /api/listings/{id}` endpoint. Eigenaar/admin kan `beschikbaar` + `gearchiveerd` bewerken; admin extra `in_magazijn`. `herbestemd` blokkeert bewerking (400). Gearchiveerde aanbieding heractiveert automatisch naar `beschikbaar` als nieuwe deadline in toekomst ligt of `isRecurrent=true`. Donnateur kan `isRecurrent=true` niet zetten (server forceert false). Openstaande aanvragen worden niet aangetast.
+- **Backend**: nieuw `ListingUpdate` model + `PATCH /api/listings/{id}` endpoint. Eigenaar/admin kan `beschikbaar` + `gearchiveerd` bewerken; admin extra `in_magazijn`. `herbestemd` blokkeert bewerking (400). Gearchiveerde aanbieding heractiveert automatisch naar `beschikbaar` als nieuwe deadline in toekomst ligt of `isRecurrent=true`. Donateur kan `isRecurrent=true` niet zetten (server forceert false). Openstaande aanvragen worden niet aangetast.
 - **Frontend**: nieuwe route `/aanbieding/:id/bewerken` → `ListingWizard editMode`, prefetcht bestaande data, redirect bij niet-bewerkbare status of geen toegang, submit via PATCH met "Wijzigingen opslaan ✓"-knop. `MijnAanbiedingen` toont een Bewerken-knop op `beschikbaar`+`gearchiveerd` listings; `ListingDetail` OwnerPanel toont Bewerken-knop op alle bewerkbare statussen.
 
 ### 2026-01-XX — Status-flow vereenvoudigd: `in_afwachting` verwijderd ✅
@@ -43,14 +43,14 @@ naar wie het kan gebruiken.
 - **Frontend**: `StatusBadge`, `Catalogus`-filter, `MijnAanbiedingen`-groepen en `MijnAanvragen` opgeschoond. `not_selected` wordt niet meer getoond aan de aanvrager. Selecteer-knop "Selecteer & herbestem" met aangepaste bevestigingstekst.
 - **Tests**: 21/21 pytest tests slagen in `tests/test_phase2_applications.py`.
 
-### 2026-01-XX — Donnateur-rol (individuele schenkers) ✅
-- **Nieuwe rol** `donnateur`: individu kan materiaal aanbieden zonder organisatie. Username i.p.v. firstName/lastName.
-- **Backend**: `POST /auth/register/donnateur` (3 velden: username + email + password), `GET /admin/validation-queue` includes `donnateurs[]`, `DELETE /admin/users/{id}` (archiveert listings cascadewise), `get_donnateur_or_validated_user`-dependency op alle owner-acties, `/apply` blokkeert donnateurs expliciet (403).
-- **Catalogus**: donnateur-aanbiedingen tonen *"Aangeboden door [username] (geen In Limbo partner)"*.
-- **ListingDetail**: voor validated users → toont donnateur-block met username; voor donnateur-viewers → owner-info gestript door backend; "Aanvraag indienen"-knop verborgen voor donnateurs.
-- **ListingWizard**: recurrent-toggle verborgen voor donnateurs, server-side geforceerd `isRecurrent=false`.
-- **Frontend**: nieuwe `/donnateur/registreer` 3-staps wizard (voorwaarden → account → bevestiging), Header conditioneel ("Doe een gift" voor visitors, beperkte nav voor donnateurs), Profiel toont username-veld i.p.v. firstName/lastName, AdminPanel sectie "Donnateurs" met delete-knop, App.js route + `allowDonnateur` props.
-- **Seed**: 1 donnateur (`donna@inlimbo.be` / `test1234`, username `dana_doneert`) + 1 aanbieding ("Oude verfresten — 8 potten").
+### 2026-01-XX — Donateur-rol (individuele schenkers) ✅
+- **Nieuwe rol** `donateur`: individu kan materiaal aanbieden zonder organisatie. Username i.p.v. firstName/lastName.
+- **Backend**: `POST /auth/register/donateur` (3 velden: username + email + password), `GET /admin/validation-queue` includes `donateurs[]`, `DELETE /admin/users/{id}` (archiveert listings cascadewise), `get_donateur_or_validated_user`-dependency op alle owner-acties, `/apply` blokkeert donateurs expliciet (403).
+- **Catalogus**: donateur-aanbiedingen tonen *"Aangeboden door [username] (geen In Limbo partner)"*.
+- **ListingDetail**: voor validated users → toont donateur-block met username; voor donateur-viewers → owner-info gestript door backend; "Aanvraag indienen"-knop verborgen voor donateurs.
+- **ListingWizard**: recurrent-toggle verborgen voor donateurs, server-side geforceerd `isRecurrent=false`.
+- **Frontend**: nieuwe `/donateur/registreer` 3-staps wizard (voorwaarden → account → bevestiging), Header conditioneel ("Doe een gift" voor visitors, beperkte nav voor donateurs), Profiel toont username-veld i.p.v. firstName/lastName, AdminPanel sectie "Donateurs" met delete-knop, App.js route + `allowDonateur` props.
+- **Seed**: 1 donateur (`donna@inlimbo.be` / `test1234`, username `dana_doneert`) + 1 aanbieding ("Oude verfresten — 8 potten").
 
 ### 2026-01-XX — Mobile hamburger menu ✅
 - Responsive header met **hamburger-icoon** (lucide-react) op schermen < 768px

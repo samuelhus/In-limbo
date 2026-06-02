@@ -11,10 +11,10 @@ export default function Header() {
 
   const isLoggedIn = user && typeof user === 'object';
   const isAdmin = isLoggedIn && user.role === 'admin';
-  const isDonnateur = isLoggedIn && user.role === 'donnateur';
-  const isValidated = isLoggedIn && user.status === 'validated' && !isDonnateur;
-  const canCreateListings = isValidated || isDonnateur;
-  const displayName = isLoggedIn ? (isDonnateur ? user.username : user.firstName) : '';
+  const isDonateur = isLoggedIn && user.role === 'donateur';
+  const isValidated = isLoggedIn && user.status === 'validated' && !isDonateur;
+  const canCreateListings = isValidated || isDonateur;
+  const displayName = isLoggedIn ? (isDonateur ? user.username : user.firstName) : '';
   const showAanbiedingen = canCreateListings || isValidated;
 
   const navLink =
@@ -178,7 +178,7 @@ export default function Header() {
               <Link to="/login" data-testid="header-login-link" className="text-sm text-foreground/80 hover:text-foreground transition">
                 Inloggen
               </Link>
-              <Link to="/donnateur/registreer" data-testid="header-donnateur-btn" className="text-sm text-foreground/80 hover:text-foreground transition">
+              <Link to="/donateur/registreer" data-testid="header-donateur-btn" className="text-sm text-foreground/80 hover:text-foreground transition">
                 Doneer materiaal
               </Link>
               <Link to="/registreer" data-testid="header-register-link" className="btn-primary !py-2 !px-4 text-xs">
@@ -225,7 +225,7 @@ export default function Header() {
                 <div className="px-5 py-3 border-b border-border bg-muted/40">
                   <p className="text-xs text-muted-foreground uppercase tracking-widest">Ingelogd als</p>
                   <p className="text-sm font-medium mt-0.5 truncate">
-                    {isDonnateur ? user.username : `${user.firstName || ''} ${user.lastName || ''}`.trim()}
+                    {isDonateur ? user.username : `${user.firstName || ''} ${user.lastName || ''}`.trim()}
                   </p>
                 </div>
               )}
@@ -334,7 +334,7 @@ export default function Header() {
                   <Link to="/login" onClick={() => setMobileOpen(false)} data-testid="mobile-header-login-link" className={mobileItemClass}>
                     Inloggen
                   </Link>
-                  <Link to="/donnateur/registreer" onClick={() => setMobileOpen(false)} data-testid="mobile-header-donnateur-btn" className={mobileItemClass}>
+                  <Link to="/donateur/registreer" onClick={() => setMobileOpen(false)} data-testid="mobile-header-donateur-btn" className={mobileItemClass}>
                     Doe een gift
                   </Link>
                   <Link to="/registreer" onClick={() => setMobileOpen(false)} data-testid="mobile-header-register-link" className={`${mobileItemClass} font-medium text-foreground`}>

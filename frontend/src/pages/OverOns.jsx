@@ -224,7 +224,7 @@ export default function OverOns() {
               ⚠️ Het materiaal moet in goede staat zijn en geschikt voor hergebruik.
               We aanvaarden geen voedsel of kledij.
             </div>
-            <Link to="/donnateur/registreer" className="btn-primary justify-center mt-8" data-testid="over-ons-cta-donnateur">
+            <Link to="/donateur/registreer" className="btn-primary justify-center mt-8" data-testid="over-ons-cta-donateur">
   Donneer materiaal
 </Link>
           </div>

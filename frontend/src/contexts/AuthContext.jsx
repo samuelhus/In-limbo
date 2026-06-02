@@ -59,9 +59,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const registerDonnateur = async (payload) => {
+  const registerDonateur = async (payload) => {
     try {
-      await api.post('/auth/register/donnateur', payload);
+      await api.post('/auth/register/donateur', payload);
       await refresh();
       return { ok: true };
     } catch (e) {
@@ -80,7 +80,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, refresh, login, logout, registerNewOrg, registerExistingOrg, registerDonnateur }}
+      value={{ user, setUser, refresh, login, logout, registerNewOrg, registerExistingOrg, registerDonateur }}
     >
       {children}
     </AuthContext.Provider>

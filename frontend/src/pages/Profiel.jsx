@@ -5,7 +5,7 @@ import { api, formatApiError } from '@/lib/api';
 
 export default function Profiel() {
   const { user, refresh } = useAuth();
-  const isDonnateur = user.role === 'donnateur';
+  const isDonateur = user.role === 'donateur';
 
   const [form, setForm] = useState({
     firstName: user.firstName || '',
@@ -25,7 +25,7 @@ export default function Profiel() {
     try {
       const payload = { ...form };
       if (!payload.password) delete payload.password;
-      if (isDonnateur) {
+      if (isDonateur) {
         delete payload.firstName;
         delete payload.lastName;
         delete payload.phone;
@@ -49,7 +49,7 @@ export default function Profiel() {
       <h1 className="text-4xl font-bold tracking-tight mb-10">Jouw gegevens</h1>
 
       <form onSubmit={save} className="space-y-5">
-        {isDonnateur ? (
+        {isDonateur ? (
           <div>
             <label className="label-overline">Gebruikersnaam</label>
             <input
@@ -97,7 +97,7 @@ export default function Profiel() {
         </button>
       </form>
 
-      {!isDonnateur && (
+      {!isDonateur && (
         <div className="mt-16 border-t border-border pt-6" data-testid="profiel-organisatie-section">
           <p className="overline mb-2">Organisatie</p>
           <p className="text-sm text-muted-foreground mb-3">

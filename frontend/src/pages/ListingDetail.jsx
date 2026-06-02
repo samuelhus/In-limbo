@@ -35,8 +35,8 @@ export default function ListingDetail() {
 
   const limited = item.limited;
   const photos = item.photos || [];
-  const isDonnateur = user && typeof user === 'object' && user.role === 'donnateur';
-  const isValidated = user && typeof user === 'object' && user.status === 'validated' && !isDonnateur;
+  const isDonateur = user && typeof user === 'object' && user.role === 'donateur';
+  const isValidated = user && typeof user === 'object' && user.status === 'validated' && !isDonateur;
   const isOwner = !!item.isOwner;
   const isAdmin = isValidated && user.role === 'admin';
   const canManage = isOwner || isAdmin;
@@ -148,8 +148,8 @@ export default function ListingDetail() {
                 </div>
               )}
 
-              {item.offererIsDonnateur && item.offererUsername && (
-                <div className="border-t border-border pt-6" data-testid="listing-offerer-donnateur-block">
+              {item.offererIsDonateur && item.offererUsername && (
+                <div className="border-t border-border pt-6" data-testid="listing-offerer-donateur-block">
                   <p className="text-base">
                     Aangeboden door <span className="font-medium">{item.offererUsername}</span>{' '}
                     <span className="text-muted-foreground italic">(geen In Limbo partner)</span>
