@@ -237,3 +237,32 @@ class CheckoutItem(BaseModel):
 class CheckoutCreate(BaseModel):
     organisationId: str
     items: List[CheckoutItem] = Field(..., min_length=1)
+
+
+# ---------- Notifications ----------
+NotificationType = Literal[
+    'new_application',
+    'selected_as_receiver',
+    'deadline_expired',
+    'application_withdrawn',
+    'unrehomed',
+    'account_validated',
+]
+
+
+class EmailPreferences(BaseModel):
+    new_application: bool = True
+    selected_as_receiver: bool = True
+    deadline_expired: bool = True
+    application_withdrawn: bool = True
+    unrehomed: bool = True
+    account_validated: bool = True
+
+
+class EmailPreferencesUpdate(BaseModel):
+    new_application: Optional[bool] = None
+    selected_as_receiver: Optional[bool] = None
+    deadline_expired: Optional[bool] = None
+    application_withdrawn: Optional[bool] = None
+    unrehomed: Optional[bool] = None
+    account_validated: Optional[bool] = None

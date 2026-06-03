@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
+
+const EMAIL_PREF_LABELS = [
+  { key: 'new_application', label: 'Nieuwe aanvraag op mijn aanbieding' },
+  { key: 'selected_as_receiver', label: 'Aangeduid als ontvanger' },
+  { key: 'application_withdrawn', label: 'Aanvraag ingetrokken door ontvanger' },
+  { key: 'unrehomed', label: 'Aanbieding terug beschikbaar na unrehome' },
+];
 
 export default function Profiel() {
   const { user, refresh } = useAuth();
@@ -18,6 +25,31 @@ export default function Profiel() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const [prefs, setPrefs] = useState(null);
+  const [prefMsg, setPrefMsg] = useState('');
+
+  useEffect(() => {
+    api.get('/users/me/email-preferences')
+      .then(({ data }) => setPrefs(data))
+      .catch(() => setPrefs({}));
+  }, []);
+
+  const togglePref = async (key) => {
+    if (!prefs) return;
+    const next = { ...prefs, [key]: !prefs[key] };
+    setPrefs(next);
+    setPrefMsg('');
+    try {
+      const { data } = await api.patch('/users/me/email-preferences', { [key]: next[key] });
+      setPrefs(data);
+      setPrefMsg('Opgeslagen');
+      setTimeout(() => setPrefMsg(''), 1500);
+    } catch (e) {
+      setPrefs(prefs); // revert
+      alert(formatApiError(e));
+    }
+  };
 
   const save = async (e) => {
     e.preventDefault();
@@ -114,6 +146,39 @@ export default function Profiel() {
         <p className="overline mb-2">Account</p>
         <p className="text-muted-foreground">Rol: {user.role} · Status: {user.status}</p>
       </div>*/}
+
+      <div className="mt-16 border-t border-border pt-6" data-testid="profiel-email-prefs">
+        <div className="flex items-end justify-between gap-3 mb-4">
+          <div>
+            <p className="overline mb-2">E-mailvoorkeuren</p>
+            <p className="text-sm text-muted-foreground">
+              Beheer welke meldingen je per e-mail wil ontvangen. In-app notificaties krijg je sowieso.
+            </p>
+          </div>
+          {prefMsg && (
+            <span className="text-xs text-[#34D399] font-medium" data-testid="email-prefs-saved">
+              {prefMsg}
+            </span>
+          )}
+        </div>
+        <ul className="divide-y divide-border border-y border-border">
+          {EMAIL_PREF_LABELS.map((p) => (
+            <li key={p.key} className="py-3 flex items-center justify-between gap-4">
+              <span className="text-sm">{p.label}</span>
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={prefs ? !!prefs[p.key] : true}
+                  onChange={() => togglePref(p.key)}
+                  disabled={!prefs}
+                  data-testid={`email-pref-${p.key}`}
+                  className="h-5 w-5 accent-[#34D399] cursor-pointer"
+                />
+              </label>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

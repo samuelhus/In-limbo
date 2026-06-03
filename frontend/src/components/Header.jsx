@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from './Logo';
+import NotificationCenter from './NotificationCenter';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -188,6 +189,7 @@ export default function Header() {
           )}
           {isLoggedIn && (
             <>
+              <NotificationCenter />
               <Link to="/profiel" data-testid="header-profile-link" className="text-sm text-foreground/80 hover:text-foreground transition hidden sm:inline">
                 {displayName}
               </Link>
@@ -315,6 +317,17 @@ export default function Header() {
                   className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
                 >
                   Admin
+                </NavLink>
+              )}
+
+              {isLoggedIn && (
+                <NavLink
+                  to="/notificaties"
+                  data-testid="mobile-nav-notificaties"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+                >
+                  Notificaties
                 </NavLink>
               )}
 

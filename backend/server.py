@@ -24,7 +24,12 @@ from models import (
     ListingBase, ListingCreateBody, ListingUpdate, OrgUpdate, UserUpdate,
     NewsPostCreate, NewsPostUpdate,
     CheckoutCreate,
+    EmailPreferencesUpdate,
     ApplicationCreate, SelectApplicantBody,
+)
+from notifications import (
+    create_notification, send_email, maybe_send_email, render_email,
+    purge_old_notifications, FRONTEND_URL,
 )
 from auth import (
     hash_password, verify_password, create_access_token,
@@ -312,6 +317,84 @@ async def update_me(body: UserUpdate, user: dict = Depends(get_current_user)):
         await db.users.update_one({"id": user["id"]}, {"$set": update})
     fresh = await db.users.find_one({"id": user["id"]})
     return strip_mongo(fresh)
+
+
+DEFAULT_EMAIL_PREFS = {
+    "new_application": True,
+    "selected_as_receiver": True,
+    "deadline_expired": True,
+    "application_withdrawn": True,
+    "unrehomed": True,
+    "account_validated": True,
+}
+
+
+@api.get("/users/me/email-preferences")
+async def get_email_prefs(user: dict = Depends(get_current_user)):
+    prefs = (user or {}).get("emailPreferences") or {}
+    return {**DEFAULT_EMAIL_PREFS, **prefs}
+
+
+@api.patch("/users/me/email-preferences")
+async def update_email_prefs(body: EmailPreferencesUpdate, user: dict = Depends(get_current_user)):
+    update = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
+    if update:
+        current = (user or {}).get("emailPreferences") or {}
+        merged = {**current, **update}
+        await db.users.update_one({"id": user["id"]}, {"$set": {"emailPreferences": merged}})
+    fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "emailPreferences": 1})
+    return {**DEFAULT_EMAIL_PREFS, **(fresh.get("emailPreferences") or {})}
+
+
+# --------------------------------------------------------------------------
+# NOTIFICATIONS
+# --------------------------------------------------------------------------
+def _serialize_notif(doc: dict) -> dict:
+    return {
+        "id": doc["id"],
+        "type": doc.get("type"),
+        "message": doc.get("message"),
+        "listingId": doc.get("listingId"),
+        "listingTitle": doc.get("listingTitle"),
+        "read": bool(doc.get("read", False)),
+        "createdAt": doc.get("createdAt"),
+    }
+
+
+@api.get("/notifications/mine")
+async def my_notifications(user: dict = Depends(get_current_user)):
+    docs = await db.notifications.find({"userId": user["id"]}).sort("createdAt", -1).to_list(200)
+    return [_serialize_notif(d) for d in docs]
+
+
+@api.patch("/notifications/{notif_id}/read")
+async def mark_notification_read(notif_id: str, user: dict = Depends(get_current_user)):
+    await db.notifications.update_one(
+        {"id": notif_id, "userId": user["id"]},
+        {"$set": {"read": True}},
+    )
+    return {"ok": True}
+
+
+@api.patch("/notifications/read-all")
+async def mark_all_notifications_read(user: dict = Depends(get_current_user)):
+    res = await db.notifications.update_many(
+        {"userId": user["id"], "read": False},
+        {"$set": {"read": True}},
+    )
+    return {"ok": True, "modified": res.modified_count}
+
+
+@api.delete("/notifications/clear-all")
+async def clear_all_notifications(user: dict = Depends(get_current_user)):
+    res = await db.notifications.delete_many({"userId": user["id"]})
+    return {"ok": True, "deleted": res.deleted_count}
+
+
+@api.delete("/notifications/{notif_id}")
+async def delete_notification(notif_id: str, user: dict = Depends(get_current_user)):
+    await db.notifications.delete_one({"id": notif_id, "userId": user["id"]})
+    return {"ok": True}
 
 
 # --------------------------------------------------------------------------
@@ -670,6 +753,25 @@ async def apply_to_listing(
         "updatedAt": now,
     }
     await db.applications.insert_one(app_doc)
+
+    # NOTIFY: aanbieder krijgt nieuwe-aanvraag notificatie + e-mail
+    offerer = await db.users.find_one({"id": listing["userId"]})
+    applicant_org_name = None
+    if user.get("organisationId"):
+        ao = await db.organisations.find_one({"id": user["organisationId"]}, {"_id": 0, "name": 1})
+        applicant_org_name = ao["name"] if ao else None
+    applicant_name = applicant_org_name or user.get("username") or f'{user.get("firstName","")} {user.get("lastName","")}'.strip()
+    msg = f'{applicant_name} heeft een aanvraag gedaan voor "{listing.get("title","")}"'
+    await create_notification(db, listing["userId"], "new_application", msg, listing_id, listing.get("title"))
+    cta_url = f"{FRONTEND_URL}/aanbieding/{listing_id}"
+    html = render_email(
+        "Nieuwe aanvraag op je aanbieding",
+        [msg + ".", "Bekijk de motivatie en beslis wie de ontvanger wordt."],
+        cta_text="Bekijk aanvraag →", cta_url=cta_url,
+    )
+    if offerer:
+        await maybe_send_email(db, offerer["id"], "new_application", offerer.get("email"),
+                               "Nieuwe aanvraag op je aanbieding", html)
     return strip_mongo(app_doc)
 
 
@@ -700,6 +802,20 @@ async def withdraw_application(application_id: str, user: dict = Depends(get_val
             {"id": listing_id},
             {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
         )
+        # NOTIFY: aanbieder
+        listing = await db.listings.find_one({"id": listing_id})
+        offerer = await db.users.find_one({"id": listing["userId"]}) if listing else None
+        if offerer:
+            applicant_name = user.get("firstName") or user.get("username") or "Een aanvrager"
+            msg = f'{applicant_name} heeft zijn aanvraag ingetrokken voor "{listing.get("title","")}". Je kan een nieuwe ontvanger aanduiden.'
+            await create_notification(db, offerer["id"], "application_withdrawn", msg, listing_id, listing.get("title"))
+            html = render_email(
+                "Aanvraag ingetrokken — kies een nieuwe ontvanger",
+                [msg, "De aanbieding staat opnieuw open en eerdere openstaande aanvragen zijn heropend."],
+                cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+            )
+            await maybe_send_email(db, offerer["id"], "application_withdrawn", offerer.get("email"),
+                                   "Aanvraag ingetrokken — kies een nieuwe ontvanger", html)
     return {"ok": True}
 
 
@@ -823,6 +939,19 @@ async def select_applicant(
             "createdAt": now,
         }
         await db.platform_transfers.insert_one(transfer_doc)
+
+    # NOTIFY: geselecteerde aanvrager
+    receiver = await db.users.find_one({"id": app_doc["applicantUserId"]})
+    if receiver:
+        msg = f'Je bent aangeduid als ontvanger van "{listing.get("title","")}". Bekijk de contactgegevens van de aanbieder.'
+        await create_notification(db, receiver["id"], "selected_as_receiver", msg, listing_id, listing.get("title"))
+        html = render_email(
+            "Je bent geselecteerd als ontvanger",
+            [msg, "Spreek af met de aanbieder en haal het materiaal op."],
+            cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+        )
+        await maybe_send_email(db, receiver["id"], "selected_as_receiver", receiver.get("email"),
+                               "Je bent geselecteerd als ontvanger", html)
     return {"ok": True}
 
 
@@ -844,7 +973,23 @@ async def unrehome(listing_id: str, user: dict = Depends(get_donateur_or_validat
     listing = await _require_listing_owner_or_admin(listing_id, user)
     if listing["status"] != "herbestemd":
         raise HTTPException(400, "Deze aanbieding is niet herbestemd")
+    selected_id = listing.get("selectedApplicantId")
     await _reset_listing_to_available(listing_id)
+    # NOTIFY: vorige geselecteerde ontvanger
+    if selected_id:
+        app_doc = await db.applications.find_one({"id": selected_id})
+        if app_doc:
+            receiver = await db.users.find_one({"id": app_doc["applicantUserId"]})
+            if receiver:
+                msg = f'De aanbieding "{listing.get("title","")}" is terug beschikbaar. Je aanvraag is opnieuw open.'
+                await create_notification(db, receiver["id"], "unrehomed", msg, listing_id, listing.get("title"))
+                html = render_email(
+                    "Aanbieding terug beschikbaar",
+                    [msg, "Je staat opnieuw in de wachtrij voor deze aanbieding."],
+                    cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+                )
+                await maybe_send_email(db, receiver["id"], "unrehomed", receiver.get("email"),
+                                       "Aanbieding terug beschikbaar", html)
     return {"ok": True}
 
 
@@ -1046,6 +1191,19 @@ async def admin_decide_user(
                 {"id": org["id"]},
                 {"$set": {"status": "active", "updatedAt": now}},
             )
+        # EMAIL: welkomstmail (geen in-app notificatie)
+        first = target.get("firstName") or target.get("username") or ""
+        html = render_email(
+            "Welkom bij In Limbo",
+            [
+                f"Dag {first},",
+                "Je account is geactiveerd. Je hebt nu toegang tot de volledige catalogus en kan aanvragen indienen of materiaal aanbieden.",
+                "Bedankt om mee te bouwen aan een circulaire culturele sector in Brussel.",
+            ],
+            cta_text="Ga naar het platform →", cta_url=f"{FRONTEND_URL}/catalogus",
+        )
+        await maybe_send_email(db, user_id, "account_validated", target.get("email"),
+                               "Welkom bij In Limbo — je account is geactiveerd", html)
         return {"ok": True, "status": "validated"}
 
     # reject

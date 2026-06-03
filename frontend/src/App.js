@@ -28,6 +28,7 @@ import OverOns from '@/pages/OverOns';
 import Nieuws from '@/pages/Nieuws';
 import NieuwsDetail from '@/pages/NieuwsDetail';
 import Checkout from '@/pages/Checkout';
+import Notificaties from '@/pages/Notificaties';
 
 function NotFound() {
   return (
@@ -56,6 +57,14 @@ export default function App() {
               <Route path="/nieuws" element={<Nieuws />} />
               <Route path="/nieuws/:id" element={<NieuwsDetail />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route
+                path="/notificaties"
+                element={
+                  <ProtectedRoute allowDonateur>
+                    <Notificaties />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/wachtkamer"

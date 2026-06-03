@@ -2,18 +2,40 @@
 from __future__ import annotations
 from datetime import datetime, timezone, timedelta
 
+from notifications import create_notification, purge_old_notifications
+
 
 async def archive_expired_listings(db) -> int:
     """Set status='gearchiveerd' on listings where deadline < today and not recurrent."""
     today_iso = datetime.now(timezone.utc).date().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Snapshot listings that will be archived so we can notify their owners
+    to_archive = await db.listings.find(
+        {
+            "isRecurrent": False,
+            "deadline": {"$ne": None, "$lt": today_iso},
+            "status": "beschikbaar",
+        },
+        {"_id": 0, "id": 1, "userId": 1, "title": 1},
+    ).to_list(None)
+
     result = await db.listings.update_many(
         {
             "isRecurrent": False,
             "deadline": {"$ne": None, "$lt": today_iso},
             "status": "beschikbaar",
         },
-        {"$set": {"status": "gearchiveerd", "updatedAt": datetime.now(timezone.utc).isoformat()}},
+        {"$set": {"status": "gearchiveerd", "updatedAt": now}},
     )
+
+    for lst in to_archive:
+        msg = f'De deadline van je aanbieding "{lst.get("title","")}" is vervallen.'
+        await create_notification(db, lst["userId"], "deadline_expired", msg, lst["id"], lst.get("title"))
+
+    # Purge old notifications opportunistically
+    await purge_old_notifications(db, days=30)
+
     return result.modified_count
 
 
