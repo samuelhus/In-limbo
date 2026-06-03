@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import html2canvas from 'html2canvas';
 import { api } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
+import InstagramTemplate from '@/components/InstagramTemplate';
 import { cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -37,8 +39,37 @@ function FilterPanel({ status, setStatus, onClose }) {
   );
 }
 
-function ListingTile({ item, isValidated }) {
+function ListingTile({ item, isValidated, isAdmin }) {
   const navigate = useNavigate();
+  const [exporting, setExporting] = useState(false);
+  const exportRef = useRef(null);
+
+  const handleExport = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (exporting || !item.photos?.[0]) return;
+    setExporting(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const canvas = await html2canvas(exportRef.current, {
+        useCORS: true,
+        allowTaint: false,
+        scale: 1,
+        width: 1080,
+        height: 1350,
+        backgroundColor: null,
+      });
+      const link = document.createElement('a');
+      link.download = `${item.title.replace(/\s+/g, '-').toLowerCase()}-inlimbo.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Export mislukt:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const photo = item.photos?.[0];
   const isDonateurOffer = !item.limited && item.offererIsDonateur && item.offererUsername;
   const showOfferer = !item.limited && item.offererFirstName && item.organisation;
@@ -70,6 +101,17 @@ function ListingTile({ item, isValidated }) {
           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">geen foto</div>
         )}
         <div className="absolute top-3 left-3"><StatusBadge status={item.status} /></div>
+        {isAdmin && item.photos?.[0] && (
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            title="Exporteer als Instagram afbeelding"
+            data-testid={`export-instagram-btn-${item.id}`}
+            className="absolute top-3 right-3 bg-black/50 hover:bg-black/80 text-white w-8 h-8 flex items-center justify-center transition-colors disabled:opacity-50 z-10 text-base"
+          >
+            {exporting ? '…' : '↓'}
+          </button>
+        )}
         {item.isRecurrent && (
           <div className="absolute bottom-3 left-3 text-[10px] uppercase tracking-widest bg-background/90 px-2 py-0.5">
             Recurrent
@@ -111,6 +153,24 @@ function ListingTile({ item, isValidated }) {
           <p className="mt-2 text-xs text-muted-foreground italic">Log in voor de volledige aanbieding</p>
         )}
       </div>
+
+      {isAdmin && item.photos?.[0] && (
+        <div
+          ref={exportRef}
+          style={{
+            position: 'fixed',
+            top: '-99999px',
+            left: '-99999px',
+            width: '1080px',
+            height: '1350px',
+            overflow: 'hidden',
+            zIndex: -1,
+            pointerEvents: 'none',
+          }}
+        >
+          <InstagramTemplate listing={item} />
+        </div>
+      )}
     </div>
   );
 }
@@ -126,6 +186,7 @@ export default function Catalogus() {
 
   const limit = 20;
   const isValidated = user && typeof user === 'object' && user.status === 'validated';
+  const isAdmin = user && typeof user === 'object' && user.role === 'admin';
 
   const load = useCallback(async (reset = false) => {
     setLoading(true);
@@ -197,7 +258,7 @@ export default function Catalogus() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
             {items.map((item) => (
-              <ListingTile key={item.id} item={item} isValidated={isValidated} />
+              <ListingTile key={item.id} item={item} isValidated={isValidated} isAdmin={isAdmin} />
             ))}
           </div>
 
