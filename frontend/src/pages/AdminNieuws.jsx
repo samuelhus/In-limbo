@@ -3,7 +3,7 @@ import { api, formatApiError } from '@/lib/api';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { CATEGORY_LABELS, formatDateNL } from './Nieuws';
 
-const CATEGORIES = ['evenement', 'artikel', 'opleidingsmoment', 'oproep', 'ander'];
+const CATEGORIES = ['evenement', 'artikel', 'giveaway', 'opleidingsmoment', 'oproep', 'ander'];
 
 const EMPTY = { title: '', category: 'artikel', content: '', photo: '' };
 

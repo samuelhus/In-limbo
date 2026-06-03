@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 export const CATEGORY_LABELS = {
   evenement: 'Evenement',
   artikel: 'Artikel',
+  giveaway: 'Giveaway',
   opleidingsmoment: 'Opleidingsmoment',
   oproep: 'Oproep voor hulp',
   ander: 'Ander',
@@ -13,6 +14,7 @@ export const CATEGORY_LABELS = {
 export const CATEGORY_COLORS = {
   evenement: '#FBBF24',
   artikel: '#60A5FA',
+  giveaway: '#34D399',
   opleidingsmoment: '#A78BFA',
   oproep: '#F87171',
   ander: '#9CA3AF',

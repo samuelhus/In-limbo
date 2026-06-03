@@ -198,7 +198,7 @@ class ListingUpdate(BaseModel):
 
 
 # ---------- News ----------
-NewsCategory = Literal['evenement', 'artikel', 'opleidingsmoment', 'oproep', 'ander']
+NewsCategory = Literal['evenement', 'artikel', 'giveaway', 'opleidingsmoment', 'oproep', 'ander']
 
 
 class NewsPostBase(BaseModel):
