@@ -29,6 +29,7 @@ import Nieuws from '@/pages/Nieuws';
 import NieuwsDetail from '@/pages/NieuwsDetail';
 import Checkout from '@/pages/Checkout';
 import Notificaties from '@/pages/Notificaties';
+import Voorwaarden from '@/pages/Voorwaarden';
 
 function NotFound() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
               <Route path="/nieuws" element={<Nieuws />} />
               <Route path="/nieuws/:id" element={<NieuwsDetail />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/voorwaarden" element={<Voorwaarden />} />
               <Route
                 path="/notificaties"
                 element={
