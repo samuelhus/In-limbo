@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '@/lib/api';
-import { CATEGORY_LABELS, CATEGORY_COLORS } from './Nieuws';
+import { CATEGORY_LABELS, CATEGORY_COLORS, formatDateNL } from './Nieuws';
 
 const HERO_BG =
   'https://static.prod-images.emergentagent.com/jobs/40e00778-584d-41f8-b6ee-4e48e961daf5/images/b211452b858296af0d927f008d058751bc1853be53d87eb88b8cc901809dbac6.png';
@@ -73,12 +73,33 @@ function MagazijnWidget({ align = 'right' }) {
 
 export default function Landing() {
   const [news, setNews] = useState([]);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     api.get('/news')
-      .then(({ data }) => setNews(data.slice(0, 3)))
+      .then(({ data }) => setNews(data.slice(0, 5)))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (news.length === 0) return;
+    timerRef.current = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % news.length);
+    }, 5000);
+    return () => clearInterval(timerRef.current);
+  }, [news.length]);
+
+  const goTo = (index) => {
+    clearInterval(timerRef.current);
+    setActiveSlide(index);
+    timerRef.current = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % news.length);
+    }, 5000);
+  };
+
+  const prevSlide = () => goTo((activeSlide - 1 + news.length) % news.length);
+  const nextSlide = () => goTo((activeSlide + 1) % news.length);
 
   return (
     <div className="min-h-[calc(100vh-4rem)]" data-testid="landing-page">
@@ -178,41 +199,91 @@ export default function Landing() {
               Alle berichten →
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {news.map((p) => {
+          <div className="grid grid-cols-1">
+            {news.length > 0 && (() => {
+              const p = news[activeSlide];
               const color = CATEGORY_COLORS[p.category] || CATEGORY_COLORS.ander;
               return (
-                <Link
-                  key={p.id}
-                  to={`/nieuws/${p.id}`}
-                  data-testid={`landing-news-card-${p.id}`}
-                  className="group block border border-border hover:border-foreground transition-colors bg-surface"
-                >
-                  <div className="aspect-[4/3] overflow-hidden">
+                <div className="relative overflow-hidden" data-testid="landing-news-slider">
+                  <Link
+                    to={`/nieuws/${p.id}`}
+                    className="block relative aspect-[16/7] overflow-hidden group"
+                    data-testid={`landing-news-slide-${p.id}`}
+                  >
                     {p.photo ? (
                       <img
                         src={p.photo}
                         alt={p.title}
-                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                       />
                     ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center text-white text-2xl font-bold tracking-tight"
-                        style={{ backgroundColor: color }}
-                      >
-                        {CATEGORY_LABELS[p.category]}
-                      </div>
+                      <div className="w-full h-full" style={{ backgroundColor: color }} />
                     )}
-                  </div>
-                  <div className="p-5">
-                    <p className="overline" style={{ color }}>{CATEGORY_LABELS[p.category]}</p>
-                    <h3 className="mt-2 text-xl font-semibold tracking-tight leading-tight">
-                      {p.title}
-                    </h3>
-                  </div>
-                </Link>
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+                    <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span
+                          className="text-xs font-medium uppercase tracking-widest px-2 py-0.5"
+                          style={{ backgroundColor: color, color: '#fff' }}
+                        >
+                          {CATEGORY_LABELS[p.category]}
+                        </span>
+                        <span className="text-xs text-white/60">
+                          {formatDateNL(p.createdAt)}
+                        </span>
+                      </div>
+                      <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-tight mb-3 max-w-2xl">
+                        {p.title}
+                      </h3>
+                      {p.content && (
+                        <p className="text-sm text-white/75 leading-relaxed max-w-xl line-clamp-2">
+                          {p.content.replace(/<[^>]+>/g, '').slice(0, 160)}
+                          {p.content.length > 160 ? '…' : ''}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+
+                  {news.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => { e.preventDefault(); prevSlide(); }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-10 h-10 flex items-center justify-center transition-colors"
+                        aria-label="Vorige"
+                        data-testid="slider-prev"
+                      >
+                        ←
+                      </button>
+
+                      <button
+                        onClick={(e) => { e.preventDefault(); nextSlide(); }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-10 h-10 flex items-center justify-center transition-colors"
+                        aria-label="Volgende"
+                        data-testid="slider-next"
+                      >
+                        →
+                      </button>
+
+                      <div className="absolute bottom-4 right-6 flex gap-2">
+                        {news.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={(e) => { e.preventDefault(); goTo(i); }}
+                            className={`h-2 transition-all ${
+                              i === activeSlide ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/70 w-2'
+                            }`}
+                            aria-label={`Slide ${i + 1}`}
+                            data-testid={`slider-dot-${i}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               );
-            })}
+            })()}
           </div>
         </section>
       )}
