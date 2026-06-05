@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from './Logo';
 import NotificationCenter from './NotificationCenter';
+import { api } from '@/lib/api';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -25,6 +26,19 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [aanbiedingenOpen, setAanbiedingenOpen] = useState(false);
   const [mobileAanbiedingenOpen, setMobileAanbiedingenOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setUnreadCount(0);
+      return;
+    }
+    api.get('/notifications/mine')
+      .then(({ data }) => {
+        setUnreadCount(data.filter((n) => !n.read).length);
+      })
+      .catch(() => {});
+  }, [isLoggedIn, location.pathname]);
 
   const mobileMenuRef = useRef(null);
   const hamburgerRef = useRef(null);
@@ -205,7 +219,18 @@ export default function Header() {
         </div>
 
         {/* MOBILE HAMBURGER */}
-        <div className="md:hidden relative">
+        <div className="md:hidden relative flex items-center gap-2">
+          {isLoggedIn && unreadCount > 0 && !mobileOpen && (
+            <Link
+              to="/notificaties"
+              className="relative p-1"
+              data-testid="mobile-notif-badge"
+            >
+              <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            </Link>
+          )}
           <button
             ref={hamburgerRef}
             onClick={() => setMobileOpen((v) => !v)}
@@ -325,9 +350,16 @@ export default function Header() {
                   to="/notificaties"
                   data-testid="mobile-nav-notificaties"
                   onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+                  className={({ isActive }) =>
+                    `${mobileItemClass} flex items-center justify-between ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`
+                  }
                 >
-                  Notificaties
+                  <span>Notificaties</span>
+                  {unreadCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </NavLink>
               )}
 
