@@ -330,15 +330,16 @@ async def download_org_stats_report(
     date_prefix = str(year)
     date_filter = {"$gte": f"{date_prefix}-01-01", "$lt": f"{int(year) + 1}-01-01"}
 
-    # Platform transfers — received & given
+    # Platform transfers — received & given (handles both new senderOrganisationId and legacy offererOrganisationId)
     platform_given = await db.platform_transfers.find(
-        {"senderOrganisationId": org_id, "createdAt": date_filter},
+        {
+            "$or": [
+                {"senderOrganisationId": org_id},
+                {"offererOrganisationId": org_id},
+            ],
+            "createdAt": date_filter,
+        },
     ).to_list(None)
-    if not platform_given:
-        # Backwards-compat: older docs used offererOrganisationId
-        platform_given = await db.platform_transfers.find(
-            {"offererOrganisationId": org_id, "createdAt": date_filter},
-        ).to_list(None)
     platform_received = await db.platform_transfers.find(
         {"receiverOrganisationId": org_id, "createdAt": date_filter},
     ).to_list(None)

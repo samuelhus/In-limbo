@@ -98,6 +98,14 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Jaarverslag PDF per organisatie ✅
+- **Backend**: `reportlab==4.2.0` toegevoegd. Nieuwe endpoints in `routes/organisations.py`:
+  - `GET /api/organisations/me/stats/report?year=YYYY&lang=nl|fr` — genereert A4 PDF met header (logo + org-naam), 2×2 overzichtsgrid (herbestemd/ontvangen platform + gedoneerd/ontvangen magazijn), detail-tabel van checkin sessies met materiaal + gewicht + beschrijving, footer met pagina-nummering. NL & FR vertalingen via TRANSLATIONS dict. Auto-pagination over meerdere pagina's.
+  - `GET /api/organisations/me/stats/available-years` — org-scoped lijst van jaartallen met activiteit.
+- **Data**: aggregeert over `platform_transfers` (sender + receiver, met legacy `offererOrganisationId` fallback via `$or`), `checkins`, en `checkouts` collections.
+- **Frontend**: `Profiel.jsx` toont nieuwe "Jaarverslag" sectie (alleen voor non-donateur users met `organisationId`) onder "Mijn organisatie →" knop, met jaar-dropdown en "Download PDF →" knop. Download via `responseType: 'blob'` + anchor click.
+- **Tests**: 10/10 pytest in `test_org_report.py` (auth 401, donateur 400, validatie 422, NL+FR vertalingen, Content-Disposition, aggregatie met seed data, checkin detail tabel rendering met auto-pagination). Frontend Playwright: download-flow + filename + gating per rol gevalideerd.
+
 ### 2026-02-06 — Magazijn checkin functie ✅
 - **Backend**: nieuwe `POST /api/checkin` endpoint (admin-only) in `routes/checkin.py`. Slaat docs op in nieuwe `db.checkins` collection met `type='magazijn_checkin'`. Pydantic-modellen `CheckinItem` (material + weightKg + optionele description ≤200 chars) en `CheckinCreate` (organisationId + items min_length=1) toegevoegd aan `models.py`.
 - **Stats uitgebreid**: `/admin/stats` retourneert nu ook `checkins_count`, `totals.checkin_kg` en `by_org_checkin` (sorted desc). `/admin/stats/available-periods` includeert ook checkin-jaartallen.

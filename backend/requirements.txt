@@ -126,3 +126,4 @@ yarl==1.24.2
 zipp==4.1.0
 reportlab==4.2.0
 chardet==7.4.3
+pypdf==6.13.0
