@@ -611,8 +611,10 @@ function AdminGebruikers() {
                data-testid={`admin-user-row-${u.id}`}>
             <div className="md:col-span-5">
               <p className="font-medium">
-                {u.role === 'donateur' ? u.username : `${u.firstName || ''} ${u.lastName || ''}`.trim() || '—'}
-              </p>
+                {u.role === 'donateur'
+                ? <Link to={`/admin/donateur/${u.id}`} className="hover:underline">{u.username}</Link>
+                : `${u.firstName || ''} ${u.lastName || ''}`.trim() || '—'
+                }              </p>
               <p className="text-sm text-muted-foreground">{u.email}</p>
             </div>
             <div className="md:col-span-3 text-sm text-muted-foreground">

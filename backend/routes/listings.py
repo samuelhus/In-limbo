@@ -12,6 +12,8 @@ import cloudinary.utils
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
 
 from deps import db, now_iso, strip_mongo
+from auth import get_admin_user
+
 from models import ListingCreateBody, ListingUpdate
 from auth import (
     get_current_user_optional, get_donateur_or_validated_user,
@@ -117,6 +119,11 @@ async def list_listings(
     items = await _enrich_listings(items)
     return {"total": total, "items": items, "skip": skip, "limit": limit}
 
+@router.get("/listings/by-user/{user_id}")
+async def listings_by_user(user_id: str, admin: dict = Depends(get_admin_user)):
+    cursor = db.listings.find({"userId": user_id}).sort("createdAt", -1)
+    items = await cursor.to_list(200)
+    return [strip_mongo(i) for i in items]
 
 @router.get("/listings/mine")
 async def my_listings(user: dict = Depends(get_donateur_or_validated_user)):

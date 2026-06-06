@@ -30,6 +30,8 @@ import NieuwsDetail from '@/pages/NieuwsDetail';
 import Checkout from '@/pages/Checkout';
 import Notificaties from '@/pages/Notificaties';
 import Voorwaarden from '@/pages/Voorwaarden';
+import AdminDonateurListings from '@/pages/AdminDonateurListings';
+
 
 function NotFound() {
   return (
@@ -143,6 +145,15 @@ export default function App() {
                 element={
                   <ProtectedRoute requireAdmin requireValidated={false}>
                     <AdminPanel />
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/donateur/:userId"
+                element={
+                  <ProtectedRoute requireAdmin requireValidated={false}>
+                    <AdminDonateurListings />
                   </ProtectedRoute>
                 }
               />
