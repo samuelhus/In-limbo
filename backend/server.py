@@ -1307,7 +1307,9 @@ async def admin_update_user(user_id: str, body: AdminUserUpdate, admin: dict = D
 
 @api.delete("/admin/users/{user_id}")
 async def admin_delete_user(user_id: str, admin: dict = Depends(get_admin_user)):
-    """Delete any user (donateur, user, admin). Archives all their listings."""
+    """Delete any user (donateur, user, admin). Archives all their listings and removes their applications."""
+    if user_id == admin["id"]:
+        raise HTTPException(400, "Je kan jezelf niet verwijderen")
     existing = await db.users.find_one({"id": user_id})
     if not existing:
         raise HTTPException(404, "Gebruiker niet gevonden")
@@ -1316,6 +1318,7 @@ async def admin_delete_user(user_id: str, admin: dict = Depends(get_admin_user))
         {"userId": user_id},
         {"$set": {"status": "gearchiveerd", "updatedAt": now_iso()}},
     )
+    await db.applications.delete_many({"applicantUserId": user_id})
     return {"ok": True}
 
 

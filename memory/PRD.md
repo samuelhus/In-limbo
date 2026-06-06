@@ -98,6 +98,14 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Admin gebruikers- & organisatiebeheer ✅
+- **Backend**: `GET/PATCH/DELETE /api/admin/users/{id}` en `/api/admin/organisations/{id}` endpoints. Admin kan nu via UI bewerken (firstName, lastName, email, phone, role, status voor users; name, description, category, address, website, status voor orgs).
+- **Self-delete bescherming**: admin kan zichzelf niet verwijderen (HTTP 400 "Je kan jezelf niet verwijderen").
+- **Cascade bij delete-user**: gebruikers verwijderen archiveert al hun listings én verwijdert hun openstaande applications.
+- **Cascade bij delete-org**: archiveert listings + verwijdert alle gebruikers van die org + verwijdert org doc.
+- **Frontend**: `AdminGebruikers` + `AdminOrganisaties` tabs in `AdminPanel.jsx` met zoekveld (300ms debounce, server-side `?q=`), Bewerken-modal en Verwijderen-knop per rij.
+- **Tests**: 18/18 pytest tests in `/app/backend/tests/test_admin_user_org_management.py` (lijst, search, patch persist, email-conflict, not-found, self-delete blok, cascade verifs, non-admin 401/403).
+
 ### P0 — Volgende iteratie (Fase 2b)
 - Resend e-mailnotificaties: registratie pending, validatie-uitkomst, aanvraag ontvangen, aanvraag geselecteerd/afgewezen, herbestemming bevestigd
 - In-app notification center

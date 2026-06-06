@@ -171,17 +171,15 @@ def test_admin_delete_user_archives_listings(admin_session):
 
 
 def test_admin_delete_self_behavior(admin_session):
-    """Admin shouldn't be able to delete their own account. Currently endpoint may allow it.
-    We test for either a 4xx OR document missing protection."""
+    """Admin shouldn't be able to delete their own account."""
     me = admin_session.get(f"{BASE}/auth/me", timeout=15).json()
     my_id = me["id"]
-    # Dry attempt — DO NOT actually delete seed admin. Test expectation: should be 4xx.
-    # We test by sending PATCH instead to confirm we know own id; then expect DELETE returns 4xx.
-    # If 200 returned, it's a bug — we must restore (impossible since seed will reseed on restart).
-    # To be safe, we DON'T call DELETE on actual admin id. Instead we report this as missing protection
-    # by checking if the endpoint has any self-check. The endpoint code shows no self-check, so:
-    # We'll just assert "self-delete protection is missing" as a known issue (skip destructive call).
-    pytest.skip("Self-delete protection not implemented in backend — flagged in report. Skipping destructive test.")
+    r = admin_session.delete(f"{BASE}/admin/users/{my_id}", timeout=15)
+    assert r.status_code == 400, f"Expected 400 self-delete block, got {r.status_code}: {r.text}"
+    assert "jezelf" in r.json().get("detail", "").lower()
+    # Confirm admin still exists
+    me2 = admin_session.get(f"{BASE}/auth/me", timeout=15).json()
+    assert me2["id"] == my_id
 
 
 def test_admin_delete_org_cascades(admin_session):
