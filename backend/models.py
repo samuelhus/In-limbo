@@ -266,3 +266,24 @@ class EmailPreferencesUpdate(BaseModel):
     application_withdrawn: Optional[bool] = None
     unrehomed: Optional[bool] = None
     account_validated: Optional[bool] = None
+
+
+class AdminUserUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    role: Optional[Literal["user", "admin", "donateur"]] = None
+    status: Optional[Literal["pending", "validated", "rejected"]] = None
+
+
+class AdminOrgUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    name: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    address: Optional[str] = None
+    website: Optional[str] = None
+    status: Optional[Literal["pending", "validated", "active", "inactive"]] = None

@@ -2,10 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { api, formatApiError } from '@/lib/api';
 import AdminNieuws from './AdminNieuws';
+import StatusBadge from '@/components/StatusBadge';
 import { Link } from 'react-router-dom';
 
 const SECTIONS = [
   { key: 'validatie', label: 'Validatie' },
+  { key: 'gebruikers', label: 'Gebruikers' },
+  { key: 'organisaties', label: 'Organisaties' },
   { key: 'nieuws', label: 'Nieuws' },
   { key: 'statistieken', label: 'Statistieken' },
   { key: 'meldingen', label: 'Meldingen' },
@@ -14,6 +17,8 @@ const SECTIONS = [
 
 const SECTION_TITLES = {
   validatie: 'Wachtrij',
+  gebruikers: 'Gebruikers',
+  organisaties: 'Organisaties',
   nieuws: 'Nieuws',
   statistieken: 'Statistieken',
   meldingen: 'Meldingen',
@@ -286,6 +291,10 @@ export default function AdminPanel() {
           </>
         )}
 
+        {section === 'gebruikers' && <AdminGebruikers />}
+
+        {section === 'organisaties' && <AdminOrganisaties />}
+
         {section === 'nieuws' && <AdminNieuws />}
 
         {section === 'statistieken' && <Statistieken />}
@@ -540,3 +549,305 @@ function Statistieken() {
     </div>
   );
 }
+
+const ROLES = ['user', 'admin', 'donateur'];
+const USER_STATUSES = ['pending', 'validated', 'rejected'];
+const ORG_CATEGORIES = [
+  'Beeldende kunsten', 'Educatie', 'Jeugdwerk', 'Podiumkunsten',
+  'Sociaal werk', 'Sport', 'Squat', 'Ander',
+];
+const ORG_STATUSES = ['pending', 'validated', 'active', 'inactive'];
+
+function AdminGebruikers() {
+  const [users, setUsers] = useState([]);
+  const [q, setQ] = useState('');
+  const [editing, setEditing] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = (query = '') => {
+    api.get('/admin/users', { params: query.length >= 2 ? { q: query } : {} })
+      .then(({ data }) => setUsers(data))
+      .catch(() => {});
+  };
+
+  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => load(q), 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const deleteUser = async (userId) => {
+    if (!window.confirm('Gebruiker definitief verwijderen? Hun aanbiedingen worden gearchiveerd.')) return;
+    setBusy(true);
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      load(q);
+    } catch (e) { alert(formatApiError(e)); }
+    finally { setBusy(false); }
+  };
+
+  const saveUser = async (userId, patch) => {
+    setBusy(true);
+    try {
+      await api.patch(`/admin/users/${userId}`, patch);
+      setEditing(null);
+      load(q);
+    } catch (e) { alert(formatApiError(e)); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div data-testid="admin-gebruikers-section">
+      <input
+        className="input-flat w-full max-w-md mb-8"
+        placeholder="Zoek op naam of e-mail..."
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        data-testid="admin-gebruikers-search"
+      />
+      <div className="divide-y divide-border border-y border-border">
+        {users.map((u) => (
+          <div key={u.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+               data-testid={`admin-user-row-${u.id}`}>
+            <div className="md:col-span-5">
+              <p className="font-medium">
+                {u.role === 'donateur' ? u.username : `${u.firstName || ''} ${u.lastName || ''}`.trim() || '—'}
+              </p>
+              <p className="text-sm text-muted-foreground">{u.email}</p>
+            </div>
+            <div className="md:col-span-3 text-sm text-muted-foreground">
+              {u.organisationName || (u.role === 'donateur' ? 'Donateur' : '—')}
+            </div>
+            <div className="md:col-span-2 flex gap-2 items-center">
+              <StatusBadge status={u.status} />
+              <span className="text-xs text-muted-foreground">{u.role}</span>
+            </div>
+            <div className="md:col-span-2 flex gap-2 justify-end">
+              <button onClick={() => setEditing(u)} className="btn-secondary !py-1 px-3 text-xs"
+                      data-testid={`admin-user-edit-${u.id}`}>Bewerken</button>
+              <button onClick={() => deleteUser(u.id)} disabled={busy}
+                      className="text-destructive text-xs hover:underline disabled:opacity-50"
+                      data-testid={`admin-user-delete-${u.id}`}>Verwijderen</button>
+            </div>
+          </div>
+        ))}
+        {users.length === 0 && (
+          <p className="py-8 text-muted-foreground text-sm">Geen gebruikers gevonden.</p>
+        )}
+      </div>
+      {editing && (
+        <AdminUserEditModal user={editing} onSave={saveUser} onClose={() => setEditing(null)} busy={busy} />
+      )}
+    </div>
+  );
+}
+
+function AdminUserEditModal({ user, onSave, onClose, busy }) {
+  const isDonateur = user.role === 'donateur';
+  const [form, setForm] = useState({
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    username: user.username || '',
+    email: user.email || '',
+    phone: user.phone || '',
+    role: user.role || 'user',
+    status: user.status || 'pending',
+  });
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" data-testid="admin-user-edit-modal">
+      <div className="bg-background border border-border p-8 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
+        <p className="overline mb-2">Gebruiker bewerken</p>
+        {isDonateur ? (
+          <div>
+            <label className="label-overline">Gebruikersnaam</label>
+            <input className="input-flat w-full" value={form.username}
+                   onChange={(e) => setForm({ ...form, username: e.target.value })} />
+          </div>
+        ) : (
+          <>
+            <div>
+              <label className="label-overline">Voornaam</label>
+              <input className="input-flat w-full" value={form.firstName}
+                     onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+            </div>
+            <div>
+              <label className="label-overline">Achternaam</label>
+              <input className="input-flat w-full" value={form.lastName}
+                     onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+            </div>
+          </>
+        )}
+        <div>
+          <label className="label-overline">E-mail</label>
+          <input className="input-flat w-full" value={form.email}
+                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        </div>
+        <div>
+          <label className="label-overline">Telefoon</label>
+          <input className="input-flat w-full" value={form.phone}
+                 onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label-overline">Rol</label>
+            <select className="input-flat w-full" value={form.role}
+                    onChange={(e) => setForm({ ...form, role: e.target.value })}>
+              {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label-overline">Status</label>
+            <select className="input-flat w-full" value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              {USER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="flex gap-3 pt-4">
+          <button onClick={() => onSave(user.id, form)} disabled={busy} className="btn-primary"
+                  data-testid="admin-user-edit-save">Opslaan</button>
+          <button onClick={onClose} className="btn-secondary">Annuleren</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminOrganisaties() {
+  const [orgs, setOrgs] = useState([]);
+  const [q, setQ] = useState('');
+  const [editing, setEditing] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = (query = '') => {
+    api.get('/admin/organisations', { params: query.length >= 2 ? { q: query } : {} })
+      .then(({ data }) => setOrgs(data))
+      .catch(() => {});
+  };
+
+  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => load(q), 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const deleteOrg = async (orgId, orgName, userCount) => {
+    if (!window.confirm(`"${orgName}" verwijderen? Dit verwijdert ook ${userCount} gebruiker(s) en archiveert hun aanbiedingen.`)) return;
+    setBusy(true);
+    try {
+      await api.delete(`/admin/organisations/${orgId}`);
+      load(q);
+    } catch (e) { alert(formatApiError(e)); }
+    finally { setBusy(false); }
+  };
+
+  const saveOrg = async (orgId, patch) => {
+    setBusy(true);
+    try {
+      await api.patch(`/admin/organisations/${orgId}`, patch);
+      setEditing(null);
+      load(q);
+    } catch (e) { alert(formatApiError(e)); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div data-testid="admin-organisaties-section">
+      <input
+        className="input-flat w-full max-w-md mb-8"
+        placeholder="Zoek op naam..."
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        data-testid="admin-organisaties-search"
+      />
+      <div className="divide-y divide-border border-y border-border">
+        {orgs.map((org) => (
+          <div key={org.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+               data-testid={`admin-org-row-${org.id}`}>
+            <div className="md:col-span-5">
+              <p className="font-medium">{org.name}</p>
+              <p className="text-sm text-muted-foreground">{org.category}</p>
+            </div>
+            <div className="md:col-span-3 text-sm text-muted-foreground">
+              {org.userCount} gebruiker(s)
+            </div>
+            <div className="md:col-span-2">
+              <StatusBadge status={org.status} />
+            </div>
+            <div className="md:col-span-2 flex gap-2 justify-end">
+              <button onClick={() => setEditing(org)} className="btn-secondary !py-1 px-3 text-xs"
+                      data-testid={`admin-org-edit-${org.id}`}>Bewerken</button>
+              <button onClick={() => deleteOrg(org.id, org.name, org.userCount)} disabled={busy}
+                      className="text-destructive text-xs hover:underline disabled:opacity-50"
+                      data-testid={`admin-org-delete-${org.id}`}>Verwijderen</button>
+            </div>
+          </div>
+        ))}
+        {orgs.length === 0 && (
+          <p className="py-8 text-muted-foreground text-sm">Geen organisaties gevonden.</p>
+        )}
+      </div>
+      {editing && (
+        <AdminOrgEditModal org={editing} onSave={saveOrg} onClose={() => setEditing(null)} busy={busy} />
+      )}
+    </div>
+  );
+}
+
+function AdminOrgEditModal({ org, onSave, onClose, busy }) {
+  const [form, setForm] = useState({
+    name: org.name || '',
+    description: org.description || '',
+    category: org.category || 'Ander',
+    address: org.address || '',
+    website: org.website || '',
+    status: org.status || 'pending',
+  });
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" data-testid="admin-org-edit-modal">
+      <div className="bg-background border border-border p-8 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
+        <p className="overline mb-2">Organisatie bewerken</p>
+        <div>
+          <label className="label-overline">Naam</label>
+          <input className="input-flat w-full" value={form.name}
+                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        </div>
+        <div>
+          <label className="label-overline">Beschrijving</label>
+          <textarea className="input-flat w-full" rows={3} value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        </div>
+        <div>
+          <label className="label-overline">Categorie</label>
+          <select className="input-flat w-full" value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            {ORG_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label-overline">Adres</label>
+          <input className="input-flat w-full" value={form.address}
+                 onChange={(e) => setForm({ ...form, address: e.target.value })} />
+        </div>
+        <div>
+          <label className="label-overline">Website</label>
+          <input className="input-flat w-full" value={form.website}
+                 onChange={(e) => setForm({ ...form, website: e.target.value })} />
+        </div>
+        <div>
+          <label className="label-overline">Status</label>
+          <select className="input-flat w-full" value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}>
+            {ORG_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="flex gap-3 pt-4">
+          <button onClick={() => onSave(org.id, form)} disabled={busy} className="btn-primary"
+                  data-testid="admin-org-edit-save">Opslaan</button>
+          <button onClick={onClose} className="btn-secondary">Annuleren</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

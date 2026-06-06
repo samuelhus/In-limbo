@@ -26,6 +26,7 @@ from models import (
     NewsPostCreate, NewsPostUpdate,
     CheckoutCreate,
     EmailPreferencesUpdate,
+    AdminUserUpdate, AdminOrgUpdate,
     ApplicationCreate, SelectApplicantBody,
 )
 from notifications import (
@@ -1262,14 +1263,105 @@ async def admin_decide_org(
     return {"ok": True}
 
 
+@api.get("/admin/users")
+async def admin_list_users(q: str | None = Query(None), admin: dict = Depends(get_admin_user)):
+    filt: dict = {}
+    if q and len(q) >= 2:
+        regex = {"$regex": q, "$options": "i"}
+        filt["$or"] = [
+            {"firstName": regex}, {"lastName": regex},
+            {"username": regex}, {"email": regex},
+        ]
+    users = await db.users.find(filt, {"_id": 0, "passwordHash": 0}).to_list(500)
+    org_ids = [u["organisationId"] for u in users if u.get("organisationId")]
+    orgs: dict = {}
+    if org_ids:
+        async for o in db.organisations.find({"id": {"$in": org_ids}}, {"_id": 0, "id": 1, "name": 1}):
+            orgs[o["id"]] = o["name"]
+    for u in users:
+        u["organisationName"] = orgs.get(u.get("organisationId"))
+    return users
+
+
+@api.patch("/admin/users/{user_id}")
+async def admin_update_user(user_id: str, body: AdminUserUpdate, admin: dict = Depends(get_admin_user)):
+    existing = await db.users.find_one({"id": user_id})
+    if not existing:
+        raise HTTPException(404, "Gebruiker niet gevonden")
+    update = {"updatedAt": now_iso()}
+    if body.firstName is not None: update["firstName"] = body.firstName
+    if body.lastName is not None: update["lastName"] = body.lastName
+    if body.username is not None: update["username"] = body.username
+    if body.email is not None:
+        clash = await db.users.find_one({"email": body.email.lower(), "id": {"$ne": user_id}})
+        if clash:
+            raise HTTPException(409, "E-mailadres al in gebruik")
+        update["email"] = body.email.lower()
+    if body.phone is not None: update["phone"] = body.phone
+    if body.role is not None: update["role"] = body.role
+    if body.status is not None: update["status"] = body.status
+    await db.users.update_one({"id": user_id}, {"$set": update})
+    updated = await db.users.find_one({"id": user_id}, {"_id": 0, "passwordHash": 0})
+    return strip_mongo(updated)
+
+
 @api.delete("/admin/users/{user_id}")
 async def admin_delete_user(user_id: str, admin: dict = Depends(get_admin_user)):
-    """Delete a donateur account. Archives all their listings."""
-    result = await db.users.delete_one({"id": user_id, "role": "donateur"})
-    if result.deleted_count == 0:
-        raise HTTPException(404, "Donateur niet gevonden of geen donateur-account")
-    await db.listings.update_many({"userId": user_id}, {"$set": {"status": "gearchiveerd", "updatedAt": now_iso()}})
+    """Delete any user (donateur, user, admin). Archives all their listings."""
+    existing = await db.users.find_one({"id": user_id})
+    if not existing:
+        raise HTTPException(404, "Gebruiker niet gevonden")
+    await db.users.delete_one({"id": user_id})
+    await db.listings.update_many(
+        {"userId": user_id},
+        {"$set": {"status": "gearchiveerd", "updatedAt": now_iso()}},
+    )
     return {"ok": True}
+
+
+@api.get("/admin/organisations")
+async def admin_list_organisations(q: str | None = Query(None), admin: dict = Depends(get_admin_user)):
+    filt: dict = {}
+    if q and len(q) >= 2:
+        filt["name"] = {"$regex": q, "$options": "i"}
+    orgs = await db.organisations.find(filt, {"_id": 0}).to_list(500)
+    for org in orgs:
+        org["userCount"] = await db.users.count_documents({"organisationId": org["id"]})
+    return orgs
+
+
+@api.patch("/admin/organisations/{org_id}")
+async def admin_update_organisation(org_id: str, body: AdminOrgUpdate, admin: dict = Depends(get_admin_user)):
+    existing = await db.organisations.find_one({"id": org_id})
+    if not existing:
+        raise HTTPException(404, "Organisatie niet gevonden")
+    update = {"updatedAt": now_iso()}
+    if body.name is not None: update["name"] = body.name
+    if body.description is not None: update["description"] = body.description
+    if body.category is not None: update["category"] = body.category
+    if body.address is not None: update["address"] = body.address
+    if body.website is not None: update["website"] = body.website
+    if body.status is not None: update["status"] = body.status
+    await db.organisations.update_one({"id": org_id}, {"$set": update})
+    updated = await db.organisations.find_one({"id": org_id}, {"_id": 0})
+    return strip_mongo(updated)
+
+
+@api.delete("/admin/organisations/{org_id}")
+async def admin_delete_organisation(org_id: str, admin: dict = Depends(get_admin_user)):
+    existing = await db.organisations.find_one({"id": org_id})
+    if not existing:
+        raise HTTPException(404, "Organisatie niet gevonden")
+    users = await db.users.find({"organisationId": org_id}, {"id": 1}).to_list(None)
+    user_ids = [u["id"] for u in users]
+    if user_ids:
+        await db.listings.update_many(
+            {"userId": {"$in": user_ids}},
+            {"$set": {"status": "gearchiveerd", "updatedAt": now_iso()}},
+        )
+    await db.users.delete_many({"organisationId": org_id})
+    await db.organisations.delete_one({"id": org_id})
+    return {"ok": True, "deletedUsers": len(user_ids)}
 
 
 @api.post("/admin/maintenance/run")
