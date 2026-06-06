@@ -98,6 +98,13 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Magazijn checkin functie ✅
+- **Backend**: nieuwe `POST /api/checkin` endpoint (admin-only) in `routes/checkin.py`. Slaat docs op in nieuwe `db.checkins` collection met `type='magazijn_checkin'`. Pydantic-modellen `CheckinItem` (material + weightKg + optionele description ≤200 chars) en `CheckinCreate` (organisationId + items min_length=1) toegevoegd aan `models.py`.
+- **Stats uitgebreid**: `/admin/stats` retourneert nu ook `checkins_count`, `totals.checkin_kg` en `by_org_checkin` (sorted desc). `/admin/stats/available-periods` includeert ook checkin-jaartallen.
+- **Frontend**: nieuwe `/checkin` route (admin-only via `ProtectedRoute requireAdmin`), 3-stappen wizard (org zoeken → materialen + optionele beschrijving → bevestigen) + success step. Pagina spiegelt UX van `/checkout`.
+- **AdminPanel**: QR-blok toont nu zowel "Checkout pagina →" als "Checkin pagina →" knoppen. Statistieken tab toont nieuwe "Magazijn checkins" sectie met count + kg widgets + "Top organisaties — gedoneerd aan magazijn" tabel.
+- **Tests**: backend 15/15 in `test_checkin.py` (auth 401/403, happy paths single/multi-item incl. description, validatie 404/422 edge cases, stats aggregaties, year-filter). Frontend 27/27 Playwright assertions (auth gating, 3-step flow met description, summary grouping, AdminPanel links + stats sectie).
+
 ### 2026-02-06 — Backend refactor: `server.py` opgesplitst in routers ✅
 - `server.py` van ~1490 regels naar ~95 regels (alleen bootstrap, CORS, startup/shutdown).
 - Nieuwe modulaire structuur in `/app/backend/`:

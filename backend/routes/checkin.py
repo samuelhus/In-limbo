@@ -17,7 +17,7 @@ async def create_checkin(body: CheckinCreate, admin: dict = Depends(get_admin_us
     if not org or org["status"] not in ("validated", "active"):
         raise HTTPException(404, "Organisatie niet gevonden")
     now = now_iso()
-    total = round(sum(item.weightKg for item in body.items), 3)
+    total = round(sum(item.weightKg for item in body.items), 2)
     doc = {
         "id": str(uuid.uuid4()),
         "organisationId": body.organisationId,
@@ -25,7 +25,7 @@ async def create_checkin(body: CheckinCreate, admin: dict = Depends(get_admin_us
         "items": [
             {
                 "material": i.material,
-                "weightKg": round(i.weightKg, 3),
+                "weightKg": round(i.weightKg, 2),
                 "description": i.description,
             }
             for i in body.items
