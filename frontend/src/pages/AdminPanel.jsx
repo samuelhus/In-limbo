@@ -258,7 +258,7 @@ export default function AdminPanel() {
             </section>
 
             {/* Donateurs */}
-            <section className="mt-16">
+           {/* <section className="mt-16">
               <p className="overline mb-4">Donateurs · {queue?.donateurs?.length || 0}</p>
               {(!queue?.donateurs || queue.donateurs.length === 0) && (
                 <p className="text-muted-foreground" data-testid="admin-no-donateurs">Geen donateurs geregistreerd.</p>
@@ -287,7 +287,7 @@ export default function AdminPanel() {
                   </li>
                 ))}
               </ul>
-            </section>
+            </section> */}
           </>
         )}
 
@@ -616,7 +616,10 @@ function AdminGebruikers() {
               <p className="text-sm text-muted-foreground">{u.email}</p>
             </div>
             <div className="md:col-span-3 text-sm text-muted-foreground">
-              {u.organisationName || (u.role === 'donateur' ? 'Donateur' : '—')}
+              {u.organisationId && u.organisationName
+                ? <Link to={`/organisaties/${u.organisationId}`} className="hover:underline">{u.organisationName}</Link>
+                : (u.role === 'donateur' ? 'Donateur' : '—')
+              }
             </div>
             <div className="md:col-span-2 flex gap-2 items-center">
               <StatusBadge status={u.status} />
@@ -765,7 +768,13 @@ function AdminOrganisaties() {
           <div key={org.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
                data-testid={`admin-org-row-${org.id}`}>
             <div className="md:col-span-5">
-              <p className="font-medium">{org.name}</p>
+              <Link
+                to={`/organisaties/${org.id}`}
+                className="font-medium hover:underline"
+                data-testid={`admin-org-name-link-${org.id}`}
+              >
+                {org.name}
+              </Link>
               <p className="text-sm text-muted-foreground">{org.category}</p>
             </div>
             <div className="md:col-span-3 text-sm text-muted-foreground">
