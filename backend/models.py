@@ -239,6 +239,18 @@ class CheckoutCreate(BaseModel):
     items: List[CheckoutItem] = Field(..., min_length=1)
 
 
+# ---------- Magazijn checkin ----------
+class CheckinItem(BaseModel):
+    material: str
+    weightKg: float = Field(..., gt=0)
+    description: Optional[str] = Field(None, max_length=200)
+
+
+class CheckinCreate(BaseModel):
+    organisationId: str
+    items: List[CheckinItem] = Field(..., min_length=1)
+
+
 # ---------- Notifications ----------
 NotificationType = Literal[
     'new_application',

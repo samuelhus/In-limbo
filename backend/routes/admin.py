@@ -239,8 +239,9 @@ async def admin_run_maintenance(admin: dict = Depends(get_admin_user)):
 async def get_available_periods(admin: dict = Depends(get_admin_user)):
     checkouts = await db.checkouts.find({}, {"createdAt": 1}).to_list(None)
     transfers = await db.platform_transfers.find({}, {"createdAt": 1}).to_list(None)
+    checkins = await db.checkins.find({}, {"createdAt": 1}).to_list(None)
     years = set()
-    for doc in checkouts + transfers:
+    for doc in checkouts + transfers + checkins:
         if doc.get("createdAt"):
             years.add(doc["createdAt"][:4])
     return {"years": sorted(years, reverse=True)}
@@ -263,9 +264,11 @@ async def get_stats(
 
     checkouts = await db.checkouts.find(date_filter).to_list(None)
     transfers = await db.platform_transfers.find(date_filter).to_list(None)
+    checkins = await db.checkins.find(date_filter).to_list(None)
 
     total_magazijn_kg = round(sum(c["totalWeightKg"] for c in checkouts), 2)
     total_platform_kg = round(sum(t["weightKg"] for t in transfers), 2)
+    total_checkin_kg = round(sum(c["totalWeightKg"] for c in checkins), 2)
 
     material_stats: dict = {}
     for c in checkouts:
@@ -309,16 +312,27 @@ async def get_stats(
         org_platform_givers.setdefault(sender_oid, {"name": sender_name, "kg": 0})
         org_platform_givers[sender_oid]["kg"] = round(org_platform_givers[sender_oid]["kg"] + t["weightKg"], 2)
 
+    org_checkin: dict = {}
+    for c in checkins:
+        if not c.get("organisationId"):
+            continue
+        oid = c["organisationId"]
+        org_checkin.setdefault(oid, {"name": c.get("organisationName") or "", "kg": 0})
+        org_checkin[oid]["kg"] = round(org_checkin[oid]["kg"] + c["totalWeightKg"], 2)
+
     return {
         "totals": {
             "magazijn_kg": total_magazijn_kg,
             "platform_kg": total_platform_kg,
+            "checkin_kg": total_checkin_kg,
             "combined_kg": round(total_magazijn_kg + total_platform_kg, 2),
         },
         "by_material": material_stats,
         "by_org_magazijn": sorted(org_magazijn.values(), key=lambda x: x["kg"], reverse=True),
         "by_org_platform": sorted(org_platform.values(), key=lambda x: x["kg"], reverse=True),
         "by_org_platform_givers": sorted(org_platform_givers.values(), key=lambda x: x["kg"], reverse=True),
+        "by_org_checkin": sorted(org_checkin.values(), key=lambda x: x["kg"], reverse=True),
         "checkouts_count": len(checkouts),
         "transfers_count": len(transfers),
+        "checkins_count": len(checkins),
     }

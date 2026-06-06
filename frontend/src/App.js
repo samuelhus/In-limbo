@@ -28,6 +28,7 @@ import OverOns from '@/pages/OverOns';
 import Nieuws from '@/pages/Nieuws';
 import NieuwsDetail from '@/pages/NieuwsDetail';
 import Checkout from '@/pages/Checkout';
+import Checkin from '@/pages/Checkin';
 import Notificaties from '@/pages/Notificaties';
 import Voorwaarden from '@/pages/Voorwaarden';
 import AdminDonateurListings from '@/pages/AdminDonateurListings';
@@ -60,6 +61,14 @@ export default function App() {
               <Route path="/nieuws" element={<Nieuws />} />
               <Route path="/nieuws/:id" element={<NieuwsDetail />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route
+                path="/checkin"
+                element={
+                  <ProtectedRoute requireAdmin requireValidated={false}>
+                    <Checkin />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/voorwaarden" element={<Voorwaarden />} />
               <Route
                 path="/notificaties"

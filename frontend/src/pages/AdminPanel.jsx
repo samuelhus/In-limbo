@@ -361,7 +361,7 @@ function Statistieken() {
         .sort((a, b) => b.total - a.total)
     : [];
 
-  const isEmpty = stats && stats.totals.combined_kg === 0 && stats.checkouts_count === 0 && stats.transfers_count === 0;
+  const isEmpty = stats && stats.totals.combined_kg === 0 && stats.checkouts_count === 0 && stats.transfers_count === 0 && (stats.checkins_count ?? 0) === 0;
 
   return (
     <div data-testid="admin-statistieken-section" className="space-y-10">
@@ -378,9 +378,14 @@ function Statistieken() {
           </p>
           
           <p className="text-xs text-muted-foreground font-mono break-all mb-4">{checkoutUrl}</p>
-          <Link to="/checkout" className="btn-secondary !py-1.5 px-3 text-xs">
-            Checkout pagina →
-          </Link>
+          <div className="flex gap-3 flex-wrap">
+            <Link to="/checkout" className="btn-secondary !py-1.5 px-3 text-xs" data-testid="admin-link-checkout">
+              Checkout pagina →
+            </Link>
+            <Link to="/checkin" className="btn-secondary !py-1.5 px-3 text-xs" data-testid="admin-link-checkin">
+              Checkin pagina →
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -499,6 +504,43 @@ function Statistieken() {
               </table>
             </section>
           )}
+
+          {/* CHECKIN STATS */}
+          <section data-testid="admin-stats-checkin">
+            <p className="overline mb-3">Magazijn checkins</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="border border-border p-4">
+                <p className="text-3xl font-bold" data-testid="admin-stats-checkins-count">{stats.checkins_count ?? 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">Totaal checkins</p>
+              </div>
+              <div className="border border-border p-4">
+                <p className="text-3xl font-bold" data-testid="admin-stats-checkin-kg">{stats.totals?.checkin_kg?.toFixed(1) ?? '0.0'}</p>
+                <p className="text-xs text-muted-foreground mt-1">kg ingecheckt</p>
+              </div>
+            </div>
+
+            {stats.by_org_checkin?.length > 0 && (
+              <div className="mt-6">
+                <p className="overline mb-3">Top organisaties — gedoneerd aan magazijn</p>
+                <table className="w-full text-sm border-y border-border" data-testid="admin-stats-checkin-table">
+                  <thead>
+                    <tr className="text-xs uppercase tracking-wider text-muted-foreground">
+                      <th className="text-left py-2">Organisatie</th>
+                      <th className="text-right py-2">Kg gedoneerd</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {stats.by_org_checkin.slice(0, 20).map((o, i) => (
+                      <tr key={i}>
+                        <td className="py-2">{o.name}</td>
+                        <td className="py-2 text-right font-medium">{o.kg.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
           {/* Org platform */}
           {stats.by_org_platform.length > 0 && (

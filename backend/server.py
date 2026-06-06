@@ -25,6 +25,7 @@ from routes.listings import router as listings_router
 from routes.applications import router as applications_router
 from routes.news import router as news_router
 from routes.checkout import router as checkout_router
+from routes.checkin import router as checkin_router
 from routes.admin import router as admin_router
 
 
@@ -84,6 +85,7 @@ api.include_router(listings_router)
 api.include_router(applications_router)
 api.include_router(news_router)
 api.include_router(checkout_router)
+api.include_router(checkin_router)
 api.include_router(admin_router)
 
 app.include_router(api)
