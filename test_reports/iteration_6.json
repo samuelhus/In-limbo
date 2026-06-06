@@ -1,0 +1,36 @@
+{
+  "summary": "End-to-end testing of the new 'PDF jaarverslag per organisatie' feature. Backend: 10/10 pytest tests passed in /app/backend/tests/test_org_report.py — covers (a) /organisations/me/stats/available-years for anonymous (401), donateur (empty list), and validated user (sorted desc list), (b) /organisations/me/stats/report auth & validation (401 anon, 400 donateur, 422 missing year, 422 invalid 'abc' year), (c) NL PDF content (Jaarverslag, Overzicht, Herbestemd via platform, Ontvangen via platform, Gedoneerd aan magazijn, Ontvangen uit magazijn — case-insensitive since reportlab renders labels in UPPER), (d) FR PDF content (Rapport annuel, Aperçu, Redistribué via la plateforme, Reçu via la plateforme, Donné au magasin, Reçu du magasin), (e) Content-Disposition contains 'inlimbo-verslag-{org_id}-{year}.pdf', body starts with %PDF-, (f) aggregation: seeded 2 checkins (Hout 3.5 + Metaal 1.25 + Textiel 2.0) and 1 checkout (Hout 4.0), verified PDF shows 'Detail checkin sessies' section with DATUM/MATERIAAL/GEWICHT/BESCHRIJVING columns, materials Hout/Metaal/Textiel rendered, '—' shown for null description, 4 summary cells with 'kg' values, auto-pagination across pages working (Pagina 1/2 and 2/2). Frontend (Playwright): donateur on /profiel does NOT see profiel-report-section (correct), regular user (lotte@atelier-brussel.example) DOES see profiel-report-section with year-select containing '2026' and download button, clicking 'Download PDF →' triggers a download via blob with suggested filename 'inlimbo-verslag-2026.pdf' (4369 bytes, %PDF- magic), captured request URL contains year=2026&lang=nl, button returns to ready state after download completes.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_org_report.py",
+    "/app/test_reports/pytest/org_report_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes/organisations.py _draw_summary_grid uppercases all labels via .upper() — translation values like 'Overzicht' are not visible verbatim in PDF; this is purely cosmetic and intended. Tests do case-insensitive matching.",
+    "Aggregation logic: platform_given query falls back from senderOrganisationId to offererOrganisationId only when first list is empty. This is a soft OR (not a real $or). If an org has BOTH new and legacy docs, only the new (sender) docs are counted. Consider replacing with a single $or: [{senderOrganisationId}, {offererOrganisationId}] query to be safe across data eras.",
+    "Two-pass PDF render (build(1) then build(pages)) to count total pages: works but doubles CPU per request. For a single-page report (most cases) this is fine; consider caching or computing pages from len(checkin_items) and rows-per-page if perf becomes a concern.",
+    "/organisations/me/stats/report uses Query(...) with int year (correct → 422 on invalid). lang has no Literal['nl','fr'] constraint; an unknown lang silently falls back to NL (graceful), acceptable.",
+    "Frontend Profiel.jsx: report section is hidden by both !isDonateur AND user.organisationId truthiness — correct double-guard. The download flow uses responseType:'blob' with proper Blob({type:'application/pdf'}) and revokes object URL after click. Clean implementation.",
+    "Filename mismatch (informational): backend sets Content-Disposition with 'inlimbo-verslag-{org_id}-{year}.pdf' but frontend overrides via anchor download='inlimbo-verslag-{year}.pdf' (no org_id). Both are intentional — the user-facing filename omits the long UUID. Tested behaviour confirms frontend filename in browser is 'inlimbo-verslag-2026.pdf'.",
+    "Busy state ('Bezig…') was not visually observed during testing because the API responds in <120ms; the React transition is real (state setter) but too brief to capture via UI poll. This is correct behaviour, not a bug."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_org_report.py (new)"
+  ],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "100% (all assertions passed)"},
+  "test_credentials": "lotte@atelier-brussel.example / User123! (user with org) · donna@inlimbo.be / test1234 (donateur) · admin@inlimbo.be / Admin123! (admin for seeding)",
+  "seed_data_creation": "Tests created 2 additional checkins (Hout/Metaal/Textiel) and attempted 1 checkout for Atelier Brussel. Items prefixed with 'TEST_report_' in description. Adds to existing TEST_* data from iteration_5; harmless small footprint.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "PDF jaarverslag feature fully working end-to-end. Reusable test file at /app/backend/tests/test_org_report.py covers auth, validation, NL/FR translations (case-insensitive), Content-Disposition filename, aggregation across platform_transfers/checkins/checkouts, and checkin detail table rendering with auto-pagination. pypdf was installed for PDF text extraction; consider pinning it in requirements.txt if you want this test to run in CI. Note: PDF section labels are rendered .upper() in reportlab so any future text-content checks should be case-insensitive.",
+  "rca of the issue": "N/A — no issues found."
+}

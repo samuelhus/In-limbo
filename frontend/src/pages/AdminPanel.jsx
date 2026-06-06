@@ -365,27 +365,35 @@ function Statistieken() {
 
   return (
     <div data-testid="admin-statistieken-section" className="space-y-10">
-      {/* QR-code */}
+            {/* QR-code checkout */}
+      {/* QR-code checkout */}
       <div className="flex flex-col sm:flex-row items-start gap-6 p-6 border border-border" data-testid="admin-qr-block">
-        <div className="bg-white p-3 border border-border">
-          <QRCodeSVG value={checkoutUrl} size={120} />
-        </div>
         <div className="flex-1">
-          <p className="overline mb-1">Magazijn checkout QR-code</p>
+          <p className="overline mb-1">Magazijn checkout</p>
           <p className="text-sm text-foreground/70 mb-2">
             Hang deze QR-code op in het magazijn. Bezoekers scannen hem
             om materialen uit te checken.
           </p>
-          
           <p className="text-xs text-muted-foreground font-mono break-all mb-4">{checkoutUrl}</p>
-          <div className="flex gap-3 flex-wrap">
-            <Link to="/checkout" className="btn-secondary !py-1.5 px-3 text-xs" data-testid="admin-link-checkout">
-              Checkout pagina →
-            </Link>
-            <Link to="/checkin" className="btn-secondary !py-1.5 px-3 text-xs" data-testid="admin-link-checkin">
-              Checkin pagina →
-            </Link>
-          </div>
+          <Link to="/checkout" className="btn-secondary !py-1.5 px-3 text-xs" data-testid="admin-link-checkout">
+            Checkout pagina →
+          </Link>
+        </div>
+        <div className="bg-white p-3 border border-border shrink-0">
+          <QRCodeSVG value={checkoutUrl} size={120} />
+        </div>
+      </div>
+
+      {/* Checkin blok */}
+      <div className="flex flex-col sm:flex-row items-start gap-6 p-6 border border-border" data-testid="admin-checkin-block">
+        <div className="flex-1">
+          <p className="overline mb-1">Magazijn checkin</p>
+          <p className="text-sm text-foreground/70 mb-4">
+            Registreer materialen die door een organisatie worden gedoneerd aan het magazijn. Enkel toegankelijk voor admins.
+          </p>
+          <Link to="/checkin" className="btn-secondary !py-1.5 px-3 text-xs" data-testid="admin-link-checkin">
+            Checkin pagina →
+          </Link>
         </div>
       </div>
 

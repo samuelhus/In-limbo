@@ -29,11 +29,56 @@ export default function Profiel() {
   const [prefs, setPrefs] = useState(null);
   const [prefMsg, setPrefMsg] = useState('');
 
+  const [reportYear, setReportYear] = useState('');
+  const [reportYears, setReportYears] = useState([]);
+  const [reportBusy, setReportBusy] = useState(false);
+
   useEffect(() => {
     api.get('/users/me/email-preferences')
       .then(({ data }) => setPrefs(data))
       .catch(() => setPrefs({}));
-  }, []);
+
+    if (!isDonateur && user.organisationId) {
+      api.get('/organisations/me/stats/available-years')
+        .then(({ data }) => {
+          const currentYear = String(new Date().getFullYear());
+          const years = (data?.years && data.years.length > 0)
+            ? data.years
+            : [currentYear];
+          if (!years.includes(currentYear)) years.unshift(currentYear);
+          setReportYears(years);
+          setReportYear(years[0]);
+        })
+        .catch(() => {
+          const fallback = String(new Date().getFullYear());
+          setReportYears([fallback]);
+          setReportYear(fallback);
+        });
+    }
+  }, [isDonateur, user.organisationId]);
+
+  const downloadReport = async () => {
+    setReportBusy(true);
+    try {
+      const lang = 'nl';
+      const response = await api.get('/organisations/me/stats/report', {
+        params: { year: reportYear, lang },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inlimbo-verslag-${reportYear}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('Download mislukt. Probeer opnieuw.');
+    } finally {
+      setReportBusy(false);
+    }
+  };
 
   const togglePref = async (key) => {
     if (!prefs) return;
@@ -138,6 +183,35 @@ export default function Profiel() {
           <Link to="/organisatie" className="btn-primary inline-block" data-testid="profiel-organisatie-link">
             Mijn organisatie →
           </Link>
+
+          {user.organisationId && (
+            <div className="mt-6 border-t border-border pt-6" data-testid="profiel-report-section">
+              <p className="overline mb-1">Jaarverslag</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Download een overzicht van de activiteiten van je organisatie per jaar.
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <select
+                  value={reportYear}
+                  onChange={(e) => setReportYear(e.target.value)}
+                  className="input-flat"
+                  data-testid="profiel-report-year-select"
+                >
+                  {reportYears.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={downloadReport}
+                  disabled={reportBusy || !reportYear}
+                  className="btn-secondary"
+                  data-testid="profiel-report-download-btn"
+                >
+                  {reportBusy ? 'Bezig…' : 'Download PDF →'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
