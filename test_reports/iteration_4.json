@@ -1,0 +1,49 @@
+{
+  "summary": "End-to-end testing of admin user & organisation management. Backend: 17 pytest tests passed, 1 skipped (intentional — admin self-delete protection missing). Frontend: admin login → /admin → Gebruikers tab (22 rows, search filters correctly to 1 row, edit modal opens, fields present) → Organisaties tab (18 rows, search filters correctly to 1 row, delete works with cascade). All required data-testids present. Auth: non-admin (lotte) and anonymous correctly receive 401/403 on all /admin/* endpoints. Cascade verified: deleting a test org also deleted its sole user.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "DELETE /api/admin/users/{user_id}", "issue": "Admin can delete themselves — no self-protection check. The seed_admin will be re-created on next backend startup, but during the same session the admin would lose access. Recommend adding: if user_id == admin['id']: raise HTTPException(400, 'Je kan jezelf niet verwijderen').", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "PATCH /api/admin/organisations/{org_id}", "issue": "AdminOrgUpdate.status Literal does not include 'rejected' (only pending/validated/active/inactive). Backend models.py line 289 — inconsistent with OrgStatus enum line 28 which includes 'rejected'. Admin cannot revert an org to 'rejected' via PATCH."},
+      {"endpoint": "GET /api/admin/users", "issue": "Returns full user docs without password but still leaks 'emailPreferences' and 'updatedAt' fields; minor — consider explicit projection."},
+      {"endpoint": "DELETE /api/admin/users/{user_id}", "issue": "Does not delete the user's pending applications nor the listings they applied to. Their applications remain in DB orphaned (no cascade in admin_delete_user). Their listings ARE archived (correct), but applications cleanup missing."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin Gebruikers / Organisaties", "issues": ["Uses native window.confirm() for delete confirmation instead of styled modal — inconsistent with rest of app's Nederlandse UI/UX style. Consider a custom confirm dialog with localized button labels.", "Delete button styled as plain red text-link rather than a button — may be missed; consider btn-destructive style."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_user_org_management.py",
+    "/app/test_reports/pytest/admin_user_org_results.xml"
+  ],
+  "action_items": [
+    "Add self-delete protection in DELETE /api/admin/users/{user_id} — return 400 when user_id == admin['id'].",
+    "Extend AdminOrgUpdate.status Literal to include 'rejected' for parity with OrgStatus.",
+    "On admin_delete_user: also delete db.applications where applicantUserId == user_id (currently orphaned).",
+    "Consider replacing window.confirm() in AdminPanel.jsx with a styled confirmation modal."
+  ],
+  "critical_code_review_comments": [
+    "server.py admin_delete_user (line 1308): no protection against admin self-delete; admin@inlimbo.be can DELETE themselves and become locked out until backend restart re-seeds the admin.",
+    "server.py admin_delete_user does not cascade-delete applications. db.applications.delete_many({'applicantUserId': user_id}) should be added next to the listings update.",
+    "server.py admin_delete_organisation correctly cascades: archives listings + deletes users + deletes org. Verified end-to-end via test_admin_delete_org_cascades and via UI.",
+    "models.py AdminOrgUpdate.status Literal (line 289) is missing 'rejected'; mismatched with OrgStatus enum (line 28).",
+    "server.py admin_update_user/admin_update_organisation use proper exclude_unset semantics via per-field 'is not None' checks — correct.",
+    "AdminPanel.jsx uses native window.confirm — not ideal UX but functional.",
+    "Backend correctly emits 401 (not authenticated) for anonymous and 403 (not admin) for non-admin on /admin/* endpoints."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_user_org_management.py (new file)"
+  ],
+  "success_rate": {"backend": "100% (17/17 active, 1 intentionally skipped to flag self-delete)", "frontend": "100% (all UI flows verified)"},
+  "test_credentials": "admin@inlimbo.be / Admin123! (admin). lotte@atelier-brussel.example / User123! (non-admin). Test users/orgs created via POST /api/auth/register/new-org with TEST_ prefix and cleaned up after each delete test.",
+  "seed_data_creation": "Each pytest run creates 2 fresh TEST_du_* and TEST_dorg_* users+orgs (one for user-delete, one for org-delete-cascade test) and cleans them up in the same test. UI session deleted the leftover TEST_org_1779837381 (plus its testpending user via cascade). Remaining test orgs (TEST Org 754e40, TEST Org 88d3f6, TEST_org_e30f99, TEST_org_9723ec) untouched.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend test file at /app/backend/tests/test_admin_user_org_management.py is regression-ready (17 tests, all passing). Frontend uses div-based row layout with data-testid='admin-user-row-{id}' and 'admin-org-row-{id}' (NOT <table>). Search inputs ('admin-gebruikers-search' / 'admin-organisaties-search') trigger server-side filtering via ?q= when query length >=2, with 300ms debounce. Edit modals contain plain <input type='text'> for firstName/lastName/email/phone and native <select> for role/status. Delete uses window.confirm() — page.on('dialog', lambda d: d.accept()) needed in Playwright. Main agent: please fix the three action items (self-delete protection, AdminOrgUpdate status enum, application cascade).",
+  "rca of the issue": "1) Admin self-delete: DELETE /api/admin/users/{user_id} only checks if user exists (line 1311-1313), no equality check against admin['id']. Reproduction: login as admin, curl -X DELETE /api/admin/users/<admin-id> — returns 200, admin doc removed from DB. Mitigation: add `if user_id == admin['id']: raise HTTPException(400, 'Je kan jezelf niet verwijderen')` before the delete_one. 2) Orphaned applications: admin_delete_user archives listings owned by user but leaves applications (where user is applicant) intact. Mitigation: add db.applications.delete_many({'applicantUserId': user_id}) inside admin_delete_user. 3) AdminOrgUpdate status: models.py Literal is restrictive — to revert an org to rejected/pending via admin edit, the literal must include those states."
+}
