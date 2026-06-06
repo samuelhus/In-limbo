@@ -98,6 +98,23 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Backend refactor: `server.py` opgesplitst in routers ✅
+- `server.py` van ~1490 regels naar ~95 regels (alleen bootstrap, CORS, startup/shutdown).
+- Nieuwe modulaire structuur in `/app/backend/`:
+  - `deps.py` — gedeelde `db`, `client`, `now_iso()`, `strip_mongo()`, `DEFAULT_EMAIL_PREFS`, `log`
+  - `routes/auth.py` — registratie (new-org, existing-org, donateur), login, logout, /me
+  - `routes/organisations.py` — list/search/get/patch organisaties
+  - `routes/users.py` — /users/me + email-preferences
+  - `routes/notifications.py` — in-app notif CRUD
+  - `routes/listings.py` — listings + helpers (`_public_listing_view`, `_enrich_listings`, `_require_listing_owner_or_admin`) + cloudinary signature
+  - `routes/applications.py` — apply, withdraw, my, by-listing, select, unrehome, unselect, mark-rehomed
+  - `routes/news.py` — nieuws CRUD
+  - `routes/checkout.py` — magazijn checkout
+  - `routes/admin.py` — validatie-queue, beslissingen, user/org CRUD, maintenance, stats
+- **Geen API-route gewijzigd** — alle endpoints behouden hun pad onder `/api`.
+- Lint clean (0 issues). Pre-existing `if x is not None: ...` patroon en `l` variabelen opgelost in bijgewerkte modules.
+- Regressie: 18/18 admin-tests passing, alle 13 e2e curl-smoke endpoints (health, login, listings, organisations, news, notifications, admin/*, applications/mine, listings/mine, cloudinary/signature) HTTP 200.
+
 ### 2026-02-06 — Admin gebruikers- & organisatiebeheer ✅
 - **Backend**: `GET/PATCH/DELETE /api/admin/users/{id}` en `/api/admin/organisations/{id}` endpoints. Admin kan nu via UI bewerken (firstName, lastName, email, phone, role, status voor users; name, description, category, address, website, status voor orgs).
 - **Self-delete bescherming**: admin kan zichzelf niet verwijderen (HTTP 400 "Je kan jezelf niet verwijderen").
