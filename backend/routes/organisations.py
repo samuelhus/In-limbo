@@ -310,12 +310,13 @@ def _draw_transfer_detail(
         c.drawString(MARGIN_X, yy, t[title_key].upper())
         c.setFillColor(BLACK)
         yy -= 7 * mm
-        col_x = [MARGIN_X, MARGIN_X + 30 * mm, A4_W - MARGIN_X - 20 * mm]
+        col_x = [MARGIN_X, MARGIN_X + 28 * mm, MARGIN_X + 68 * mm, MARGIN_X + 95 * mm]
         c.setFont("Helvetica-Bold", 8)
         c.setFillColor(MUTED)
         c.drawString(col_x[0], yy, t["date"].upper())
-        c.drawString(col_x[1], yy, t["listing_title"].upper())
-        c.drawRightString(A4_W - MARGIN_X, yy, t["weight"].upper())
+        c.drawString(col_x[1], yy, t["material"].upper())
+        c.drawString(col_x[2], yy, t["weight"].upper())
+        c.drawString(col_x[3], yy, t["listing_title"].upper())
         c.setFillColor(BLACK)
         yy -= 2 * mm
         c.setStrokeColor(BLACK)
@@ -354,11 +355,12 @@ def _draw_transfer_detail(
 
         c.setFont("Helvetica", 9)
         c.drawString(col_x[0], y, (tr.get("createdAt") or "")[:10])
+        c.drawString(col_x[1], y, (tr.get("material") or "—")[:18])
+        c.drawString(col_x[2], y, f"{float(tr.get('weightKg', 0)):.2f}")
         title = tr.get("listingTitle") or "—"
-        if len(title) > title_max_chars:
-            title = title[: title_max_chars - 1] + "…"
-        c.drawString(col_x[1], y, title)
-        c.drawRightString(A4_W - MARGIN_X, y, f"{float(tr.get('weightKg', 0)):.2f}")
+        if len(title) > 40:
+            title = title[:39] + "…"
+        c.drawString(col_x[3], y, title)
         y -= 6 * mm
         row_idx += 1
 
