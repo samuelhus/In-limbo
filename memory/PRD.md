@@ -98,6 +98,15 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Jaarverslag PDF: platform transfer detail tabellen ✅
+- Twee nieuwe detail-tabellen in PDF na de checkin-tabel (alleen indien data):
+  - **"Detail herbestemmingen via platform"** (NL) / "Détail des redistributions via la plateforme" (FR)
+  - **"Detail ontvangsten via platform"** (NL) / "Détail des réceptions via la plateforme" (FR)
+- Kolommen: Datum · Aanbieding/Offre · Gewicht (rechts uitgelijnd). Sortering op datum, alternating row colors, auto-pagination.
+- Nieuwe vertaalsleutels `platform_given_detail`, `platform_received_detail`, `listing_title` toegevoegd in NL+FR.
+- Legacy transfers zonder `listingTitle` worden via listingId opgezocht en geënricht.
+- Tests: 10/10 pytest blijven groen; manuele PDF text-extraction validatie: alle nieuwe headers, listing-titels en gewichten correct gerenderd in beide talen.
+
 ### 2026-02-06 — Jaarverslag PDF per organisatie ✅
 - **Backend**: `reportlab==4.2.0` toegevoegd. Nieuwe endpoints in `routes/organisations.py`:
   - `GET /api/organisations/me/stats/report?year=YYYY&lang=nl|fr` — genereert A4 PDF met header (logo + org-naam), 2×2 overzichtsgrid (herbestemd/ontvangen platform + gedoneerd/ontvangen magazijn), detail-tabel van checkin sessies met materiaal + gewicht + beschrijving, footer met pagina-nummering. NL & FR vertalingen via TRANSLATIONS dict. Auto-pagination over meerdere pagina's.

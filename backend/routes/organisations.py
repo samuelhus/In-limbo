@@ -29,6 +29,9 @@ TRANSLATIONS = {
         "magazijn_donated": "Gedoneerd aan magazijn",
         "magazijn_received": "Ontvangen uit magazijn",
         "checkin_detail": "Detail checkin sessies",
+        "platform_given_detail": "Detail herbestemmingen via platform",
+        "platform_received_detail": "Detail ontvangsten via platform",
+        "listing_title": "Aanbieding",
         "date": "Datum",
         "material": "Materiaal",
         "weight": "Gewicht (kg)",
@@ -49,6 +52,9 @@ TRANSLATIONS = {
         "magazijn_donated": "Donné au magasin",
         "magazijn_received": "Reçu du magasin",
         "checkin_detail": "Détail des sessions d'entrée",
+        "platform_given_detail": "Détail des redistributions via la plateforme",
+        "platform_received_detail": "Détail des réceptions via la plateforme",
+        "listing_title": "Offre",
         "date": "Date",
         "material": "Matériau",
         "weight": "Poids (kg)",
@@ -286,6 +292,79 @@ def _draw_checkin_detail(
     return page_num, y
 
 
+def _draw_transfer_detail(
+    c: rl_canvas.Canvas, y: float, t: dict, year: int, org_name: str,
+    page_num: int, transfers: list, total_pages_holder: list, title_key: str,
+) -> tuple[int, float]:
+    """Renders a 3-column platform-transfer detail table (date / listing title / weight).
+    Auto-paginates. Returns (page_num, y_cursor)."""
+    if not transfers:
+        return page_num, y
+
+    min_y = FOOTER_Y + 12 * mm
+    title_max_chars = 55
+
+    def draw_header(yy: float) -> float:
+        c.setFont("Helvetica-Bold", 11)
+        c.setFillColor(MINT)
+        c.drawString(MARGIN_X, yy, t[title_key].upper())
+        c.setFillColor(BLACK)
+        yy -= 7 * mm
+        col_x = [MARGIN_X, MARGIN_X + 30 * mm, A4_W - MARGIN_X - 20 * mm]
+        c.setFont("Helvetica-Bold", 8)
+        c.setFillColor(MUTED)
+        c.drawString(col_x[0], yy, t["date"].upper())
+        c.drawString(col_x[1], yy, t["listing_title"].upper())
+        c.drawRightString(A4_W - MARGIN_X, yy, t["weight"].upper())
+        c.setFillColor(BLACK)
+        yy -= 2 * mm
+        c.setStrokeColor(BLACK)
+        c.setLineWidth(0.4)
+        c.line(MARGIN_X, yy, A4_W - MARGIN_X, yy)
+        return yy - 5 * mm, col_x
+
+    # Section needs at least 30mm to start; otherwise new page
+    if y < min_y + 30 * mm:
+        _draw_footer(c, page_num, total_pages_holder[0], t, year)
+        c.showPage()
+        page_num += 1
+        y = A4_H - 20 * mm
+
+    y, col_x = draw_header(y)
+    row_idx = 0
+
+    transfers_sorted = sorted(transfers, key=lambda x: x.get("createdAt") or "")
+    for tr in transfers_sorted:
+        if y < min_y:
+            _draw_footer(c, page_num, total_pages_holder[0], t, year)
+            c.showPage()
+            page_num += 1
+            c.setFont("Helvetica-Bold", 11)
+            c.setFillColor(MINT)
+            c.drawString(MARGIN_X, A4_H - 20 * mm, f"{t[title_key].upper()} · {org_name}")
+            c.setFillColor(BLACK)
+            y = A4_H - 28 * mm
+            y, col_x = draw_header(y)
+            row_idx = 0
+
+        if row_idx % 2 == 1:
+            c.setFillColor(LIGHT)
+            c.rect(MARGIN_X - 1 * mm, y - 2 * mm, A4_W - 2 * MARGIN_X + 2 * mm, 6 * mm, stroke=0, fill=1)
+            c.setFillColor(BLACK)
+
+        c.setFont("Helvetica", 9)
+        c.drawString(col_x[0], y, (tr.get("createdAt") or "")[:10])
+        title = tr.get("listingTitle") or "—"
+        if len(title) > title_max_chars:
+            title = title[: title_max_chars - 1] + "…"
+        c.drawString(col_x[1], y, title)
+        c.drawRightString(A4_W - MARGIN_X, y, f"{float(tr.get('weightKg', 0)):.2f}")
+        y -= 6 * mm
+        row_idx += 1
+
+    return page_num, y - 4 * mm
+
+
 @router.get("/organisations/me/stats/available-years")
 async def org_available_years(user: dict = Depends(get_validated_user)):
     """Years for which the current user's organisation has any activity."""
@@ -352,6 +431,21 @@ async def download_org_stats_report(
         {"organisationId": org_id, "createdAt": date_filter},
     ).to_list(None)
 
+    # Enrich legacy transfers without listingTitle via lookup
+    missing_ids = list({
+        tr["listingId"] for tr in (platform_given + platform_received)
+        if not tr.get("listingTitle") and tr.get("listingId")
+    })
+    if missing_ids:
+        title_map: dict[str, str] = {}
+        async for ldoc in db.listings.find(
+            {"id": {"$in": missing_ids}}, {"_id": 0, "id": 1, "title": 1},
+        ):
+            title_map[ldoc["id"]] = ldoc.get("title", "")
+        for tr in platform_given + platform_received:
+            if not tr.get("listingTitle"):
+                tr["listingTitle"] = title_map.get(tr.get("listingId"), "")
+
     stats = {
         "platform_given_kg": round(sum(p.get("weightKg", 0) for p in platform_given), 2),
         "platform_given_count": len(platform_given),
@@ -373,8 +467,18 @@ async def download_org_stats_report(
         y = _draw_summary_grid(c, y, t, stats)
         total_holder = [target_pages]
         if checkins:
-            page_num, _ = _draw_checkin_detail(c, y, t, year, org["name"],
+            page_num, y = _draw_checkin_detail(c, y, t, year, org["name"],
                                                page_num, checkins, total_holder)
+        if platform_given:
+            page_num, y = _draw_transfer_detail(
+                c, y, t, year, org["name"], page_num, platform_given,
+                total_holder, "platform_given_detail",
+            )
+        if platform_received:
+            page_num, y = _draw_transfer_detail(
+                c, y, t, year, org["name"], page_num, platform_received,
+                total_holder, "platform_received_detail",
+            )
         _draw_footer(c, page_num, target_pages, t, year)
         c.showPage()
         c.save()
