@@ -147,3 +147,56 @@ async def purge_old_notifications(db, days: int = 30) -> int:
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     res = await db.notifications.delete_many({"createdAt": {"$lt": cutoff}})
     return res.deleted_count
+
+
+async def notify_admins_new_registration(
+    db,
+    new_user_firstName: str,
+    new_user_lastName: str,
+    new_user_email: str,
+    org_name: str,
+    registration_type: str,  # "new-org" of "existing-org"
+) -> None:
+    """Stuur in-app notificatie + e-mail naar alle admins bij nieuwe registratie."""
+    try:
+        admins = await db.users.find(
+            {"role": "admin"},
+            {"_id": 0, "id": 1, "email": 1, "firstName": 1},
+        ).to_list(None)
+
+        if not admins:
+            logger.warning("notify_admins_new_registration: geen admins gevonden")
+            return
+
+        type_label = "nieuwe organisatie" if registration_type == "new-org" else "bestaande organisatie"
+        full_name = f"{new_user_firstName} {new_user_lastName}".strip()
+        message = (
+            f"{full_name} heeft zich geregistreerd bij {org_name} "
+            f"({type_label}) en wacht op validatie."
+        )
+        admin_url = f"{FRONTEND_URL}/admin"
+        email_html = render_email(
+            title="Nieuwe registratie",
+            body_lines=[
+                f"<strong>{full_name}</strong> ({new_user_email}) heeft zich "
+                f"geregistreerd bij <strong>{org_name}</strong> ({type_label}).",
+                "Deze gebruiker wacht op validatie in het admin panel.",
+            ],
+            cta_text="Bekijk admin panel →",
+            cta_url=admin_url,
+        )
+
+        for admin in admins:
+            await create_notification(
+                db=db,
+                user_id=admin["id"],
+                n_type="new_registration",
+                message=message,
+            )
+            await send_email(
+                to_email=admin.get("email"),
+                subject=f"Nieuwe registratie: {full_name} ({org_name})",
+                html_content=email_html,
+            )
+    except Exception as e:
+        logger.warning("notify_admins_new_registration failed: %s", e)

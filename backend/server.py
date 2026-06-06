@@ -9,6 +9,7 @@ load_dotenv(ROOT_DIR / ".env")
 import os
 import time
 import uuid
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -30,6 +31,7 @@ from models import (
 from notifications import (
     create_notification, send_email, maybe_send_email, render_email,
     purge_old_notifications, FRONTEND_URL,
+    notify_admins_new_registration,
 )
 from auth import (
     hash_password, verify_password, create_access_token,
@@ -147,6 +149,14 @@ async def register_new_org(body: RegisterNewOrg, response: Response):
 
     token = create_access_token(user_id, email, "user")
     set_auth_cookie(response, token)
+    asyncio.create_task(notify_admins_new_registration(
+        db=db,
+        new_user_firstName=body.firstName,
+        new_user_lastName=body.lastName,
+        new_user_email=email,
+        org_name=body.orgName,
+        registration_type="new-org",
+    ))
     return {"ok": True, "userId": user_id, "organisationId": org_id, "status": "pending"}
 
 
@@ -183,6 +193,14 @@ async def register_existing_org(body: RegisterExistingOrg, response: Response):
 
     token = create_access_token(user_id, email, "user")
     set_auth_cookie(response, token)
+    asyncio.create_task(notify_admins_new_registration(
+        db=db,
+        new_user_firstName=body.firstName,
+        new_user_lastName=body.lastName,
+        new_user_email=email,
+        org_name=org["name"],
+        registration_type="existing-org",
+    ))
     return {"ok": True, "userId": user_id, "status": "pending"}
 
 
