@@ -613,18 +613,27 @@ function AdminGebruikers() {
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
+  const LIMIT = 50;
 
-  const load = (query = '') => {
-    api.get('/admin/users', { params: query.length >= 2 ? { q: query } : {} })
-      .then(({ data }) => setUsers(data))
-      .catch(() => {});
-  };
+  const load = (query = '', currentPage = 0) => {
+  const params = { skip: currentPage * LIMIT, limit: LIMIT };
+  if (query.length >= 2) params.q = query;
+  api.get('/admin/users', { params })
+    .then(({ data }) => {
+      setUsers(data.items);
+      setTotal(data.total);
+    })
+    .catch(() => {});
+};
 
-  useEffect(() => { load(); }, []);
-  useEffect(() => {
-    const t = setTimeout(() => load(q), 300);
-    return () => clearTimeout(t);
-  }, [q]);
+useEffect(() => { load(q, page); }, [page]);
+useEffect(() => {
+  setPage(0);
+  const t = setTimeout(() => load(q, 0), 300);
+  return () => clearTimeout(t);
+}, [q]);
 
   const deleteUser = async (userId) => {
     if (!window.confirm('Gebruiker definitief verwijderen? Hun aanbiedingen worden gearchiveerd.')) return;
@@ -690,6 +699,31 @@ function AdminGebruikers() {
           <p className="py-8 text-muted-foreground text-sm">Geen gebruikers gevonden.</p>
         )}
       </div>
+
+      {total > LIMIT && (
+        <div className="flex items-center justify-between py-4 border-t border-border">
+          <p className="text-sm text-muted-foreground">
+            {page * LIMIT + 1}–{Math.min((page + 1) * LIMIT, total)} van {total}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(p => p - 1)}
+              disabled={page === 0}
+              className="btn-secondary !py-1 px-3 text-xs disabled:opacity-40"
+            >
+              ← Vorige
+            </button>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={(page + 1) * LIMIT >= total}
+              className="btn-secondary !py-1 px-3 text-xs disabled:opacity-40"
+            >
+              Volgende →
+            </button>
+          </div>
+        </div>
+      )}
+
       {editing && (
         <AdminUserEditModal user={editing} onSave={saveUser} onClose={() => setEditing(null)} busy={busy} />
       )}

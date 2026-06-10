@@ -110,7 +110,12 @@ async def admin_decide_org(
 
 
 @router.get("/admin/users")
-async def admin_list_users(q: str | None = Query(None), admin: dict = Depends(get_admin_user)):
+async def admin_list_users(
+    q: str | None = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    admin: dict = Depends(get_admin_user)
+):
     filt: dict = {}
     if q and len(q) >= 2:
         regex = {"$regex": q, "$options": "i"}
@@ -118,7 +123,8 @@ async def admin_list_users(q: str | None = Query(None), admin: dict = Depends(ge
             {"firstName": regex}, {"lastName": regex},
             {"username": regex}, {"email": regex},
         ]
-    users = await db.users.find(filt, {"_id": 0, "passwordHash": 0}).to_list(500)
+    total = await db.users.count_documents(filt)
+    users = await db.users.find(filt, {"_id": 0, "passwordHash": 0}).skip(skip).limit(limit).to_list(limit)
     org_ids = [u["organisationId"] for u in users if u.get("organisationId")]
     orgs: dict = {}
     if org_ids:
@@ -126,7 +132,7 @@ async def admin_list_users(q: str | None = Query(None), admin: dict = Depends(ge
             orgs[o["id"]] = o["name"]
     for u in users:
         u["organisationName"] = orgs.get(u.get("organisationId"))
-    return users
+    return {"total": total, "items": users}
 
 
 @router.patch("/admin/users/{user_id}")
