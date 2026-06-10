@@ -234,11 +234,11 @@ async def forgot_password(request: Request, body: PasswordResetRequest = Body(..
         cta_text="Stel nieuw wachtwoord in →",
         cta_url=reset_url,
     )
-    await send_email(
+    asyncio.create_task(send_email(
         to_email=email,
         subject="Wachtwoord opnieuw instellen — In Limbo",
         html_content=html,
-    )
+    ))
     return SAFE_FORGOT_RESPONSE
 
 
@@ -280,10 +280,10 @@ async def reset_password(request: Request, body: PasswordResetConfirm = Body(...
             cta_text="Inloggen →",
             cta_url=f"{FRONTEND_URL}/login",
         )
-        await send_email(
+        asyncio.create_task(send_email(
             to_email=user["email"],
             subject="Je wachtwoord is gewijzigd — In Limbo",
             html_content=html,
-        )
+        ))
 
     return {"ok": True, "message": "Wachtwoord succesvol gewijzigd."}

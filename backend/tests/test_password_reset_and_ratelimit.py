@@ -216,10 +216,10 @@ def test_c8_reset_happy_path_and_single_use():
     assert r_reuse.status_code == 400
     assert r_reuse.json()["detail"] == "Ongeldige of verlopen resetlink."
 
-    # Restore password using a second reset cycle (we've now used 4/5 logins this minute).
+    # Restore password directly via DB hash (avoid hitting the 5/min forgot-password rate limit
+    # in the same test window). Module teardown also has a hash-restore as safety net.
+    import bcrypt
+    new_hash = bcrypt.hashpw(USER_PWD.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    db.users.update_one({"email": USER_EMAIL}, {"$set": {"passwordHash": new_hash}})
     db.password_resets.delete_many({"email": USER_EMAIL})
-    requests.post(f"{API}/auth/forgot-password", json={"email": USER_EMAIL})
-    rec2 = db.password_resets.find_one({"email": USER_EMAIL})
-    r_restore = requests.post(f"{API}/auth/reset-password", json={"token": rec2["token"], "newPassword": USER_PWD})
-    assert r_restore.status_code == 200
     # don't login here; let the module teardown also hash-restore via DB just in case

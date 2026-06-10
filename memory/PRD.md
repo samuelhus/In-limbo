@@ -98,6 +98,16 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Auth hardening: rate limiting + wachtwoord vergeten ✅
+- **Rate limiting (slowapi)**: `5/min` op `/auth/login` en `/auth/forgot-password`, `10/min` op `/auth/register/*` en `/auth/reset-password`. NL-foutmelding bij 429 via custom exception handler in `server.py`. Shared `Limiter` in `deps.py` met `SlowAPIMiddleware` voor correcte wiring.
+- **K8s ingress fix**: custom `get_real_ip()` key_func leest `X-Forwarded-For` header (left-most) i.p.v. socket peer, anders bypass via meerdere proxy IPs. Geverifieerd: 6e rapid login → 429 consistent.
+- **Wachtwoord vergeten flow**: 2 nieuwe publieke endpoints
+  - `POST /auth/forgot-password` — genereert 32-byte `secrets.token_urlsafe` token, slaat op in `db.password_resets` (TTL 24h via Mongo index op `expiresAt`), verstuurt resetlink via Resend. Identieke response voor bestaande én niet-bestaande mails (email enumeration prevention). E-mail dispatch non-blocking via `asyncio.create_task`.
+  - `POST /auth/reset-password` — verifieert token (bestaat + niet verlopen + niet gebruikt), hasht nieuw wachtwoord met bcrypt, verwijdert token (single-use), verstuurt bevestigingsmail.
+- **MongoDB**: `password_resets` collection met unique index op `token` + TTL index op `expiresAt`.
+- **Frontend**: 2 nieuwe publieke pagina's (`/wachtwoord-vergeten`, `/wachtwoord-reset?token=...`) + "Wachtwoord vergeten?" link op `/login`.
+- **Testing**: 13/13 pytest passing in `test_password_reset_and_ratelimit.py` (rate-limit 5/min op login + forgot + 10/min op register, enumeration prevention, oude token vervangen, single-use, expired tokens, ongeldig token, validatie, indexes, happy path + login met nieuwe pw + oude pw faalt). Frontend Playwright: 100% (link op login, forgot success state, reset error states).
+
 ### 2026-02-06 — Jaarverslag PDF: platform transfer detail tabellen ✅
 - Twee nieuwe detail-tabellen in PDF na de checkin-tabel (alleen indien data):
   - **"Detail herbestemmingen via platform"** (NL) / "Détail des redistributions via la plateforme" (FR)

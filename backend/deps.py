@@ -39,4 +39,13 @@ DEFAULT_EMAIL_PREFS = {
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-limiter = Limiter(key_func=get_remote_address)
+
+def get_real_ip(request) -> str:
+    """Use X-Forwarded-For (left-most IP) when behind a proxy/ingress; fall back to socket peer."""
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.split(",")[0].strip()
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=get_real_ip)
