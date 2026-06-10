@@ -1,13 +1,15 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function Voorwaarden() {
+  const { t } = useTranslation();
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-10 py-16"
          data-testid="voorwaarden-page">
 
       <p className="overline mb-4">Juridisch</p>
       <h1 className="text-4xl font-bold tracking-tight mb-12">
-        Algemene voorwaarden
+        {t('pages.voorwaarden_title')}
       </h1>
 
       <section className="mb-10">

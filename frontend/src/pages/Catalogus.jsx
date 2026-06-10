@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import html2canvas from 'html2canvas';
 import { api } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
@@ -7,19 +8,20 @@ import InstagramTemplate from '@/components/InstagramTemplate';
 import { cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 
-const STATUS_OPTIONS = [
-  { v: 'beschikbaar', l: 'Beschikbaar' },
-  { v: 'in_magazijn', l: 'In magazijn' },
-  { v: 'herbestemd', l: 'Herbestemd' },
+const STATUS_KEYS = [
+  { v: 'beschikbaar', k: 'catalogus.filter_available' },
+  { v: 'in_magazijn', k: 'catalogus.filter_warehouse' },
+  { v: 'herbestemd', k: 'catalogus.filter_rehomed' },
 ];
 
 function FilterPanel({ status, setStatus, onClose }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6" data-testid="filter-panel">
       <div>
         <p className="overline mb-3">Status</p>
         <ul className="space-y-2">
-          {STATUS_OPTIONS.map((opt) => (
+          {STATUS_KEYS.map((opt) => (
             <li key={opt.v}>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -29,7 +31,7 @@ function FilterPanel({ status, setStatus, onClose }) {
                   onChange={() => { setStatus(opt.v); onClose?.(); }}
                   data-testid={`filter-status-${opt.v}`}
                 />
-                <span className="text-sm">{opt.l}</span>
+                <span className="text-sm">{t(opt.k)}</span>
               </label>
             </li>
           ))}
@@ -177,6 +179,7 @@ function ListingTile({ item, isValidated, isAdmin }) {
 
 export default function Catalogus() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [skip, setSkip] = useState(0);
@@ -216,7 +219,7 @@ export default function Catalogus() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
         <div>
-          <h1 className="mt-2 text-5xl font-bold tracking-tight">Catalogus</h1>
+          <h1 className="mt-2 text-5xl font-bold tracking-tight">{t('catalogus.title')}</h1>
           <p className="overline"> {total} aanbiedingen</p>
         </div>
         <button

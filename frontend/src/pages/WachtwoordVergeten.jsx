@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
 export default function WachtwoordVergeten() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ export default function WachtwoordVergeten() {
       if (e?.response?.status === 429 && typeof detail === 'string') {
         setError(detail);
       } else {
-        setError('Er liep iets mis. Probeer het opnieuw.');
+        setError(t('common.error_generic'));
       }
     } finally {
       setLoading(false);
@@ -30,15 +32,15 @@ export default function WachtwoordVergeten() {
   if (submitted) {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center" data-testid="forgot-success">
-        <p className="overline mb-4">E-mail verstuurd</p>
+        <p className="overline mb-4">{t('auth.forgot_title')}</p>
         <h1 className="text-3xl font-bold tracking-tight mb-4">
-          Controleer je inbox
+          {t('auth.forgot_success_title')}
         </h1>
         <p className="text-foreground/70 text-sm leading-relaxed mb-8">
-          Als dit e-mailadres bekend is, ontvang je binnen enkele minuten een link om je wachtwoord opnieuw in te stellen. De link is 24 uur geldig.
+          {t('auth.forgot_success_body')}
         </p>
         <Link to="/login" className="industrial-link text-sm" data-testid="forgot-back-to-login">
-          ← Terug naar inloggen
+          {t('auth.back_to_login')}
         </Link>
       </div>
     );
@@ -46,10 +48,10 @@ export default function WachtwoordVergeten() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-24" data-testid="forgot-page">
-      <p className="overline mb-4">Account</p>
-      <h1 className="text-3xl font-bold tracking-tight mb-2">Wachtwoord vergeten</h1>
+      <p className="overline mb-4">{t('nav.profile')}</p>
+      <h1 className="text-3xl font-bold tracking-tight mb-2">{t('auth.forgot_title')}</h1>
       <p className="text-foreground/70 text-sm mb-10">
-        Vul je e-mailadres in. Als het bekend is, sturen we een resetlink.
+        {t('auth.forgot_subtitle')}
       </p>
 
       <div className="space-y-4">
@@ -72,13 +74,13 @@ export default function WachtwoordVergeten() {
           className="btn-primary w-full"
           data-testid="forgot-submit-btn"
         >
-          {loading ? 'Versturen…' : 'Resetlink versturen'}
+          {loading ? t('common.saving') : t('auth.forgot_btn')}
         </button>
         <Link
           to="/login"
           className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          ← Terug naar inloggen
+          {t('auth.back_to_login')}
         </Link>
       </div>
     </div>

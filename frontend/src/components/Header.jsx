@@ -1,15 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from './Logo';
 import NotificationCenter from './NotificationCenter';
+import LanguageSwitcher from './LanguageSwitcher';
 import { api } from '@/lib/api';
 
 export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const isLoggedIn = user && typeof user === 'object';
   const isAdmin = isLoggedIn && user.role === 'admin';
@@ -103,7 +106,7 @@ export default function Header() {
             data-testid="nav-catalogus"
             className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
           >
-            Catalogus
+            {t('nav.catalogus')}
           </NavLink>
 
           <NavLink
@@ -111,7 +114,7 @@ export default function Header() {
             data-testid="nav-nieuws"
             className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
           >
-            Nieuws
+            {t('nav.news')}
           </NavLink>
 
           {showAanbiedingen && (
@@ -137,7 +140,7 @@ export default function Header() {
                         `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
                       }
                     >
-                      Nieuwe aanbieding
+                      {t('nav.new_listing')}
                     </NavLink>
                   )}
                   {canCreateListings && (
@@ -148,7 +151,7 @@ export default function Header() {
                         `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
                       }
                     >
-                      Mijn aanbiedingen
+                      {t('nav.my_listings')}
                     </NavLink>
                   )}
                   {isValidated && (
@@ -159,7 +162,7 @@ export default function Header() {
                         `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
                       }
                     >
-                      Mijn aanvragen
+                      {t('nav.my_applications')}
                     </NavLink>
                   )}
                 </div>
@@ -172,7 +175,7 @@ export default function Header() {
             data-testid="nav-over-ons"
             className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
           >
-            Over ons
+            {t('nav.about')}
           </NavLink>
 
           {isAdmin && (
@@ -181,17 +184,18 @@ export default function Header() {
               data-testid="nav-admin"
               className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
             >
-              Admin
+              {t('nav.admin')}
             </NavLink>
           )}
         </nav>
 
         {/* DESKTOP RIGHT GROUP */}
         <div className="hidden md:flex items-center gap-3">
+          <LanguageSwitcher className="mr-1" />
           {!isLoggedIn && (
             <>
               <Link to="/login" data-testid="header-login-link" className="text-sm text-foreground/80 hover:text-foreground transition">
-                Inloggen
+                {t('nav.login')}
               </Link>
               <Link to="/donateur/registreer" data-testid="header-donateur-btn" className="text-sm text-foreground/80 hover:text-foreground transition">
                 Doneer materiaal
@@ -212,7 +216,7 @@ export default function Header() {
                 data-testid="header-logout-btn"
                 className="text-sm text-foreground/70 hover:text-foreground transition"
               >
-                Uitloggen
+                {t('nav.logout')}
               </button>
             </>
           )}
@@ -263,7 +267,7 @@ export default function Header() {
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
               >
-                Catalogus
+                {t('nav.catalogus')}
               </NavLink>
 
               <NavLink
@@ -272,7 +276,7 @@ export default function Header() {
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
               >
-                Nieuws
+                {t('nav.news')}
               </NavLink>
 
               {showAanbiedingen && (
@@ -331,7 +335,7 @@ export default function Header() {
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
               >
-                Over ons
+                {t('nav.about')}
               </NavLink>
 
               {isAdmin && (
@@ -341,7 +345,7 @@ export default function Header() {
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
                 >
-                  Admin
+                  {t('nav.admin')}
                 </NavLink>
               )}
 
@@ -354,7 +358,7 @@ export default function Header() {
                     `${mobileItemClass} flex items-center justify-between ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`
                   }
                 >
-                  <span>Notificaties</span>
+                  <span>{t('nav.notifications')}</span>
                   {unreadCount > 0 && (
                     <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
                       {unreadCount > 9 ? '9+' : unreadCount}
@@ -370,14 +374,14 @@ export default function Header() {
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
                 >
-                  Mijn profiel
+                  {t('nav.profile')}
                 </NavLink>
               )}
 
               {!isLoggedIn && (
                 <>
                   <Link to="/login" onClick={() => setMobileOpen(false)} data-testid="mobile-header-login-link" className={mobileItemClass}>
-                    Inloggen
+                    {t('nav.login')}
                   </Link>
                   <Link to="/donateur/registreer" onClick={() => setMobileOpen(false)} data-testid="mobile-header-donateur-btn" className={mobileItemClass}>
                     Doe een gift
@@ -394,9 +398,14 @@ export default function Header() {
                   data-testid="mobile-header-logout-btn"
                   className={`${mobileItemClass} w-full text-left text-destructive`}
                 >
-                  Uitloggen
+                  {t('nav.logout')}
                 </button>
               )}
+
+              <div className="px-5 py-3 border-t border-border flex items-center justify-between">
+                <span className="text-xs text-muted-foreground uppercase tracking-widest">{t('common.language')}</span>
+                <LanguageSwitcher />
+              </div>
             </div>
           )}
         </div>

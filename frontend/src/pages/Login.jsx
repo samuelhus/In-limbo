@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,14 +33,14 @@ export default function Login() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16" data-testid="login-page">
       <div className="w-full max-w-md">
-        <p className="overline mb-4">Inloggen</p>
+        <p className="overline mb-4">{t('auth.login_title')}</p>
         <h1 className="text-4xl font-bold tracking-tight mb-10">
-          Welkom terug.
+          {t('auth.login_subtitle')}
         </h1>
 
         <form onSubmit={onSubmit} className="space-y-5">
           <div>
-            <label className="label-overline" htmlFor="email">E-mailadres</label>
+            <label className="label-overline" htmlFor="email">{t('auth.email')}</label>
             <input
               id="email"
               type="email"
@@ -51,7 +53,7 @@ export default function Login() {
             />
           </div>
           <div>
-            <label className="label-overline" htmlFor="password">Wachtwoord</label>
+            <label className="label-overline" htmlFor="password">{t('auth.password')}</label>
             <input
               id="password"
               type="password"
@@ -79,7 +81,7 @@ export default function Login() {
             className="btn-primary w-full"
             data-testid="login-submit-btn"
           >
-            {loading ? 'Bezig…' : 'Inloggen →'}
+            {loading ? t('common.saving') : t('auth.login_btn')}
           </button>
 
           <div className="text-center">
@@ -88,15 +90,15 @@ export default function Login() {
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               data-testid="forgot-password-link"
             >
-              Wachtwoord vergeten?
+              {t('auth.forgot_password')}
             </Link>
           </div>
         </form>
 
         <p className="mt-8 text-sm text-muted-foreground">
-          Nog geen account?{' '}
+          {t('auth.no_account')}{' '}
           <Link to="/registreer" className="industrial-link text-foreground" data-testid="login-to-register-link">
-            Registreer je organisatie
+            {t('auth.register_link')}
           </Link>
         </p>
       </div>

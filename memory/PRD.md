@@ -98,6 +98,18 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Meertaligheid NL/FR (i18next) — setup + top-prioriteit migratie ✅
+- **Setup**: `i18next` + `react-i18next` + `i18next-browser-languagedetector` geïnstalleerd. Config in `src/i18n.js` met `localStorage` persistence (`inlimbo_lang`) en browser auto-detect. Geladen via `index.js` import.
+- **Locales**: `src/locales/nl.json` met volledige NL content (~120 sleutels), `src/locales/fr.json` met kern-UI vertaald (knoppen, navigatie, login/register/wachtwoord-reset, catalogus filters, profile sectie-titels, footer). Niet-vertaalde sleutels vallen automatisch terug op NL.
+- **Language switcher**: nieuwe `LanguageSwitcher.jsx` component (NL · FR pill) geïntegreerd in desktop + mobile header.
+- **Gemigreerde top-prioriteit pagina's** (alle interactieve elementen + zichtbare titels):
+  - `Header.jsx` (desktop + mobile nav)
+  - `Login.jsx`, `WachtwoordVergeten.jsx`, `WachtwoordReset.jsx`
+  - `Catalogus.jsx` (titel + filter-radio labels)
+  - `Profiel.jsx` (sectie-titels: profile, organisatie, jaarverslag + download knop/foutmelding)
+  - `Voorwaarden.jsx`, `Pending.jsx` (titels)
+- **Resterend werk (volgende sessies)**: ~75 bestanden hebben nog hardcoded NL strings: AdminPanel + alle Admin*-pagina's, ListingDetail, ListingWizard, Mijn*-pagina's, Register/DonateurRegister, OverOns body, Nieuws-pagina's, Checkin/Checkout, ApplyModal, NotificationCenter body, Footer. Die zijn allemaal nog functioneel in NL en kunnen incrementeel gemigreerd worden door simpelweg `useTranslation()` te importeren en strings te vervangen.
+
 ### 2026-02-06 — Auth hardening: rate limiting + wachtwoord vergeten ✅
 - **Rate limiting (slowapi)**: `5/min` op `/auth/login` en `/auth/forgot-password`, `10/min` op `/auth/register/*` en `/auth/reset-password`. NL-foutmelding bij 429 via custom exception handler in `server.py`. Shared `Limiter` in `deps.py` met `SlowAPIMiddleware` voor correcte wiring.
 - **K8s ingress fix**: custom `get_real_ip()` key_func leest `X-Forwarded-For` header (left-most) i.p.v. socket peer, anders bypass via meerdere proxy IPs. Geverifieerd: 6e rapid login → 429 consistent.

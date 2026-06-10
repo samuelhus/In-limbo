@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
 
@@ -12,6 +13,7 @@ const EMAIL_PREF_LABELS = [
 
 export default function Profiel() {
   const { user, refresh } = useAuth();
+  const { t } = useTranslation();
   const isDonateur = user.role === 'donateur';
 
   const [form, setForm] = useState({
@@ -74,7 +76,7 @@ export default function Profiel() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      alert('Download mislukt. Probeer opnieuw.');
+      alert(t('profile.report_download_failed'));
     } finally {
       setReportBusy(false);
     }
@@ -122,8 +124,8 @@ export default function Profiel() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16" data-testid="profiel-page">
-      <p className="overline mb-3">Profiel</p>
-      <h1 className="text-4xl font-bold tracking-tight mb-10">Jouw gegevens</h1>
+      <p className="overline mb-3">{t('nav.profile')}</p>
+      <h1 className="text-4xl font-bold tracking-tight mb-10">{t('profile.title')}</h1>
 
       <form onSubmit={save} className="space-y-5">
         {isDonateur ? (
@@ -176,19 +178,19 @@ export default function Profiel() {
 
       {!isDonateur && (
         <div className="mt-16 border-t border-border pt-6" data-testid="profiel-organisatie-section">
-          <p className="overline mb-2">Organisatie</p>
+          <p className="overline mb-2">{t('profile.organisation_section')}</p>
           <p className="text-sm text-muted-foreground mb-3">
-            Beheer de gegevens van je organisatie.
+            {t('profile.organisation_subtitle')}
           </p>
           <Link to="/organisatie" className="btn-primary inline-block" data-testid="profiel-organisatie-link">
-            Mijn organisatie →
+            {t('profile.my_organisation_link')}
           </Link>
 
           {user.organisationId && (
             <div className="mt-6 border-t border-border pt-6" data-testid="profiel-report-section">
-              <p className="overline mb-1">Jaarverslag</p>
+              <p className="overline mb-1">{t('profile.report_title')}</p>
               <p className="text-sm text-muted-foreground mb-4">
-                Download een overzicht van de activiteiten van je organisatie per jaar.
+                {t('profile.report_subtitle')}
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 <select
@@ -207,7 +209,7 @@ export default function Profiel() {
                   className="btn-secondary"
                   data-testid="profiel-report-download-btn"
                 >
-                  {reportBusy ? 'Bezig…' : 'Download PDF →'}
+                  {reportBusy ? t('profile.report_downloading') : t('profile.report_download_btn')}
                 </button>
               </div>
             </div>
