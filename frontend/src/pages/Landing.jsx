@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import { CATEGORY_LABELS, CATEGORY_COLORS, formatDateNL } from './Nieuws';
 
@@ -72,6 +73,7 @@ function MagazijnWidget({ align = 'right' }) {
 }
 
 export default function Landing() {
+  const { t } = useTranslation();
   const [news, setNews] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const timerRef = useRef(null);
@@ -125,13 +127,13 @@ export default function Landing() {
             </p>
             <div className="mt-10 flex flex-wrap gap-4" data-testid="hero-cta">
               <Link to="/catalogus" className="btn-primary" data-testid="hero-catalogus-btn">
-                Bekijk catalogus →
+                {t('landing.explore_catalogus')}
               </Link>
               <Link to="/registreer" className="btn-secondary" data-testid="hero-register-btn">
-                Word lid
+                {t('nav.join_member')}
               </Link>
               <Link to="/donateur/registreer" className="btn-secondary" data-testid="hero-donateur-btn">
-                Doneer materiaal
+                {t('nav.donate_material')}
               </Link>
             </div>
 
@@ -190,13 +192,13 @@ export default function Landing() {
           data-testid="landing-news-section"
         >
           <div className="flex flex-wrap items-end justify-between gap-3 mb-10">
-            <p className="overline">Nieuws</p>
+            <p className="overline">{t('news.title')}</p>
             <Link
               to="/nieuws"
               className="industrial-link text-sm text-foreground"
               data-testid="landing-news-all-link"
             >
-              Alle berichten →
+              {t('landing.news_view_all')}
             </Link>
           </div>
           <div className="grid grid-cols-1">
@@ -296,10 +298,10 @@ export default function Landing() {
           </h2>
           <div className="flex flex-wrap gap-3">
             <Link to="/registreer" className="btn-primary" data-testid="cta-register-btn">
-              Registreer je organisatie →
+              {t('auth.register_link')} →
             </Link>
             <Link to="/donateur/registreer" className="btn-secondary" data-testid="cta-donateur-btn">
-              Doneer materiaal →
+              {t('nav.donate_material')} →
             </Link>
           </div>
         </div>

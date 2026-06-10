@@ -124,7 +124,7 @@ export default function Header() {
                 className={`${navLink} flex items-center gap-1`}
                 data-testid="nav-aanbiedingen-dropdown"
               >
-                Aanbiedingen
+                {t('nav.listings')}
                 <ChevronDown
                   size={14}
                   className={`transition-transform duration-200 ${aanbiedingenOpen ? 'rotate-180' : ''}`}
@@ -198,10 +198,10 @@ export default function Header() {
                 {t('nav.login')}
               </Link>
               <Link to="/donateur/registreer" data-testid="header-donateur-btn" className="text-sm text-foreground/80 hover:text-foreground transition">
-                Doneer materiaal
+                {t('nav.donate_material')}
               </Link>
               <Link to="/registreer" data-testid="header-register-link" className="btn-primary !py-2 !px-4 text-xs">
-                Word lid
+                {t('nav.join_member')}
               </Link>
             </>
           )}
@@ -286,7 +286,7 @@ export default function Header() {
                     className={`${mobileItemClass} w-full text-left flex items-center justify-between`}
                     data-testid="mobile-nav-aanbiedingen"
                   >
-                    Aanbiedingen
+                    {t('nav.listings')}
                     <ChevronDown
                       size={14}
                       className={`transition-transform duration-200 ${mobileAanbiedingenOpen ? 'rotate-180' : ''}`}
@@ -384,10 +384,10 @@ export default function Header() {
                     {t('nav.login')}
                   </Link>
                   <Link to="/donateur/registreer" onClick={() => setMobileOpen(false)} data-testid="mobile-header-donateur-btn" className={mobileItemClass}>
-                    Doe een gift
+                    {t('nav.give_gift')}
                   </Link>
                   <Link to="/registreer" onClick={() => setMobileOpen(false)} data-testid="mobile-header-register-link" className={`${mobileItemClass} font-medium text-foreground`}>
-                    Word lid →
+                    {t('nav.join_member')} →
                   </Link>
                 </>
               )}

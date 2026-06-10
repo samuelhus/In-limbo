@@ -1,16 +1,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 
-function formatDateNL(iso) {
+function formatDateLocale(iso, lang = 'nl') {
   if (!iso) return '';
-  return new Date(iso).toLocaleString('nl-BE', {
+  const locale = lang === 'fr' ? 'fr-BE' : 'nl-BE';
+  return new Date(iso).toLocaleString(locale, {
     day: 'numeric', month: 'long', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
 }
 
 export default function Notificaties() {
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.resolvedLanguage || 'nl').slice(0, 2);
   const [items, setItems] = useState(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -41,7 +45,7 @@ export default function Notificaties() {
   };
 
   const clearAll = async () => {
-    if (!window.confirm('Alle notificaties verwijderen?')) return;
+    if (!window.confirm(t('notifications.clear_all') + '?')) return;
     try {
       await api.delete('/notifications/clear-all');
       setItems([]);
@@ -52,8 +56,8 @@ export default function Notificaties() {
     <div className="max-w-3xl mx-auto px-4 py-12" data-testid="notificaties-page">
       <div className="flex items-end justify-between mb-10 gap-4">
         <div>
-          <p className="overline mb-2">Centrum</p>
-          <h1 className="text-4xl font-bold tracking-tight">Notificaties</h1>
+          <p className="overline mb-2">{t('notifications.title')}</p>
+          <h1 className="text-4xl font-bold tracking-tight">{t('notifications.title')}</h1>
         </div>
         {items && items.length > 0 && (
           <button
@@ -61,15 +65,15 @@ export default function Notificaties() {
             className="btn-secondary !py-2 text-xs"
             data-testid="notif-clear-all"
           >
-            Verwijder alles
+            {t('notifications.clear_all')}
           </button>
         )}
       </div>
 
       {error && <p className="text-destructive" data-testid="notif-error">{error}</p>}
-      {items === null && !error && <p className="text-muted-foreground">Laden…</p>}
+      {items === null && !error && <p className="text-muted-foreground">{t('common.loading')}</p>}
       {items && items.length === 0 && (
-        <p className="text-muted-foreground" data-testid="notif-page-empty">Geen notificaties.</p>
+        <p className="text-muted-foreground" data-testid="notif-page-empty">{t('notifications.empty')}</p>
       )}
 
       {items && items.length > 0 && (
@@ -91,14 +95,14 @@ export default function Notificaties() {
                   {n.message}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {formatDateNL(n.createdAt)} {n.read ? '' : ' · '} {!n.read && <span className="text-[#34D399] font-medium">Nieuw</span>}
+                  {formatDateLocale(n.createdAt, lang)}
                 </p>
               </div>
               <button
                 onClick={() => remove(n.id)}
                 className="text-muted-foreground hover:text-destructive text-lg leading-none px-2"
                 data-testid={`notif-delete-${n.id}`}
-                aria-label="Verwijderen"
+                aria-label={t('common.delete')}
               >
                 ×
               </button>

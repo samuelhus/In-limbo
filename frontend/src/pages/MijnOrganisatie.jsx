@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
@@ -10,6 +11,7 @@ const CATS = [
 ];
 
 export default function MijnOrganisatie() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const orgId = user.organisationId;
   const [org, setOrg] = useState(null);
@@ -71,7 +73,7 @@ export default function MijnOrganisatie() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-16" data-testid="mijn-organisatie-page">
-      <p className="overline mb-3">Organisatie</p>
+      <p className="overline mb-3">{t('profile.organisation_section')}</p>
       <h1 className="text-4xl font-bold tracking-tight mb-2">{org.name}</h1>
       <Link to={`/organisaties/${orgId}`} className="btn-primary inline-block" data-testid="mijn-org-public-link">
         Bekijk publieke pagina →

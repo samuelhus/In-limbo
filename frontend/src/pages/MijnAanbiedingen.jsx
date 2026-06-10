@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import { cloudinaryThumb } from '@/lib/cloudinary';
 import StatusBadge from '@/components/StatusBadge';
 
 const STATUS_GROUPS = [
-  { key: 'beschikbaar', label: 'Beschikbaar' },
-  { key: 'herbestemd', label: 'Herbestemd' },
-  { key: 'in_magazijn', label: 'In magazijn' },
-  { key: 'gearchiveerd', label: 'Gearchiveerd' },
+  { key: 'beschikbaar', labelKey: 'listing.status_beschikbaar' },
+  { key: 'herbestemd', labelKey: 'listing.status_herbestemd' },
+  { key: 'in_magazijn', labelKey: 'listing.status_in_magazijn' },
+  { key: 'gearchiveerd', labelKey: 'listing.status_gearchiveerd' },
 ];
 
 const COUNT_VISIBLE_STATUSES = new Set(['beschikbaar']);
@@ -24,6 +25,7 @@ const formatDate = (iso) => {
 };
 
 export default function MijnAanbiedingen() {
+  const { t } = useTranslation();
   const [items, setItems] = useState(null);
   const navigate = useNavigate();
 
@@ -42,8 +44,8 @@ export default function MijnAanbiedingen() {
   if (items.length === 0) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-24" data-testid="mijn-aanbiedingen-empty">
-        <p className="overline mb-3">Mijn aanbiedingen</p>
-        <h1 className="text-4xl font-bold tracking-tight">Je hebt nog geen aanbiedingen geplaatst</h1>
+        <p className="overline mb-3">{t('nav.my_listings')}</p>
+        <h1 className="text-4xl font-bold tracking-tight">{t('listing.no_listings')}</h1>
         <p className="mt-4 text-foreground/75 max-w-xl">
           Heb je materiaal dat je wil doorgeven? Plaats je eerste aanbieding en
           help het in transit te brengen.
@@ -53,7 +55,7 @@ export default function MijnAanbiedingen() {
           className="btn-primary mt-8 inline-flex"
           data-testid="mijn-aanbiedingen-create-btn"
         >
-          Plaats een aanbieding →
+          {t('listing.create_first')} →
         </Link>
       </div>
     );
@@ -65,12 +67,12 @@ export default function MijnAanbiedingen() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 py-12" data-testid="mijn-aanbiedingen-page">
-      <p className="overline">Mijn aanbiedingen · {items.length}</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight mb-10">Wat ik aanbied</h1>
+      <p className="overline">{t('nav.my_listings')} · {items.length}</p>
+      <h1 className="mt-2 text-4xl font-bold tracking-tight mb-10">{t('nav.my_listings')}</h1>
 
       {grouped.map((g) => (
         <section key={g.key} className="mb-12" data-testid={`mijn-aanbiedingen-group-${g.key}`}>
-          <p className="overline mb-4">{g.label} · {g.items.length}</p>
+          <p className="overline mb-4">{t(g.labelKey)} · {g.items.length}</p>
           <ul className="space-y-3">
             {g.items.map((it) => {
               const photo = it.photos?.[0];

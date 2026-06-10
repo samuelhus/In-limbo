@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
 import { cloudinaryThumb } from '@/lib/cloudinary';
@@ -14,6 +15,7 @@ const APP_STATUS_LABELS = {
 };
 
 export default function ListingDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const { user } = useAuth();
   const [item, setItem] = useState(null);
@@ -94,8 +96,8 @@ export default function ListingDetail() {
                 (beschrijving, gewicht, contact, organisatie).
               </p>
               <div className="mt-5 flex gap-3">
-                <Link to="/login" className="btn-primary !py-2 !px-4 text-xs">Inloggen</Link>
-                <Link to="/registreer" className="btn-secondary !py-2 !px-4 text-xs">Registreer</Link>
+                <Link to="/login" className="btn-primary !py-2 !px-4 text-xs">{t('nav.login')}</Link>
+                <Link to="/registreer" className="btn-secondary !py-2 !px-4 text-xs">{t('nav.register')}</Link>
               </div>
             </div>
           )}
@@ -205,6 +207,7 @@ export default function ListingDetail() {
 // Applicant panel — shows for non-owner validated viewers
 // ---------------------------------------------------------------------------
 function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChanged }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
   const isOwnerOrAdmin = listing.isOwner || isAdmin;
@@ -255,7 +258,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
         <p className="text-sm font-medium">Je aanvraag is ingediend.</p>
         <p className="text-xs text-muted-foreground italic">Motivatie: "{myApp.motivation}"</p>
         <button onClick={withdraw} disabled={busy} className="btn-secondary !py-2 text-xs" data-testid="apply-withdraw-btn">
-          Aanvraag intrekken
+          {t('listing.withdraw_btn')}
         </button>
       </div>
     );
@@ -276,7 +279,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
         <p className="text-sm text-muted-foreground">Je hebt eerder een aanvraag ingetrokken voor deze aanbieding.</p>
         {listing.status === 'beschikbaar' && (
           <button onClick={onOpenApply} className="btn-primary" data-testid="apply-reapply-btn">
-            Opnieuw aanvragen
+            {t('listing.apply_btn')}
           </button>
         )}
       </div>
@@ -288,7 +291,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
     return (
       <div className="mt-8 border-t border-border pt-6" data-testid="apply-cta-block">
         <button onClick={onOpenApply} className="btn-primary" data-testid="apply-open-modal-btn">
-          Aanvraag indienen →
+          {t('listing.apply_btn')}
         </button>
       </div>
     );
@@ -300,6 +303,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
 // Owner / admin panel
 // ---------------------------------------------------------------------------
 function OwnerPanel({ listing, isAdmin, onChanged }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -364,7 +368,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
   return (
     <div className="mt-10 border-t border-border pt-6" data-testid="owner-panel">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
-        <p className="overline">Aanvragen · {visibleApps.length}</p>
+        <p className="overline">{t('listing.applications')} · {visibleApps.length}</p>
         <div className="flex flex-wrap gap-2">
           {listing.status === 'beschikbaar' && (
             <button
@@ -389,7 +393,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
               className="btn-secondary !py-2 text-xs"
               data-testid="owner-unrehome-btn"
             >
-              Herbestemming ongedaan maken
+              {t('listing.unrehome_btn')}
             </button>
           )}
           {isEditable && (
@@ -398,7 +402,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
               className="btn-secondary !py-2 text-xs"
               data-testid="owner-edit-btn"
             >
-              Bewerken
+              {t('common.edit')}
             </button>
           )}
           {canDelete && (

@@ -1,21 +1,28 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
 const POLL_MS = 60_000;
 
-function timeAgo(iso) {
+function timeAgo(iso, lang = 'nl') {
   if (!iso) return '';
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'zojuist';
-  if (diff < 3600) return `${Math.floor(diff / 60)} min geleden`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} u geleden`;
-  if (diff < 7 * 86400) return `${Math.floor(diff / 86400)} d geleden`;
-  return new Date(iso).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' });
+  const labels = lang === 'fr'
+    ? { now: "à l'instant", min: 'min', h: 'h', d: 'j' }
+    : { now: 'zojuist', min: 'min geleden', h: 'u geleden', d: 'd geleden' };
+  if (diff < 60) return labels.now;
+  if (diff < 3600) return `${Math.floor(diff / 60)} ${labels.min}`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} ${labels.h}`;
+  if (diff < 7 * 86400) return `${Math.floor(diff / 86400)} ${labels.d}`;
+  const locale = lang === 'fr' ? 'fr-BE' : 'nl-BE';
+  return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
 export default function NotificationCenter() {
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.resolvedLanguage || 'nl').slice(0, 2);
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -64,7 +71,7 @@ export default function NotificationCenter() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="relative p-2 hover:bg-muted transition-colors"
-        aria-label="Notificaties"
+        aria-label={t('notifications.title')}
         data-testid="notif-bell"
       >
         <Bell className="w-5 h-5" />
@@ -84,21 +91,21 @@ export default function NotificationCenter() {
           data-testid="notif-dropdown"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <p className="font-semibold text-sm">Notificaties</p>
+            <p className="font-semibold text-sm">{t('notifications.title')}</p>
             {unread > 0 && (
               <button
                 onClick={markAllRead}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 data-testid="notif-mark-all-read"
               >
-                Markeer alles als gelezen
+                {t('notifications.mark_all_read')}
               </button>
             )}
           </div>
 
           {items.length === 0 ? (
             <p className="px-4 py-8 text-sm text-muted-foreground text-center" data-testid="notif-empty">
-              Geen notificaties.
+              {t('notifications.empty')}
             </p>
           ) : (
             <ul className="max-h-96 overflow-y-auto divide-y divide-border">
@@ -114,7 +121,7 @@ export default function NotificationCenter() {
                     <p className={`text-sm ${n.read ? 'text-foreground/75' : 'text-foreground font-medium'}`}>
                       {n.message}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">{timeAgo(n.createdAt)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{timeAgo(n.createdAt, lang)}</p>
                   </button>
                 </li>
               ))}
@@ -128,7 +135,7 @@ export default function NotificationCenter() {
               className="block px-4 py-3 text-sm text-center hover:bg-muted transition-colors industrial-link"
               data-testid="notif-view-all"
             >
-              Bekijk alle notificaties →
+              {t('notifications.view_all')}
             </Link>
           </div>
         </div>

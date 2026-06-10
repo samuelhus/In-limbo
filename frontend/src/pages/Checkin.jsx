@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 
 
@@ -27,6 +28,7 @@ function StepIndicator({ step }) {
 }
 
 export default function Checkin() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -107,10 +109,10 @@ export default function Checkin() {
   return (
     <div className="min-h-screen bg-background" data-testid="checkin-page">
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-12">
-        <p className="overline mb-3">In Limbo · Magazijn</p>
-        <h1 className="text-4xl font-bold tracking-tight mb-2">Magazijn checkin</h1>
+        <p className="overline mb-3">In Limbo · {t('nav.warehouse')}</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-2">{t('checkin.title')}</h1>
         <p className="text-sm text-muted-foreground mb-10">
-          Registreer materialen die gedoneerd worden aan het magazijn.
+          {t('checkin.subtitle')}
         </p>
 
         {step !== 4 && <StepIndicator step={step} />}
@@ -325,7 +327,7 @@ export default function Checkin() {
                 className="btn-primary"
                 data-testid="checkin-confirm-btn"
               >
-                {busy ? 'Bezig…' : 'Bevestig incheckin ✓'}
+                {busy ? t('checkin.in_progress') : t('checkin.confirm_btn')}
               </button>
             </div>
           </section>
@@ -340,7 +342,7 @@ export default function Checkin() {
             >
               ✓
             </div>
-            <h2 className="text-3xl font-bold tracking-tight">Incheckin geregistreerd!</h2>
+            <h2 className="text-3xl font-bold tracking-tight">{t('checkin.success_title')}</h2>
             <p className="text-foreground/80 leading-relaxed max-w-md mx-auto">
               <span className="font-medium" data-testid="checkin-success-org">{selectedOrg.name}</span>{' '}
               heeft <span className="font-medium" data-testid="checkin-success-kg">{confirmedTotal.toFixed(2)} kg</span>{' '}
@@ -354,7 +356,7 @@ export default function Checkin() {
               className="btn-primary"
               data-testid="checkin-restart-btn"
             >
-              Nieuwe incheckin starten
+              {t('checkin.restart_btn')}
             </button>
           </section>
         )}

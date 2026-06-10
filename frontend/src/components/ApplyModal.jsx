@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 
 export default function ApplyModal({ listing, onClose, onSubmitted }) {
+  const { t } = useTranslation();
   const [motivation, setMotivation] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -33,7 +35,7 @@ export default function ApplyModal({ listing, onClose, onSubmitted }) {
       >
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <p className="overline mb-2">Aanvraag indienen</p>
+            <p className="overline mb-2">{t('listing.apply_modal_title')}</p>
             <h2 className="text-2xl font-bold tracking-tight">{listing.title}</h2>
           </div>
           <button onClick={onClose} className="text-2xl leading-none px-2" data-testid="apply-modal-close">×</button>
@@ -41,14 +43,14 @@ export default function ApplyModal({ listing, onClose, onSubmitted }) {
 
         <form onSubmit={submit} className="space-y-5">
           <div>
-            <label className="label-overline">Motivatie / korte beschrijving van je project</label>
+            <label className="label-overline">{t('listing.motivation')}</label>
             <textarea
               rows={6}
               maxLength={500}
               required
               value={motivation}
               onChange={(e) => setMotivation(e.target.value)}
-              placeholder="Vertel kort waarvoor je dit materiaal nodig hebt — wat je ermee gaat doen, wanneer, en hoe je het zou ophalen."
+              placeholder={t('listing.apply_modal_placeholder')}
               className="input-flat"
               data-testid="apply-motivation-input"
               autoFocus
@@ -64,10 +66,10 @@ export default function ApplyModal({ listing, onClose, onSubmitted }) {
 
           <div className="flex justify-between items-center pt-2">
             <button type="button" onClick={onClose} className="btn-ghost" data-testid="apply-cancel">
-              Annuleren
+              {t('common.cancel')}
             </button>
             <button type="submit" disabled={submitting || !motivation.trim()} className="btn-primary" data-testid="apply-submit">
-              {submitting ? 'Verzenden…' : 'Aanvraag versturen →'}
+              {submitting ? t('common.saving') : t('listing.apply_modal_submit')}
             </button>
           </div>
         </form>

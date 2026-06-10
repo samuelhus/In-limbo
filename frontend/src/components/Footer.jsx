@@ -1,35 +1,35 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Logo from './Logo';
 
 export default function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="border-t border-border bg-background mt-24" data-testid="footer">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12 grid grid-cols-1 md:grid-cols-12 gap-8">
         <div className="md:col-span-5">
           <Logo size="md" />
           <p className="mt-4 text-sm text-muted-foreground max-w-md leading-relaxed">
-            Een marktplaats voor materiaal in transit. In Limbo verbindt
-            socio-culturele organisaties die materiaal teveel hebben met diegenen
-            die het nog kunnen gebruiken.
+            {t('footer.tagline')}
           </p>
         </div>
         <div className="md:col-span-2">
-          <p className="overline mb-3">Navigatie</p>
+          <p className="overline mb-3">{t('footer.navigation')}</p>
           <ul className="space-y-2 text-sm">
-            <li><a href="/" className="industrial-link">Home</a></li>
-            <li><a href="/catalogus" className="industrial-link">Catalogus</a></li>
+            <li><a href="/" className="industrial-link">{t('common.home')}</a></li>
+            <li><a href="/catalogus" className="industrial-link">{t('nav.catalogus')}</a></li>
           </ul>
         </div>
         <div className="md:col-span-2">
-          <p className="overline mb-3">Project</p>
+          <p className="overline mb-3">{t('footer.project')}</p>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><a href="/over-ons" className="industrial-link">Over ons</a></li>
-            <li>Contact</li>
-            <li><a href="/voorwaarden" className="industrial-link">Voorwaarden</a></li>
+            <li><a href="/over-ons" className="industrial-link">{t('nav.about')}</a></li>
+            <li>{t('common.contact')}</li>
+            <li><a href="/voorwaarden" className="industrial-link">{t('footer.terms')}</a></li>
           </ul>
         </div>
         <div className="md:col-span-3">
-          <p className="overline mb-3">Socials</p>
+          <p className="overline mb-3">{t('footer.socials')}</p>
           <ul className="space-y-3">
             <li>
               <a href="https://www.instagram.com/inlimbo.brussels" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -57,7 +57,7 @@ export default function Footer() {
       <div className="border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 text-xs text-muted-foreground flex justify-between">
           <span>© {new Date().getFullYear()} in—limbo</span>
-          <span className="tracking-widest uppercase">Material in transit</span>
+          <span className="tracking-widest uppercase">{t('footer.material_in_transit')}</span>
         </div>
       </div>
     </footer>

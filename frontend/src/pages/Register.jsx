@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
 
@@ -26,6 +27,7 @@ function StepIndicator({ step, max }) {
 
 export default function Register() {
   const { registerNewOrg, registerExistingOrg } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Step 1: terms → Step 2: pick path → Step 3: user info → Step 4: org info or pick org
@@ -92,9 +94,9 @@ export default function Register() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16" data-testid="register-page">
-      <p className="overline mb-4">Registratie</p>
+      <p className="overline mb-4">{t('auth.register_title')}</p>
       <h1 className="text-4xl font-bold tracking-tight mb-10">
-        Word lid van in—limbo.
+        {t('nav.join_member')} in—limbo.
       </h1>
 
       <StepIndicator step={step} max={4} />

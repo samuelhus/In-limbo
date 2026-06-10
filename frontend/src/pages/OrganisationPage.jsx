@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
 import { cloudinaryThumb } from '@/lib/cloudinary';
 
 export default function OrganisationPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [org, setOrg] = useState(null);
   const [listings, setListings] = useState([]);
@@ -14,8 +16,8 @@ export default function OrganisationPage() {
     api.get(`/organisations/${id}/listings`).then(({ data }) => setListings(data)).catch(() => {});
   }, [id]);
 
-  if (org === null) return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground">Laden…</div>;
-  if (!org) return <div className="max-w-5xl mx-auto px-4 py-24" data-testid="org-not-found">Organisatie niet gevonden.</div>;
+  if (org === null) return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground">{t('common.loading')}</div>;
+  if (!org) return <div className="max-w-5xl mx-auto px-4 py-24" data-testid="org-not-found">{t('organisation.page_title')}: —</div>;
 
   const herbestemd = listings.filter((l) => l.status === 'herbestemd');
   const active = listings.filter((l) => l.status !== 'herbestemd' && l.status !== 'gearchiveerd');
@@ -34,19 +36,19 @@ export default function OrganisationPage() {
 
       <div className="mt-12 grid grid-cols-1 md:grid-cols-12 gap-10">
         <div className="md:col-span-7">
-          <p className="overline mb-2">Over deze organisatie</p>
+          <p className="overline mb-2">{t('organisation.description')}</p>
           <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap text-lg">{org.description}</p>
         </div>
         <aside className="md:col-span-5 md:border-l md:border-border md:pl-10 space-y-6">
           {org.address && (
             <div>
-              <p className="overline mb-1">Adres</p>
+              <p className="overline mb-1">{t('organisation.address')}</p>
               <p className="text-foreground/85">{org.address}</p>
             </div>
           )}
           {org.website && (
             <div>
-              <p className="overline mb-1">Website</p>
+              <p className="overline mb-1">{t('organisation.website')}</p>
               <a href={org.website} target="_blank" rel="noreferrer" className="industrial-link" data-testid="org-website-link">
                 {org.website.replace(/^https?:\/\//, '')}
               </a>
@@ -58,14 +60,14 @@ export default function OrganisationPage() {
 
       {active.length > 0 && (
         <section className="mt-20 border-t border-border pt-10">
-          <p className="overline mb-6">Beschikbare aanbiedingen · {active.length}</p>
+          <p className="overline mb-6">{t('organisation.active_listings')} · {active.length}</p>
           <ListingsGrid items={active} />
         </section>
       )}
 
       {herbestemd.length > 0 && (
         <section className="mt-20 border-t border-border pt-10">
-          <p className="overline mb-6">Succesvol herbestemd · {herbestemd.length}</p>
+          <p className="overline mb-6">{t('listing.status_herbestemd')} · {herbestemd.length}</p>
           <ListingsGrid items={herbestemd} muted />
         </section>
       )}

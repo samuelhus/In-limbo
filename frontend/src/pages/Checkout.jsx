@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 
 
@@ -27,6 +28,7 @@ function StepIndicator({ step }) {
 }
 
 export default function Checkout() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -103,8 +105,8 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
   return (
     <div className="min-h-screen bg-background" data-testid="checkout-page">
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-12">
-        <p className="overline mb-3">In Limbo · Magazijn</p>
-        <h1 className="text-4xl font-bold tracking-tight mb-2">Magazijn checkout</h1>
+        <p className="overline mb-3">In Limbo · {t('nav.warehouse')}</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-2">{t('checkout.title')}</h1>
         <p className="text-sm text-muted-foreground mb-10">
           Registreer de materialen die je vandaag meeneemt.
         </p>

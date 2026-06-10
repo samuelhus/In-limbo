@@ -1,21 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import { cloudinaryThumb } from '@/lib/cloudinary';
 
 const STATUS_GROUPS = [
-  { key: 'selected', label: 'Geselecteerd', tone: 'border-green-500 bg-green-50' },
-  { key: 'open', label: 'In behandeling', tone: 'border-foreground bg-surface' },
-  { key: 'withdrawn', label: 'Ingetrokken', tone: 'border-border bg-muted/50 opacity-70' },
+  { key: 'selected', labelKey: 'applications.status_selected', tone: 'border-green-500 bg-green-50' },
+  { key: 'open', labelKey: 'applications.status_open', tone: 'border-foreground bg-surface' },
+  { key: 'withdrawn', labelKey: 'applications.status_withdrawn', tone: 'border-border bg-muted/50 opacity-70' },
 ];
 
-const APP_STATUS_LABELS = {
-  open: 'In behandeling',
-  selected: 'Geselecteerd',
-  withdrawn: 'Ingetrokken',
-};
-
 export default function MijnAanvragen() {
+  const { t } = useTranslation();
   const [apps, setApps] = useState(null);
 
   useEffect(() => {
@@ -23,7 +19,7 @@ export default function MijnAanvragen() {
   }, []);
 
   if (apps === null) {
-    return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground" data-testid="aanvragen-loading">Laden…</div>;
+    return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground" data-testid="aanvragen-loading">{t('common.loading')}</div>;
   }
 
   const grouped = STATUS_GROUPS.map((g) => ({
@@ -32,18 +28,18 @@ export default function MijnAanvragen() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 py-12" data-testid="aanvragen-page">
-      <p className="overline">Mijn aanvragen · {apps.length}</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight mb-10">Wat ik aanvroeg</h1>
+      <p className="overline">{t('applications.title')} · {apps.length}</p>
+      <h1 className="mt-2 text-4xl font-bold tracking-tight mb-10">{t('applications.title')}</h1>
 
       {apps.length === 0 && (
         <p className="text-muted-foreground" data-testid="aanvragen-empty">
-          Je hebt nog geen aanvragen ingediend. <Link to="/catalogus" className="industrial-link text-foreground">Bekijk de catalogus →</Link>
+          {t('applications.empty')} <Link to="/catalogus" className="industrial-link text-foreground">{t('applications.browse_catalogus')} →</Link>
         </p>
       )}
 
       {grouped.map((g) => (
         <section key={g.key} className="mb-12" data-testid={`aanvragen-group-${g.key}`}>
-          <p className="overline mb-4">{g.label} · {g.items.length}</p>
+          <p className="overline mb-4">{t(g.labelKey)} · {g.items.length}</p>
           <ul className="space-y-3">
             {g.items.map((a) => (
               <li key={a.id} data-testid={`aanvragen-item-${a.id}`}>
@@ -64,7 +60,7 @@ export default function MijnAanvragen() {
                     <p className="text-xs text-foreground/70 italic line-clamp-1 mt-1">"{a.motivation}"</p>
                   </div>
                   <span className="text-xs uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                    {APP_STATUS_LABELS[a.status]}
+                    {t(`applications.status_${a.status}`)}
                   </span>
                 </Link>
               </li>

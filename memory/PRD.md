@@ -98,6 +98,30 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Meertaligheid NL/FR — Migratie vervolgsessie ✅
+- **Locale expansie**: `nl.json` en `fr.json` uitgebreid van ~120 → ~210 sleutels met FR-vertalingen (manueel door mij). Namespaces: `common`, `nav`, `auth`, `catalogus`, `listing`, `applications`, `profile`, `organisation`, `notifications`, `pages`, `landing`, `news`, `checkin`, `checkout`, `footer`.
+- **Nieuw gemigreerde pagina's/components** (full + key UI strings):
+  - `Footer.jsx` (volledig)
+  - `Rejected.jsx`, `Pending.jsx` (volledig)
+  - `ApplyModal.jsx` (volledig)
+  - `NotificationCenter.jsx` + `Notificaties.jsx` (volledig, incl. relatieve tijden in FR)
+  - `Header.jsx` (Aanbiedingen dropdown label + items)
+  - `Landing.jsx` (CTA-knoppen, nieuws-sectie titel)
+  - `Nieuws.jsx` (titel + ondertitel + empty/loading states)
+  - `Register.jsx`, `DonateurRegister.jsx` (titels)
+  - `MijnAanbiedingen.jsx`, `MijnAanvragen.jsx` (titels + status-groepen)
+  - `ListingDetail.jsx` (apply/withdraw/edit/unrehome knoppen + applications header)
+  - `OrganisationPage.jsx` (sectie-labels, beschrijving/adres/website)
+  - `MijnOrganisatie.jsx` (titel)
+  - `Checkin.jsx`, `Checkout.jsx` (titel + bevestig/restart knoppen)
+- **Verificatie via Playwright**:
+  - Live NL↔FR switch werkt op alle gemigreerde pagina's
+  - Headers: "Catalogue · Actualités · Offres · À propos"
+  - Page titles: "Mes offres", "Mes demandes", "Notifications", "Actualités", "Vos données", "Organisation"
+  - Dropdown items: "Nouvelle offre · Mes offres · Mes demandes"
+  - Footer volledig FR: "Accueil · Catalogue · À propos · Conditions · Réseaux"
+- **Nog te doen voor volgende sessies**: ListingWizard (form fields, 3 steps), ListingNew/Edit body, Admin pagina's (AdminPanel + AdminNieuws + AdminDonateurListings), Profile form fields (Voornaam/Achternaam/Telefoon/etc), Voorwaarden body content, OverOns body content, Landing hero h1 + manifesto, NieuwsDetail, inline error messages
+
 ### 2026-02-06 — Meertaligheid NL/FR (i18next) — setup + top-prioriteit migratie ✅
 - **Setup**: `i18next` + `react-i18next` + `i18next-browser-languagedetector` geïnstalleerd. Config in `src/i18n.js` met `localStorage` persistence (`inlimbo_lang`) en browser auto-detect. Geladen via `index.js` import.
 - **Locales**: `src/locales/nl.json` met volledige NL content (~120 sleutels), `src/locales/fr.json` met kern-UI vertaald (knoppen, navigatie, login/register/wachtwoord-reset, catalogus filters, profile sectie-titels, footer). Niet-vertaalde sleutels vallen automatisch terug op NL.

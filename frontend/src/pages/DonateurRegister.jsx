@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 
 function StepIndicator({ step, max }) {
@@ -20,6 +21,7 @@ function StepIndicator({ step, max }) {
 
 export default function DonateurRegister() {
   const { registerDonateur } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -45,9 +47,9 @@ export default function DonateurRegister() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16" data-testid="donateur-register-page">
-      <p className="overline mb-4">Donateur</p>
+      <p className="overline mb-4">{t('auth.register_donateur')}</p>
       <h1 className="text-4xl font-bold tracking-tight mb-10">
-        Doneer materiaal.
+        {t('auth.donateur_register_title')}.
       </h1>
 
       <StepIndicator step={step} max={3} />

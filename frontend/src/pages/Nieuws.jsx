@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
 export const CATEGORY_LABELS = {
@@ -68,6 +69,7 @@ function NieuwsCard({ post }) {
 }
 
 export default function Nieuws() {
+  const { t } = useTranslation();
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState('');
 
@@ -79,14 +81,14 @@ export default function Nieuws() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16" data-testid="nieuws-page">
-      <p className="overline mb-4">Wat speelt er</p>
-      <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-12">Nieuws</h1>
+      <p className="overline mb-4">{t('news.subtitle')}</p>
+      <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-12">{t('news.title')}</h1>
 
       {error && <p className="text-destructive">{error}</p>}
-      {posts === null && !error && <p className="text-muted-foreground">Laden…</p>}
+      {posts === null && !error && <p className="text-muted-foreground">{t('common.loading')}</p>}
       {posts && posts.length === 0 && (
         <p className="text-muted-foreground" data-testid="nieuws-empty">
-          Er zijn momenteel geen berichten.
+          {t('news.empty')}
         </p>
       )}
 
