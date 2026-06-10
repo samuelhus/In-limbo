@@ -9,10 +9,13 @@ load_dotenv(ROOT_DIR / ".env")
 import os
 
 import cloudinary
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request
+from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
-from deps import db, client, log
+from deps import db, client, log, limiter
 from seed import seed
 from tasks import archive_expired_listings, mark_inactive_orgs
 
@@ -41,6 +44,27 @@ api = APIRouter(prefix="/api")
 
 
 # --------------------------------------------------------------------------
+# Rate limiting (slowapi)
+# --------------------------------------------------------------------------
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    path = request.url.path
+    if path.endswith("/auth/login"):
+        msg = "Te veel inlogpogingen. Probeer het over een minuut opnieuw."
+    elif "/auth/register" in path:
+        msg = "Te veel registratiepogingen. Probeer het over een minuut opnieuw."
+    elif "/auth/forgot-password" in path:
+        msg = "Te veel resetaanvragen. Probeer het over een minuut opnieuw."
+    else:
+        msg = "Te veel aanvragen. Probeer het later opnieuw."
+    return JSONResponse(status_code=429, content={"detail": msg})
+
+
+# --------------------------------------------------------------------------
 # Startup / shutdown
 # --------------------------------------------------------------------------
 @app.on_event("startup")
@@ -55,6 +79,8 @@ async def startup() -> None:
     await db.applications.create_index("listingId")
     await db.applications.create_index("applicantUserId")
     await db.applications.create_index([("listingId", 1), ("applicantUserId", 1)])
+    await db.password_resets.create_index("token", unique=True)
+    await db.password_resets.create_index("expiresAt", expireAfterSeconds=0)
     await seed(db)
     archived = await archive_expired_listings(db)
     inactive = await mark_inactive_orgs(db)

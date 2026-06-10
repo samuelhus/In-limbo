@@ -1,0 +1,43 @@
+{
+  "summary": "Tested slowapi rate limiting (login/register/forgot-password) and full password reset flow (TTL, single-use, email-enumeration prevention). Functional reset flow + all UI flows pass 100%. Rate-limit enforcement via public ingress URL is UNRELIABLE because Kubernetes ingress routes requests through multiple internal source IPs which split slowapi's per-IP buckets.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/auth/login, /api/auth/forgot-password, /api/auth/register/*",
+        "issue": "Rate limit (5/min, 5/min, 10/min) is NOT reliably enforced through the public REACT_APP_BACKEND_URL. Backend uvicorn access logs show requests alternating between ingress source IPs 10.79.128.133 and 10.79.138.194 — slowapi's default key_func get_remote_address() uses request.client.host which is the proxy IP, so each ingress pod gets its own bucket. Result: 6+ logins in <60s often all return 401 (or 6+ forgot-password calls return 200) instead of hitting 429. Tested manually with curl: sometimes 6th call returns 429 (when same proxy), sometimes 7th-8th still return 401/200. The limit is bypassable via the public URL. Verified working correctly on localhost:8001 (11th register → 429, 6th login → 429).",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_password_reset_and_ratelimit.py",
+    "/app/test_reports/pytest/password_reset_ratelimit_results.xml"
+  ],
+  "action_items": [
+    "Fix slowapi rate-limit bypass through k8s ingress: change limiter key_func in /app/backend/deps.py to read X-Forwarded-For header (real client IP) instead of using default get_remote_address. Example: `def get_real_ip(request): xff = request.headers.get('x-forwarded-for'); return xff.split(',')[0].strip() if xff else get_remote_address(request)` and pass `key_func=get_real_ip` to Limiter(). After fix, re-test 6+ rapid logins/forgot-password calls via public URL → 429 should trigger consistently."
+  ],
+  "critical_code_review_comments": [
+    "Rate-limit IP detection: slowapi defaults to request.client.host which is unsafe behind ingress/proxy. Must use X-Forwarded-For (first value, left-most) to identify real client. Current implementation makes per-endpoint brute-force / enumeration protection bypassable.",
+    "Resend send_email is awaited inline inside forgot-password and reset-password handlers — if Resend has a slow/timeout response this blocks the request and delays the response by seconds. Consider asyncio.create_task() for non-blocking dispatch (like notify_admins_new_registration already does in register endpoints).",
+    "PasswordResetConfirm.newPassword min_length=6 is quite weak — consider raising to 8 with a complexity hint."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_password_reset_and_ratelimit.py (created)"
+  ],
+  "success_rate": {
+    "backend": "77% (10/13 — 3 rate-limit tests fail due to bug above; all 10 functional tests pass)",
+    "frontend": "100% (all UI flows: forgot link on /login, navigation, forgot success state for both existing+nonexistent email, back-to-login link, reset password mismatch/short-pw/invalid-token validation)"
+  },
+  "test_credentials": "Used existing seeded credentials from /app/memory/test_credentials.md (lotte@atelier-brussel.example / User123! — confirmed restored after test run).",
+  "seed_data_creation": "None. Test creates temporary password_resets records and immediately deletes them; lotte's password is hash-restored to User123! via module teardown.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Functional flow (forgot/reset/single-use/expired/short-pw/indexes/enumeration prevention) is fully working — green on all 10 tests. The only failure is the slowapi IP-key behind k8s ingress. After main agent updates Limiter key_func to use X-Forwarded-For, simply re-run tests/test_password_reset_and_ratelimit.py — rate-limit tests should pass on first attempt. Tests are correctly ordered: rate-limit tests first, then 65s sleep, then functional tests, so no bucket contamination. Lotte's password is hash-restored in module teardown so other test suites are unaffected.",
+  "rca of the issue": "RCA — Rate-limit bypass: (1) Reproduction: send 6 POSTs to /api/auth/forgot-password (or login) in <60s via REACT_APP_BACKEND_URL — observe many 200/401 instead of one 429. (2) Cause: slowapi's default key_func returns request.client.host = the immediate connecting socket peer. In the preview k8s cluster the uvicorn process receives connections from at least two ingress proxy IPs (10.79.128.133, 10.79.138.194). Each IP gets its own 5/min bucket; with N proxy IPs, the effective limit is N*5/min and per-IP isolation of brute-force is broken. (3) Mitigation: configure Limiter(key_func=...) to read X-Forwarded-For (left-most value) which the ingress sets to the real client IP. (4) Why localhost test works: direct socket connection has stable client IP (127.0.0.1) — slowapi's bucket is consistent — 6th request correctly returns 429. (5) Side effect: also relevant for any future limit (e.g., listing creation, comments). Fix once in deps.py limiter init."
+}

@@ -33,3 +33,10 @@ DEFAULT_EMAIL_PREFS = {
     "unrehomed": True,
     "account_validated": True,
 }
+
+
+# Shared rate-limiter (1 instance for slowapi to wire correctly)
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)

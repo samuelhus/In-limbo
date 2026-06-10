@@ -1,23 +1,34 @@
-"""Auth endpoints: registratie, login, logout, current user."""
-from __future__ import annotations
+"""Auth endpoints: registratie, login, logout, current user, password reset."""
+import secrets
 import uuid
 import asyncio
+from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, HTTPException, Depends, Response
+from fastapi import APIRouter, HTTPException, Depends, Response, Request, Body
+from slowapi.util import get_remote_address
 
-from deps import db, now_iso, strip_mongo
-from models import RegisterNewOrg, RegisterExistingOrg, RegisterDonateur, LoginRequest
+from deps import db, now_iso, strip_mongo, limiter
+from models import (
+    RegisterNewOrg, RegisterExistingOrg, RegisterDonateur, LoginRequest,
+    PasswordResetRequest, PasswordResetConfirm,
+)
 from auth import (
     hash_password, verify_password, create_access_token,
     set_auth_cookie, clear_auth_cookie, get_current_user,
 )
-from notifications import notify_admins_new_registration
+from notifications import (
+    notify_admins_new_registration, send_email, render_email, FRONTEND_URL,
+)
 
 router = APIRouter()
 
 
+RATE_LIMIT_MSG = "Te veel inlogpogingen. Probeer het over een minuut opnieuw."
+
+
 @router.post("/auth/register/new-org")
-async def register_new_org(body: RegisterNewOrg, response: Response):
+@limiter.limit("10/minute")
+async def register_new_org(request: Request, body: RegisterNewOrg = Body(...), response: Response = None):
     if not body.acceptedTerms:
         raise HTTPException(status_code=400, detail="Je moet de voorwaarden aanvaarden")
 
@@ -73,7 +84,8 @@ async def register_new_org(body: RegisterNewOrg, response: Response):
 
 
 @router.post("/auth/register/existing-org")
-async def register_existing_org(body: RegisterExistingOrg, response: Response):
+@limiter.limit("10/minute")
+async def register_existing_org(request: Request, body: RegisterExistingOrg = Body(...), response: Response = None):
     if not body.acceptedTerms:
         raise HTTPException(status_code=400, detail="Je moet de voorwaarden aanvaarden")
 
@@ -117,7 +129,8 @@ async def register_existing_org(body: RegisterExistingOrg, response: Response):
 
 
 @router.post("/auth/register/donateur")
-async def register_donateur(body: RegisterDonateur, response: Response):
+@limiter.limit("10/minute")
+async def register_donateur(request: Request, body: RegisterDonateur = Body(...), response: Response = None):
     if not body.acceptedTerms:
         raise HTTPException(400, "Je moet de voorwaarden aanvaarden")
     email = body.email.lower()
@@ -148,7 +161,8 @@ async def register_donateur(body: RegisterDonateur, response: Response):
 
 
 @router.post("/auth/login")
-async def login(body: LoginRequest, response: Response):
+@limiter.limit("5/minute")
+async def login(request: Request, body: LoginRequest = Body(...), response: Response = None):
     email = body.email.lower()
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(body.password, user["passwordHash"]):
@@ -170,3 +184,106 @@ async def logout(response: Response):
 @router.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     return strip_mongo(dict(user))
+
+
+
+# --------------------------------------------------------------------------
+# Wachtwoord vergeten / reset
+# --------------------------------------------------------------------------
+SAFE_FORGOT_RESPONSE = {
+    "ok": True,
+    "message": "Als dit e-mailadres bestaat, sturen we een resetlink.",
+}
+
+
+@router.post("/auth/forgot-password")
+@limiter.limit("5/minute")
+async def forgot_password(request: Request, body: PasswordResetRequest = Body(...)):
+    email = body.email.lower()
+    user = await db.users.find_one({"email": email})
+    if not user:
+        return SAFE_FORGOT_RESPONSE
+
+    # Oude tokens van deze user opruimen (single active token per user)
+    await db.password_resets.delete_many({"userId": user["id"]})
+
+    token = secrets.token_urlsafe(32)
+    now = now_iso()
+    expires_dt = datetime.now(timezone.utc) + timedelta(hours=24)
+
+    await db.password_resets.insert_one({
+        "token": token,
+        "userId": user["id"],
+        "email": email,
+        "createdAt": now,
+        "expiresAt": expires_dt,
+        "expiresAtIso": expires_dt.isoformat(),
+        "used": False,
+    })
+
+    reset_url = f"{FRONTEND_URL}/wachtwoord-reset?token={token}"
+    first = user.get("firstName") or user.get("username") or "daar"
+    html = render_email(
+        title="Wachtwoord opnieuw instellen",
+        body_lines=[
+            f"Dag {first},",
+            "Je hebt gevraagd om je wachtwoord opnieuw in te stellen.",
+            "Klik op onderstaande knop om een nieuw wachtwoord in te stellen. De link is 24 uur geldig.",
+            "Als je dit niet zelf hebt aangevraagd, kan je deze e-mail negeren.",
+        ],
+        cta_text="Stel nieuw wachtwoord in →",
+        cta_url=reset_url,
+    )
+    await send_email(
+        to_email=email,
+        subject="Wachtwoord opnieuw instellen — In Limbo",
+        html_content=html,
+    )
+    return SAFE_FORGOT_RESPONSE
+
+
+@router.post("/auth/reset-password")
+@limiter.limit("10/minute")
+async def reset_password(request: Request, body: PasswordResetConfirm = Body(...)):
+    record = await db.password_resets.find_one({"token": body.token, "used": False})
+    if not record:
+        raise HTTPException(400, "Ongeldige of verlopen resetlink.")
+
+    expires_at = record.get("expiresAt")
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    elif expires_at is not None and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at is None or datetime.now(timezone.utc) > expires_at:
+        await db.password_resets.delete_one({"token": body.token})
+        raise HTTPException(400, "Deze resetlink is verlopen. Vraag een nieuwe aan.")
+
+    new_hash = hash_password(body.newPassword)
+    await db.users.update_one(
+        {"id": record["userId"]},
+        {"$set": {"passwordHash": new_hash, "updatedAt": now_iso()}},
+    )
+
+    # Single-use: token verwijderen na succes
+    await db.password_resets.delete_one({"token": body.token})
+
+    user = await db.users.find_one({"id": record["userId"]})
+    if user:
+        first = user.get("firstName") or user.get("username") or "daar"
+        html = render_email(
+            title="Wachtwoord gewijzigd",
+            body_lines=[
+                f"Dag {first},",
+                "Je wachtwoord is succesvol gewijzigd.",
+                "Als je dit niet zelf hebt gedaan, neem dan onmiddellijk contact op via hello@inlimbo.be.",
+            ],
+            cta_text="Inloggen →",
+            cta_url=f"{FRONTEND_URL}/login",
+        )
+        await send_email(
+            to_email=user["email"],
+            subject="Je wachtwoord is gewijzigd — In Limbo",
+            html_content=html,
+        )
+
+    return {"ok": True, "message": "Wachtwoord succesvol gewijzigd."}

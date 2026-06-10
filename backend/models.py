@@ -139,6 +139,17 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class PasswordResetRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    token: str
+    newPassword: str = Field(..., min_length=6)
+
+
 class RegisterDonateur(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     username: str

@@ -81,6 +81,16 @@ export default function Login() {
           >
             {loading ? 'Bezig…' : 'Inloggen →'}
           </button>
+
+          <div className="text-center">
+            <Link
+              to="/wachtwoord-vergeten"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="forgot-password-link"
+            >
+              Wachtwoord vergeten?
+            </Link>
+          </div>
         </form>
 
         <p className="mt-8 text-sm text-muted-foreground">

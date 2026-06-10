@@ -29,6 +29,8 @@ import Nieuws from '@/pages/Nieuws';
 import NieuwsDetail from '@/pages/NieuwsDetail';
 import Checkout from '@/pages/Checkout';
 import Checkin from '@/pages/Checkin';
+import WachtwoordVergeten from '@/pages/WachtwoordVergeten';
+import WachtwoordReset from '@/pages/WachtwoordReset';
 import Notificaties from '@/pages/Notificaties';
 import Voorwaarden from '@/pages/Voorwaarden';
 import AdminDonateurListings from '@/pages/AdminDonateurListings';
@@ -61,6 +63,8 @@ export default function App() {
               <Route path="/nieuws" element={<Nieuws />} />
               <Route path="/nieuws/:id" element={<NieuwsDetail />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/wachtwoord-vergeten" element={<WachtwoordVergeten />} />
+              <Route path="/wachtwoord-reset" element={<WachtwoordReset />} />
               <Route
                 path="/checkin"
                 element={
