@@ -98,6 +98,20 @@ naar wie het kan gebruiken.
 
 ## Prioritized backlog
 
+### 2026-02-06 — Meertaligheid NL/FR — Vervolg #2 (wizard + landing + body) ✅
+- **Locale uitbreiding**: +25 nieuwe wizard-keys (foto/titel/beschrijving/deadline/gewicht/materiaal/afmetingen/transport stappen + buttons + admin-opties), +2 landing keys (cta-sectie), +form labels (Prénom/Nom/Téléphone/Adresse e-mail).
+- **Nieuw gemigreerde files (deze sessie)**:
+  - `Profiel.jsx` — alle form labels (Voornaam/Achternaam/Telefoon/E-mail/Nieuw wachtwoord) + opslaan-knop
+  - `Landing.jsx` — hero h1 + manifesto + CTA-sectie titel
+  - `ListingWizard.jsx` — 9 stappen titels + form labels + placeholders + nav-knoppen + summary rows + admin-optie
+  - `NieuwsDetail.jsx` — terug-link + loading state
+  - `OverOns.jsx` — hero titel + tagline
+- **Playwright verificatie**:
+  - Landing FR: "Le réemploi dans le secteur socio-culturel bruxellois."
+  - Profile labels: Prénom, Nom, Téléphone, Adresse e-mail, Nouveau mot de passe…
+  - Wizard step 1: "NOUVELLE OFFRE / Photos / + Ajouter une photo / ← Retour / Suivant →"
+- **Resterend**: Admin pagina's (AdminPanel ~860 lijnen, AdminNieuws, AdminDonateurListings), Voorwaarden body content (juridische tekst), OverOns body paragraphs + FAQ, inline error messages, ApplicantPanel selecteer-ontvanger dialoog detail strings.
+
 ### 2026-02-06 — Meertaligheid NL/FR — Migratie vervolgsessie ✅
 - **Locale expansie**: `nl.json` en `fr.json` uitgebreid van ~120 → ~210 sleutels met FR-vertalingen (manueel door mij). Namespaces: `common`, `nav`, `auth`, `catalogus`, `listing`, `applications`, `profile`, `organisation`, `notifications`, `pages`, `landing`, `news`, `checkin`, `checkout`, `footer`.
 - **Nieuw gemigreerde pagina's/components** (full + key UI strings):

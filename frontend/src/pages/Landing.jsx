@@ -118,12 +118,10 @@ export default function Landing() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-16 sm:pt-24 pb-24 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
           <div className="md:col-span-7 animate-fade-in">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl tracking-tightest font-bold leading-[0.95]">
-              Hergebruik in de brusselse socio-culturele sector.
+              {t('landing.hero_title')}
             </h1>
             <p className="mt-8 text-lg text-foreground/80 max-w-xl leading-relaxed">
-              In Limbo is een marktplaats die Brusselse socio-culturele
-              organisaties verbindt om overschotmateriaal door te geven —
-              decor, bouwhout, textiel, electro — in plaats van weg te gooien.
+              {t('landing.hero_subtitle')}
             </p>
             <div className="mt-10 flex flex-wrap gap-4" data-testid="hero-cta">
               <Link to="/catalogus" className="btn-primary" data-testid="hero-catalogus-btn">
@@ -294,7 +292,7 @@ export default function Landing() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 border-t border-border">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
           <h2 className="text-4xl sm:text-5xl font-bold tracking-tight max-w-2xl">
-            Klaar om materiaal in beweging te zetten?
+            {t('landing.cta_section_title')}
           </h2>
           <div className="flex flex-wrap gap-3">
             <Link to="/registreer" className="btn-primary" data-testid="cta-register-btn">

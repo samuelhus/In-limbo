@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import { uploadToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,12 +10,20 @@ const MATERIALS = [
   'Electro', 'Vloeistof', 'Papier', 'Isolatie', 'Ander',
 ];
 
-const STEPS = [
-  'Foto\'s', 'Titel', 'Beschrijving', 'Deadline',
-  'Gewicht', 'Materiaal', 'Afmetingen', 'Transport', 'Bevestigen',
+const STEP_KEYS = [
+  'listing.wizard_step_photos',
+  'listing.wizard_step_title',
+  'listing.wizard_step_description',
+  'listing.wizard_step_deadline',
+  'listing.wizard_step_weight',
+  'listing.wizard_step_material',
+  'listing.wizard_step_dimensions',
+  'listing.wizard_step_transport',
+  'listing.wizard_step_confirm',
 ];
 
 export default function ListingWizard({ editMode = false }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id: listingId } = useParams();
   const { user } = useAuth();
@@ -96,15 +105,15 @@ export default function ListingWizard({ editMode = false }) {
     setStep((s) => {
       // Admin magazijn shortcut in create mode: jump from step 4 to step 9
       if (s === 4 && isAdmin && data.placeInWarehouse && !editMode) {
-        return STEPS.length; // 9
+        return STEP_KEYS.length; // 9
       }
-      return Math.min(STEPS.length, s + 1);
+      return Math.min(STEP_KEYS.length, s + 1);
     });
   };
   const back = () => {
     setStep((s) => {
       // Mirror the skip when going back from the confirm step
-      if (s === STEPS.length && isAdmin && data.placeInWarehouse && !editMode) {
+      if (s === STEP_KEYS.length && isAdmin && data.placeInWarehouse && !editMode) {
         return 4;
       }
       return Math.max(1, s - 1);
@@ -167,18 +176,18 @@ export default function ListingWizard({ editMode = false }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-16" data-testid="wizard-page">
-      <p className="overline mb-3">{editMode ? 'Aanbieding bewerken' : 'Nieuwe aanbieding'}</p>
-      <h1 className="text-4xl font-bold tracking-tight mb-2">{STEPS[step - 1]}</h1>
+      <p className="overline mb-3">{editMode ? t('listing.wizard_edit_title') : t('listing.wizard_title')}</p>
+      <h1 className="text-4xl font-bold tracking-tight mb-2">{t(STEP_KEYS[step - 1])}</h1>
 
       {/* Progress */}
       <div className="flex items-center gap-2 my-8" data-testid="wizard-progress">
-        {STEPS.map((_, i) => (
+        {STEP_KEYS.map((_, i) => (
           <div
             key={i}
             className={`h-px flex-1 transition-all ${i + 1 <= step ? 'bg-foreground h-0.5' : 'bg-border'}`}
           />
         ))}
-        <span className="overline ml-3">{step}/{STEPS.length}</span>
+        <span className="overline ml-3">{step}/{STEP_KEYS.length}</span>
       </div>
 
       {/* STEP 1: Photos */}
@@ -210,7 +219,7 @@ export default function ListingWizard({ editMode = false }) {
                   className="hidden"
                   data-testid="wizard-photo-input"
                 />
-                {uploading ? 'Uploaden…' : '+ Foto toevoegen'}
+                {uploading ? t('listing.wizard_uploading') : t('listing.wizard_add_photo')}
               </label>
             )}
           </div>
@@ -221,7 +230,7 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 2: Title */}
       {step === 2 && (
         <section className="space-y-3" data-testid="wizard-step-title">
-          <label className="label-overline">Titel (max 35 tekens)</label>
+          <label className="label-overline">{t('listing.wizard_title_label')}</label>
           <input
             className="input-flat text-lg"
             data-testid="wizard-title-input"
@@ -237,7 +246,7 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 3: Description */}
       {step === 3 && (
         <section className="space-y-3" data-testid="wizard-step-description">
-          <label className="label-overline">Beschrijving (max 400 tekens)</label>
+          <label className="label-overline">{t('listing.wizard_description_label')}</label>
           <textarea
             rows={6}
             className="input-flat"
@@ -271,7 +280,7 @@ export default function ListingWizard({ editMode = false }) {
           )}
           {!data.isRecurrent && !(isAdmin && data.placeInWarehouse) && (
             <div>
-              <label className="label-overline">Deadline</label>
+              <label className="label-overline">{t('listing.wizard_deadline_label')}</label>
               <input
                 type="date"
                 className="input-flat"
@@ -297,7 +306,7 @@ export default function ListingWizard({ editMode = false }) {
 
           {isAdmin && (
             <div className="mt-6 border-t border-border pt-4" data-testid="wizard-admin-magazijn-block">
-              <p className="overline mb-2">Admin-optie</p>
+              <p className="overline mb-2">{t('listing.wizard_admin_option')}</p>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -324,7 +333,7 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 5: Weight */}
       {step === 5 && (
         <section className="space-y-3" data-testid="wizard-step-weight">
-          <label className="label-overline">Gewicht in kilogram</label>
+          <label className="label-overline">{t('listing.wizard_weight_label')}</label>
           <input
             type="number"
             step="0.1"
@@ -368,7 +377,7 @@ export default function ListingWizard({ editMode = false }) {
           <input
             className="input-flat"
             data-testid="wizard-dimensions-input"
-            placeholder="bv. 240 x 80 x 4 cm"
+            placeholder={t('listing.wizard_dimensions_placeholder')}
             value={data.dimensions}
             onChange={(e) => setData({ ...data, dimensions: e.target.value })}
           />
@@ -383,7 +392,7 @@ export default function ListingWizard({ editMode = false }) {
             rows={3}
             className="input-flat"
             data-testid="wizard-transport-input"
-            placeholder="bv. Op te halen in Molenbeek met bestelwagen"
+            placeholder={t('listing.wizard_transport_placeholder')}
             value={data.transport}
             onChange={(e) => setData({ ...data, transport: e.target.value })}
           />
@@ -393,23 +402,23 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 9: Confirm */}
       {step === 9 && (
         <section className="space-y-4" data-testid="wizard-step-confirm">
-          <h2 className="text-2xl font-semibold mb-4">Samenvatting</h2>
+          <h2 className="text-2xl font-semibold mb-4">{t('listing.wizard_step_confirm')}</h2>
           <dl className="border-t border-border divide-y divide-border" data-testid="wizard-summary">
-            <Row label="Foto's" value={`${data.photos.length} foto(s)`} />
-            <Row label="Titel" value={data.title} />
-            <Row label="Beschrijving" value={data.description} />
-            <Row label="Deadline" value={data.isRecurrent ? 'Recurrent — geen deadline' : data.deadline} />
+            <Row label={t('listing.wizard_step_photos')} value={t('listing.wizard_summary_photos_count', { count: data.photos.length })} />
+            <Row label={t('listing.wizard_step_title')} value={data.title} />
+            <Row label={t('listing.wizard_step_description')} value={data.description} />
+            <Row label={t('listing.wizard_step_deadline')} value={data.isRecurrent ? t('listing.wizard_recurrent_no_deadline') : data.deadline} />
             {data.weight && parseFloat(data.weight) > 0 && (
-              <Row label="Gewicht" value={`${data.weight} kg`} />
+              <Row label={t('listing.wizard_step_weight')} value={`${data.weight} kg`} />
             )}
             {data.material && parseFloat(data.weight) > 0 && (
-              <Row label="Materiaal" value={data.material} />
+              <Row label={t('listing.wizard_step_material')} value={data.material} />
             )}
-            {data.dimensions && <Row label="Afmetingen" value={data.dimensions} />}
-            {data.transport && <Row label="Transport" value={data.transport} />}
+            {data.dimensions && <Row label={t('listing.wizard_step_dimensions')} value={data.dimensions} />}
+            {data.transport && <Row label={t('listing.wizard_step_transport')} value={data.transport} />}
             {isAdmin && data.placeInWarehouse && (
               <Row
-                label="Magazijn"
+                label={t('nav.warehouse')}
                 value={editMode ? 'Blijft in magazijn' : 'Direct in magazijn plaatsen'}
               />
             )}
@@ -426,19 +435,19 @@ export default function ListingWizard({ editMode = false }) {
           className="btn-ghost disabled:opacity-30"
           data-testid="wizard-back-btn"
         >
-          ← Terug
+          ← {t('common.back')}
         </button>
-        {step < STEPS.length && (
+        {step < STEP_KEYS.length && (
           <button
             onClick={next}
             disabled={!canNext()}
             className="btn-primary"
             data-testid="wizard-next-btn"
           >
-            Volgende →
+            {t('common.next')} →
           </button>
         )}
-        {step === STEPS.length && (
+        {step === STEP_KEYS.length && (
           <button
             onClick={submit}
             disabled={submitting}
@@ -446,8 +455,8 @@ export default function ListingWizard({ editMode = false }) {
             data-testid="wizard-submit-btn"
           >
             {submitting
-              ? (editMode ? 'Opslaan…' : 'Aanmaken…')
-              : (editMode ? 'Wijzigingen opslaan ✓' : 'Aanbieding plaatsen ✓')}
+              ? t('common.saving')
+              : (editMode ? t('listing.wizard_save_edit') : t('listing.wizard_publish'))}
           </button>
         )}
       </div>

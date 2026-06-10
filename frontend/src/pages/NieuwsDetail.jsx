@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import { CATEGORY_LABELS, CATEGORY_COLORS, formatDateNL } from './Nieuws';
 
 export default function NieuwsDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
@@ -18,14 +20,14 @@ export default function NieuwsDetail() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-24" data-testid="nieuws-detail-error">
         <p className="text-destructive">{error}</p>
-        <Link to="/nieuws" className="industrial-link mt-4 inline-block">← Terug naar nieuws</Link>
+        <Link to="/nieuws" className="industrial-link mt-4 inline-block">{t('news.back_to_news')}</Link>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-24 text-muted-foreground">Laden…</div>
+      <div className="max-w-3xl mx-auto px-4 py-24 text-muted-foreground">{t('common.loading')}</div>
     );
   }
 
@@ -38,7 +40,7 @@ export default function NieuwsDetail() {
         className="industrial-link text-sm mb-8 inline-block"
         data-testid="nieuws-detail-back"
       >
-        ← Terug naar nieuws
+        {t('news.back_to_news')}
       </Link>
 
       {post.photo && (

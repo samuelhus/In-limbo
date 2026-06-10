@@ -130,7 +130,7 @@ export default function Profiel() {
       <form onSubmit={save} className="space-y-5">
         {isDonateur ? (
           <div>
-            <label className="label-overline">Gebruikersnaam</label>
+            <label className="label-overline">{t('profile.username_label')}</label>
             <input
               className="input-flat"
               value={form.username}
@@ -145,26 +145,26 @@ export default function Profiel() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="label-overline">Voornaam</label>
+                <label className="label-overline">{t('profile.first_name_label')}</label>
                 <input className="input-flat" value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} data-testid="profiel-firstname" />
               </div>
               <div>
-                <label className="label-overline">Achternaam</label>
+                <label className="label-overline">{t('profile.last_name_label')}</label>
                 <input className="input-flat" value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} data-testid="profiel-lastname" />
               </div>
             </div>
             <div>
-              <label className="label-overline">Telefoon</label>
+              <label className="label-overline">{t('profile.phone_label')}</label>
               <input className="input-flat" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} data-testid="profiel-phone" />
             </div>
           </>
         )}
         <div>
-          <label className="label-overline">E-mail</label>
+          <label className="label-overline">{t('profile.email_label')}</label>
           <input type="email" className="input-flat" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} data-testid="profiel-email" />
         </div>
         <div>
-          <label className="label-overline">Nieuw wachtwoord <span className="text-muted-foreground normal-case">(laat leeg om niet te wijzigen)</span></label>
+          <label className="label-overline">{t('profile.new_password')}</label>
           <input type="password" className="input-flat" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} data-testid="profiel-password" />
         </div>
 
@@ -172,7 +172,7 @@ export default function Profiel() {
         {err && <p className="text-sm text-destructive bg-destructive/10 border border-destructive/40 px-3 py-2" data-testid="profiel-error">{err}</p>}
 
         <button type="submit" disabled={saving} className="btn-primary" data-testid="profiel-submit">
-          {saving ? 'Opslaan…' : 'Wijzigingen opslaan'}
+          {saving ? t('profile.saving') : t('profile.save_btn')}
         </button>
       </form>
 

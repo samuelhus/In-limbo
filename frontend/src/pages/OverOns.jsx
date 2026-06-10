@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
 const FAQ_ITEMS = [
@@ -27,6 +28,7 @@ const CATEGORY_ORDER = [
 ];
 
 export default function OverOns() {
+  const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(null);
   const [orgs, setOrgs] = useState([]);
 
@@ -49,9 +51,9 @@ export default function OverOns() {
 
       {/* 1. HERO */}
       <section className="py-16 border-b border-border" data-testid="over-ons-hero">
-        <p className="overline mb-4">Materiaal in transit · Brussel</p>
+        <p className="overline mb-4">{t('landing.hero_tagline')} · Brussel</p>
         <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[0.95] max-w-3xl">
-          Over In Limbo
+          {t('pages.overons_title')} In Limbo
         </h1>
         <p className="mt-6 text-lg text-foreground/80 max-w-2xl leading-relaxed">
           In Limbo maakt het doneren en hergebruiken van materialen in de
