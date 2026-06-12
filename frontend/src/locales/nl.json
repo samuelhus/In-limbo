@@ -183,6 +183,7 @@
     "no_open_applications": "Geen openstaande aanvragen",
     "deadline_expired": "Deadline verlopen",
     "view_btn": "Bekijken",
+    "deze_aanvrager": "deze aanvrager",
     "view_details": "Details →"
   },
   "applications": {
@@ -255,7 +256,8 @@
     "voorwaarden_title": "Algemene voorwaarden",
     "voorwaarden_subtitle": "Door gebruik te maken van In Limbo aanvaard je deze voorwaarden.",
     "overons_title": "Over ons",
-    "overons_subtitle": "In Limbo verbindt Brusselse socio-culturele organisaties rond materialen in transit.",
+    "overons_intro": "In Limbo maakt het doneren en hergebruiken van materialen in de Brusselse socio-culturele sector eenvoudig en toegankelijk.",
+    "overons_subtitle": "In Limbo verbindt Brusselse socio-culturele organisaties rond materialen in beweging.",
     "pending_title": "Status · in afwachting",
     "pending_body": "Bedankt voor je registratie. Een beheerder bekijkt je aanvraag en valideert je account zo snel mogelijk. Tot dan kan je de catalogus bekijken met beperkte rechten — net als een bezoeker.",
     "rejected_title": "Account afgewezen",
@@ -264,9 +266,14 @@
     "rejected_logout": "Uitloggen"
   },
   "landing": {
-    "hero_tagline": "Materiaal in transit",
+    "hero_tagline": "Materiaal in beweging",
     "hero_title": "Hergebruik in de brusselse socio-culturele sector.",
     "hero_subtitle": "In Limbo is een marktplaats die Brusselse socio-culturele organisaties verbindt om overschotmateriaal door te geven — decor, bouwhout, textiel, electro — in plaats van weg te gooien.",
+    
+    "het_idee": "Het idee",
+    "p1": "Theaters bouwen decor. Ateliers maken installaties. Sociaal werk verbouwt zalen. Wat overblijft, belandt in containers.",
+    "p2": "We zetten dat materiaal letterlijk in limbo — een wachtkamer tussen twee bestemmingen — en geven het tijd om door te stromen naar wie het kan gebruiken.",
+    
     "cta_section_title": "Klaar om materiaal in beweging te zetten?",
     "cta_section_subtitle": "Registreer je organisatie of doe een gift als particulier.",
     "explore_catalogus": "Ontdek de catalogus →",
@@ -332,14 +339,71 @@
     "success_body": "{{org}} heeft {{kg}} kg materiaal meegenomen uit het magazijn.",
     "restart_btn": "Nieuwe checkout starten"
   },
+  "overons": {
+    "wie_zijn_we": "Wie zijn we",
+    "wat_is_title": "Wat is In Limbo?",
+    "p1": "In Limbo is een platform voor gedeeld gebruik en hergebruik van materiaal voor socio-culturele organisaties en tijdelijke invullingen in Brussel. Via ons online platform en ons magazijn verbinden we donateurs met organisaties die materialen nieuw leven willen geven.",
+    "p2": "We redden waardevolle materialen van de vuilnisbelt en stimuleren wederzijdse hulp binnen de sector. Niet-gebruikte materialen gaan naar verenigingen met minder middelen. Het is een samenwerking tussen Toestand, Zinneke, De Munt en Rotor DC, met steun van Leefmilieu Brussel.",
+    "partnersteller": "Partners sinds 2018",
+    "tonmateriaal": "Materiaal per jaar gered",
+    "opening": "Elke woensdag 10–17u",
+    "doelgroep": "Doelgroep",
+    "voor_wie_title": "Voor wie?",
+    "p3": "In Limbo richt zich op informele en formele verenigingen en collectieven zonder winstoogmerk: sociale, culturele en artistieke organisaties, kunstscholen, noodhuisvesting en tijdelijke projecten in Brussel.",
+    "p4": "Wie zich aansluit wordt partner van In Limbo en krijgt toegang tot ons platform en magazijn. We vragen een vrije bijdrage voor de materialen.",
+    "de_werking": "De werking",
+    "hoe_werkt_title": "Hoe werkt het?",
+    "werking1": "Wordt partner",
+    "werking2": "Registreer je organisatie en krijg toegang tot het volledige platform.",
+    "werking3": "Blader door het aanbod",
+    "werking4": "Ontdek beschikbare materialen van andere organisaties en donateurs.",
+    "werking5": "Doe een aanvraag of bied aan",
+    "werking6": "Vraag materiaal aan of plaats zelf een aanbieding. De aanbieder kiest wie het materiaal krijgt.",
+    "werking7": "Haal op of geef af",
+    "werking8": "Spreek af en geef het materiaal een tweede leven.",
+    "doneren_overline": "Doneren",
+    "doneren_title": "Materiaal doneren",
+    "p5": "Heb je als bedrijf of organisatie structureel materiaal over? Neem contact met ons op. Na goedkeuring kan je het materiaal rechtstreeks afzetten in het depot.",
+    "p6": "Het materiaal moet in goede staat zijn en geschikt voor hergebruik. We aanvaarden geen voedsel of kledij.",
+    "ctadoneer": "Doneer materiaal",
+    "faq_overline": "FAQ",
+    "faq_title": "Veelgestelde vragen",
+    "netwerk_overline": "Netwerk",
+    "partners_title": "Onze partners",
+    "samenwerking_overline": "Samenwerking",
+    "samenwerking_title": "Een initiatief van",
+    "contact_overline": "Bezoek ons",
+    "contact_title": "Contact",
+    "cta_partner": "Word partner →",
+    "cta_catalogus": "Bekijk de catalogus",
+    "faq_items": [
+  {
+    "question": "Wat voor materialen nemen jullie aan?",
+    "answer": "We aanvaarden materialen in goede staat..."
+  },
+  {
+    "question": "Mag ik op het platform verkopen?",
+    "answer": "Nee. In Limbo is geen verkoopplatform..."
+  },
+  {
+    "question": "Is alles gratis?",
+    "answer": "Materialen op het platform worden gratis aangeboden..."
+  },
+  {
+    "question": "Wat aanvaarden jullie niet?",
+    "answer": "We aanvaarden geen voedsel, kledij..."
+  }
+]
+},
+
   "footer": {
-    "tagline": "Een marktplaats voor materiaal in transit. In Limbo verbindt socio-culturele organisaties die materiaal teveel hebben met diegenen die het nog kunnen gebruiken.",
+    "tagline": "Een platform voor materiaal in transit. In Limbo verbindt socio-culturele organisaties die materiaal teveel hebben met diegenen die het nog kunnen gebruiken.",
     "rights": "© 2026 In Limbo · Brussel",
     "contact": "Contact",
     "navigation": "Navigatie",
     "project": "Project",
     "socials": "Socials",
     "terms": "Voorwaarden",
-    "material_in_transit": "Material in transit"
+    "material_in_transit": "Materiaal in beweging"
   }
 }

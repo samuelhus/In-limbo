@@ -151,22 +151,20 @@ export default function Landing() {
       {/* MANIFESTO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 grid grid-cols-1 md:grid-cols-12 gap-8">
         <div className="md:col-span-4">
-          <p className="overline">Het idee</p>
+          <p className="overline">{t('landing.het_idee')}</p>
         </div>
         <div className="md:col-span-8 space-y-6 text-lg leading-relaxed">
           <p>
-            Theaters bouwen decor. Ateliers maken installaties. Sociaal werk
-            verbouwt zalen. Wat overblijft, belandt in containers.
+            {t('landing.p1')}
           </p>
           <p>
-            We zetten dat materiaal letterlijk <em>in limbo</em> — een wachtkamer
-            tussen twee bestemmingen — en geven het tijd om door te stromen
-            naar wie het kan gebruiken.
+            {t('landing.p2')}
           </p>
         </div>
       </section>
 
       {/* THREE STEPS */}
+      {/*
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12 border-t border-border">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {[
@@ -182,6 +180,7 @@ export default function Landing() {
           ))}
         </div>
       </section>
+      */}
 
       {/* NIEUWS */}
       {news.length > 0 && (

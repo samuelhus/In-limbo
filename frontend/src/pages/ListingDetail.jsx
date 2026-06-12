@@ -7,15 +7,15 @@ import { cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 import ApplyModal from '@/components/ApplyModal';
 
-const APP_STATUS_LABELS = {
-  open: 'Open',
-  selected: 'Geselecteerd',
-  not_selected: 'Niet geselecteerd',
-  withdrawn: 'Ingetrokken',
+const APP_STATUS_KEYS = {
+  open: 'listing.status_open',
+  selected: 'listing.status_selected',
+  not_selected: 'listing.status_not_selected',
+  withdrawn: 'listing.status_withdrawn',
 };
 
 export default function ListingDetail() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const { user } = useAuth();
   const [item, setItem] = useState(null);
@@ -59,7 +59,7 @@ export default function ListingDetail() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">geen foto</div>
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">{t('listing.geen_foto')}</div>
             )}
           </div>
           {photos.length > 1 && (
@@ -108,29 +108,29 @@ export default function ListingDetail() {
 
               <dl className="grid grid-cols-2 gap-y-4 gap-x-6 mb-8 text-sm" data-testid="listing-meta">
                 <div>
-                  <dt className="overline mb-1">Materiaal</dt>
+                  <dt className="overline mb-1">{t('listing.materiaal')}</dt>
                   <dd>{item.material}</dd>
                 </div>
                 <div>
-                  <dt className="overline mb-1">Gewicht</dt>
+                  <dt className="overline mb-1">{t('listing.gewicht')}</dt>
                   <dd>{item.weight} kg</dd>
                 </div>
                 {item.dimensions && (
                   <div className="col-span-2">
-                    <dt className="overline mb-1">Afmetingen</dt>
+                    <dt className="overline mb-1">{t('listing.afmetingen')}</dt>
                     <dd>{item.dimensions}</dd>
                   </div>
                 )}
                 {item.transport && (
                   <div className="col-span-2">
-                    <dt className="overline mb-1">Transport</dt>
+                    <dt className="overline mb-1">{t('listing.transport')}</dt>
                     <dd>{item.transport}</dd>
                   </div>
                 )}
                 {item.deadline && (
                   <div>
-                    <dt className="overline mb-1">Deadline</dt>
-                    <dd>{new Date(item.deadline).toLocaleDateString('nl-BE')}</dd>
+                    <dt className="overline mb-1">{t('listing.deadline_label')}</dt>
+                    <dd>{new Date(item.deadline).toLocaleDateString(i18n.language === 'fr' ? 'fr-BE' : 'nl-BE')}</dd>
                   </div>
                 )}
               </dl>
@@ -138,7 +138,7 @@ export default function ListingDetail() {
               {item.organisation && item.offererFirstName && (
                 <div className="border-t border-border pt-6" data-testid="listing-offerer-block">
                   <p className="text-base">
-                    Aangeboden door <span className="font-medium">{item.offererFirstName}</span> van{' '}
+                    {t('listing.aangeboden_door')} <span className="font-medium">{item.offererFirstName}</span> {t('listing.van')}{' '}
                     <Link
                       to={`/organisaties/${item.organisation.id}`}
                       className="industrial-link font-medium"
@@ -153,8 +153,8 @@ export default function ListingDetail() {
               {item.offererIsDonateur && item.offererUsername && (
                 <div className="border-t border-border pt-6" data-testid="listing-offerer-donateur-block">
                   <p className="text-base">
-                    Aangeboden door <span className="font-medium">{item.offererUsername}</span>{' '}
-                    <span className="text-muted-foreground italic">(geen In Limbo partner)</span>
+                    {t('listing.aangeboden_door')} <span className="font-medium">{item.offererUsername}</span>{' '}
+                    <span className="text-muted-foreground italic">{t('listing.geen_partner')}</span>
                   </p>
                 </div>
               )}
@@ -168,7 +168,7 @@ export default function ListingDetail() {
 
               {/* Selected contact banner (applicant side) */}
               {!isOwner && item.selectedApplicantContact && myApp?.status === 'selected' && (
-                <SelectedContactBanner contact={item.selectedApplicantContact} title="Jij bent gekozen!" />
+                <SelectedContactBanner contact={item.selectedApplicantContact} title={t('listing.jij_bent_gekozen')} />
               )}
 
               {/* Applicant flow */}
@@ -218,7 +218,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
   if (sameOrg && !myApp) {
     return (
       <div className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground" data-testid="apply-disabled-same-org">
-        Je kan geen aanvragen indienen voor aanbiedingen van je eigen organisatie.
+        {t('listing.eigen_org_fout')}
       </div>
     );
   }
@@ -231,13 +231,13 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
     if (myApp?.status === 'not_selected') {
       return (
         <div className="mt-8 border-t border-border pt-6 text-sm text-foreground/75" data-testid="apply-not-selected">
-          Je aanvraag was niet geselecteerd. De aanbieder heeft deze aanbieding herbestemd.
+          {t('listing.niet_geselecteerd_herbestemd')}
         </div>
       );
     }
     return (
       <div className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground" data-testid="apply-disabled-herbestemd">
-        Deze aanbieding is reeds herbestemd.
+        {t('listing.reeds_herbestemd')}
       </div>
     );
   }
@@ -245,7 +245,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
   // My application states
   if (myApp && myApp.status === 'open') {
     const withdraw = async () => {
-      if (!window.confirm('Aanvraag intrekken?')) return;
+      if (!window.confirm(t('listing.confirm_intrekken'))) return;
       setBusy(true);
       try {
         await api.post(`/applications/${myApp.id}/withdraw`);
@@ -267,7 +267,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
   if (myApp && myApp.status === 'not_selected') {
     return (
       <div className="mt-8 border-t border-border pt-6 text-sm text-foreground/75" data-testid="apply-not-selected">
-        Je aanvraag was niet geselecteerd.
+        {t('listing.niet_geselecteerd')}
       </div>
     );
   }
@@ -340,7 +340,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
   };
 
   const selectApplicant = async (applicationId, applicantName) => {
-    if (!window.confirm(`Selecteer ${applicantName || 'deze aanvrager'} als ontvanger? De aanbieding wordt direct gemarkeerd als herbestemd en andere openstaande aanvragen worden afgewezen.`)) return;
+    if (!window.confirm(t('listing.confirm_selecteer', { name: applicantName || t('listing.deze_aanvrager') }))) return;
     setBusy(true);
     try {
       await api.post(`/listings/${listing.id}/select-applicant`, { applicationId });
@@ -373,20 +373,20 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
           {listing.status === 'beschikbaar' && (
             <button
               onClick={() => {
-                if (!window.confirm('Markeer als herbestemd zonder iemand te selecteren? Andere openstaande aanvragen worden afgewezen.')) return;
+                if (!window.confirm(t('listing.confirm_herbestemmen'))) return;
                 callAction(`/listings/${listing.id}/mark-rehomed`);
               }}
               disabled={busy}
               className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-xs font-medium tracking-wide transition-all duration-200 hover:bg-green-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
               data-testid="owner-mark-rehomed-btn"
             >
-              Markeer als herbestemd
+              {t('listing.markeer_herbestemd')}
             </button>
           )}
           {listing.status === 'herbestemd' && (
             <button
               onClick={() => {
-                if (!window.confirm('Herbestemming ongedaan maken? Aanbieding wordt terug beschikbaar en aanvragen worden heropend.')) return;
+                if (!window.confirm(t('listing.confirm_herbestemming_ongedaan'))) return;
                 callAction(`/listings/${listing.id}/unrehome`);
               }}
               disabled={busy}
@@ -454,7 +454,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
       )}
 
       {openApps.length === 0 && listing.status === 'beschikbaar' && (
-        <p className="text-sm text-muted-foreground" data-testid="owner-no-apps">Nog geen aanvragen ontvangen.</p>
+        <p className="text-sm text-muted-foreground" data-testid="owner-no-apps">{t('listing.geen_aanvragen')}</p>
       )}
 
       {openApps.length > 0 && listing.status === 'beschikbaar' && (
@@ -519,8 +519,7 @@ function DeleteConfirmModal({ busy, error, onCancel, onConfirm }) {
       >
         <h2 className="text-2xl font-bold tracking-tight mb-3">Aanbieding verwijderen</h2>
         <p className="text-foreground/80 leading-relaxed text-sm mb-6">
-          Ben je zeker dat je deze aanbieding wil verwijderen? Deze actie kan
-          niet ongedaan worden gemaakt.
+          {t('listing.confirm_verwijderen')}
         </p>
 
         {error && (
@@ -547,7 +546,7 @@ function DeleteConfirmModal({ busy, error, onCancel, onConfirm }) {
             className="inline-flex items-center justify-center px-5 py-2.5 bg-red-600 text-white text-sm font-medium tracking-wide transition-all duration-200 hover:bg-red-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             style={{ borderRadius: 2 }}
           >
-            {busy ? 'Verwijderen…' : 'Definitief verwijderen'}
+            {busy ? t('listing.verwijderen_bezig') : t('listing.definitief_verwijderen')}
           </button>
         </div>
       </div>
@@ -559,6 +558,7 @@ function DeleteConfirmModal({ busy, error, onCancel, onConfirm }) {
 // "Jij bent gekozen!" banner
 // ---------------------------------------------------------------------------
 function SelectedContactBanner({ contact, title }) {
+  const { t } = useTranslation();
   return (
     <div
       className="mt-8 border-l-4 border-l-green-700 border border-green-700/30 bg-green-50 p-5"
@@ -566,7 +566,7 @@ function SelectedContactBanner({ contact, title }) {
     >
       <p className="overline text-green-900 mb-2">{title}</p>
       <p className="text-foreground text-sm mb-3 leading-relaxed">
-        Je bent geselecteerd als ontvanger. Hieronder vind je de contactgegevens van de aanbieder
+        {t('listing.geselecteerd_contact')}
         om een afspraak te maken.
       </p>
       <p className="font-semibold text-foreground">

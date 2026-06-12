@@ -26,16 +26,59 @@ router = APIRouter()
 RATE_LIMIT_MSG = "Te veel inlogpogingen. Probeer het over een minuut opnieuw."
 
 
+def get_lang(request: Request) -> str:
+    lang = request.headers.get("Accept-Language", "nl")
+    if lang.startswith("fr"):
+        return "fr"
+    return "nl"
+
+
+MESSAGES = {
+    "terms_required": {
+        "nl": "Je moet de voorwaarden aanvaarden",
+        "fr": "Vous devez accepter les conditions",
+    },
+    "email_exists": {
+        "nl": "Dit e-mailadres is al geregistreerd",
+        "fr": "Cette adresse e-mail est déjà enregistrée",
+    },
+    "username_exists": {
+        "nl": "Deze gebruikersnaam is al in gebruik",
+        "fr": "Ce nom d'utilisateur est déjà utilisé",
+    },
+    "org_not_found": {
+        "nl": "Organisatie niet gevonden of niet gevalideerd",
+        "fr": "Organisation introuvable ou non validée",
+    },
+    "login_failed": {
+        "nl": "Onjuist e-mailadres of wachtwoord",
+        "fr": "Adresse e-mail ou mot de passe incorrect",
+    },
+    "reset_invalid": {
+        "nl": "Ongeldige of verlopen resetlink.",
+        "fr": "Lien de réinitialisation invalide ou expiré.",
+    },
+    "reset_expired": {
+        "nl": "Deze resetlink is verlopen. Vraag een nieuwe aan.",
+        "fr": "Ce lien de réinitialisation a expiré. Veuillez en demander un nouveau.",
+    },
+}
+
+
+def msg(key: str, request: Request) -> str:
+    return MESSAGES[key][get_lang(request)]
+
+
 @router.post("/auth/register/new-org")
 @limiter.limit("10/minute")
 async def register_new_org(request: Request, body: RegisterNewOrg = Body(...), response: Response = None):
     if not body.acceptedTerms:
-        raise HTTPException(status_code=400, detail="Je moet de voorwaarden aanvaarden")
+        raise HTTPException(status_code=400, detail=msg("terms_required", request))
 
     email = body.email.lower()
     existing = await db.users.find_one({"email": email})
     if existing:
-        raise HTTPException(status_code=409, detail="Dit e-mailadres is al geregistreerd")
+        raise HTTPException(status_code=409, detail=msg("email_exists", request))
 
     org_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
@@ -87,16 +130,16 @@ async def register_new_org(request: Request, body: RegisterNewOrg = Body(...), r
 @limiter.limit("10/minute")
 async def register_existing_org(request: Request, body: RegisterExistingOrg = Body(...), response: Response = None):
     if not body.acceptedTerms:
-        raise HTTPException(status_code=400, detail="Je moet de voorwaarden aanvaarden")
+        raise HTTPException(status_code=400, detail=msg("terms_required", request))
 
     email = body.email.lower()
     existing = await db.users.find_one({"email": email})
     if existing:
-        raise HTTPException(status_code=409, detail="Dit e-mailadres is al geregistreerd")
+        raise HTTPException(status_code=409, detail=msg("email_exists", request))
 
     org = await db.organisations.find_one({"id": body.organisationId})
     if not org or org["status"] not in ("validated", "active"):
-        raise HTTPException(status_code=404, detail="Organisatie niet gevonden of niet gevalideerd")
+        raise HTTPException(status_code=404, detail=msg("org_not_found", request))
 
     user_id = str(uuid.uuid4())
     now = now_iso()
@@ -132,12 +175,12 @@ async def register_existing_org(request: Request, body: RegisterExistingOrg = Bo
 @limiter.limit("10/minute")
 async def register_donateur(request: Request, body: RegisterDonateur = Body(...), response: Response = None):
     if not body.acceptedTerms:
-        raise HTTPException(400, "Je moet de voorwaarden aanvaarden")
+        raise HTTPException(400, msg("terms_required", request))
     email = body.email.lower()
     if await db.users.find_one({"email": email}):
-        raise HTTPException(409, "Dit e-mailadres is al geregistreerd")
+        raise HTTPException(409, msg("email_exists", request))
     if await db.users.find_one({"username": body.username}):
-        raise HTTPException(409, "Deze gebruikersnaam is al in gebruik")
+        raise HTTPException(409, msg("username_exists", request))
     user_id = str(uuid.uuid4())
     now = now_iso()
     await db.users.insert_one({
@@ -166,7 +209,7 @@ async def login(request: Request, body: LoginRequest = Body(...), response: Resp
     email = body.email.lower()
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(body.password, user["passwordHash"]):
-        raise HTTPException(status_code=401, detail="Onjuist e-mailadres of wachtwoord")
+        raise HTTPException(status_code=401, detail=msg("login_failed", request))
 
     await db.users.update_one({"id": user["id"]}, {"$set": {"dateLastLogin": now_iso()}})
     token = create_access_token(user["id"], user["email"], user["role"])
@@ -247,7 +290,7 @@ async def forgot_password(request: Request, body: PasswordResetRequest = Body(..
 async def reset_password(request: Request, body: PasswordResetConfirm = Body(...)):
     record = await db.password_resets.find_one({"token": body.token, "used": False})
     if not record:
-        raise HTTPException(400, "Ongeldige of verlopen resetlink.")
+        raise HTTPException(400, msg("reset_invalid", request))
 
     expires_at = record.get("expiresAt")
     if isinstance(expires_at, str):
@@ -256,7 +299,7 @@ async def reset_password(request: Request, body: PasswordResetConfirm = Body(...
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     if expires_at is None or datetime.now(timezone.utc) > expires_at:
         await db.password_resets.delete_one({"token": body.token})
-        raise HTTPException(400, "Deze resetlink is verlopen. Vraag een nieuwe aan.")
+        raise HTTPException(400, msg("reset_expired", request))
 
     new_hash = hash_password(body.newPassword)
     await db.users.update_one(

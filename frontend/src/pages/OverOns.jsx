@@ -3,25 +3,6 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
-const FAQ_ITEMS = [
-  {
-    question: "Wat voor materialen nemen jullie aan?",
-    answer: "We aanvaarden materialen in goede staat die geschikt zijn voor hergebruik: hout, metaal, meubels, stoelen, panelen, deuren, TL-balken, verf, regenpijpen, plexiglas, kabels, lampen en andere bouwmaterialen. Bij grotere hoeveelheden bekijken we samen of In Limbo de ophaling kan organiseren.",
-  },
-  {
-    question: "Mag ik op het platform verkopen?",
-    answer: "Nee. In Limbo is geen verkoopplatform. Alle materialen worden kosteloos aangeboden en doorgegeven. We vragen enkel een vrije bijdrage voor de materialen die je ophaalt in ons magazijn. Het platform is uitsluitend bedoeld voor schenking en hergebruik, niet voor handel.",
-  },
-  {
-    question: "Is alles gratis?",
-    answer: "Materialen op het platform worden gratis aangeboden door partners en donateurs. In het fysieke magazijn vragen we een vrije bijdrage — je betaalt wat je kan en wat je eerlijk lijkt. Lidmaatschap als partnerorganisatie is gratis. Donaties voor de werking zijn welkom via IBAN BE76 7350 3121 5695 (mededeling: IN LIMBO).",
-  },
-  {
-    question: "Wat aanvaarden jullie niet?",
-    answer: "We aanvaarden geen voedsel, kledij of materialen in slechte staat. Ook materialen die niet geschikt zijn voor hergebruik of een veiligheidsrisico vormen worden niet aanvaard. Twijfel je of jouw materiaal in aanmerking komt? Neem dan eerst contact op voor je het afzet in het depot.",
-  },
-];
-
 const CATEGORY_ORDER = [
   'Beeldende kunsten', 'Educatie', 'Jeugdwerk', 'Podiumkunsten',
   'Sociaal werk', 'Sport', 'Squat', 'Ander',
@@ -29,6 +10,7 @@ const CATEGORY_ORDER = [
 
 export default function OverOns() {
   const { t } = useTranslation();
+  const FAQ_ITEMS = t('overons.faq_items', { returnObjects: true });
   const [activeIndex, setActiveIndex] = useState(null);
   const [orgs, setOrgs] = useState([]);
 
@@ -51,13 +33,12 @@ export default function OverOns() {
 
       {/* 1. HERO */}
       <section className="py-16 border-b border-border" data-testid="over-ons-hero">
-        <p className="overline mb-4">{t('landing.hero_tagline')} · Brussel</p>
+        <p className="overline mb-4">{t('landing.hero_tagline')}</p>
         <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[0.95] max-w-3xl">
-          {t('pages.overons_title')} In Limbo
+          {t('pages.overons_title')}
         </h1>
         <p className="mt-6 text-lg text-foreground/80 max-w-2xl leading-relaxed">
-          In Limbo maakt het doneren en hergebruiken van materialen in de
-          Brusselse socio-culturele sector eenvoudig en toegankelijk.
+          {t('pages.overons_intro')}
         </p>
         <div className="mt-10 aspect-[21/9] overflow-hidden">
           <img
@@ -72,19 +53,13 @@ export default function OverOns() {
       <section className="py-16 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
-            <p className="overline mb-4">Wie zijn we</p>
-            <h2 className="text-3xl font-bold tracking-tight mb-6">Wat is In Limbo?</h2>
+            <p className="overline mb-4">{t('overons.wie_zijn_we')}</p>
+            <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.wat_is_title')}</h2>
             <p className="text-foreground/80 leading-relaxed mb-4">
-              In Limbo is een platform voor gedeeld gebruik en hergebruik van materiaal
-              voor socio-culturele organisaties en tijdelijke invullingen in Brussel.
-              Via ons online platform en ons magazijn verbinden we donateurs met
-              organisaties die materialen nieuw leven willen geven.
+              {t('overons.p1')}
             </p>
             <p className="text-foreground/80 leading-relaxed">
-              We redden waardevolle materialen van de vuilnisbelt en stimuleren
-              wederzijdse hulp binnen de sector. Niet-gebruikte materialen gaan
-              naar verenigingen met minder middelen. Het is een samenwerking tussen
-              Toestand, Zinneke, De Munt en Rotor DC, met steun van Leefmilieu Brussel.
+              {t('overons.p2')}
             </p>
           </div>
           <div className="aspect-square overflow-hidden">
@@ -103,19 +78,19 @@ export default function OverOns() {
           <div>
             <p className="text-6xl font-bold tracking-tight">500+</p>
             <p className="mt-2 text-sm text-muted-foreground uppercase tracking-widest">
-              Partners sinds 2018
+              {t('overons.partnersteller')}
             </p>
           </div>
           <div>
             <p className="text-6xl font-bold tracking-tight">100T+</p>
             <p className="mt-2 text-sm text-muted-foreground uppercase tracking-widest">
-              Materiaal per jaar gered
+              {t('overons.tonmateriaal')}
             </p>
           </div>
           <div>
-            <p className="text-6xl font-bold tracking-tight">kom langs</p>
+            <p className="text-6xl font-bold tracking-tight">OPEN</p>
             <p className="mt-2 text-sm text-muted-foreground uppercase tracking-widest">
-              Elke woensdag 10–17u
+              {t('overons.opening')}
             </p>
           </div>
         </div>
@@ -125,17 +100,13 @@ export default function OverOns() {
       <section className="py-16 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
-            <p className="overline mb-4">Doelgroep</p>
-            <h2 className="text-3xl font-bold tracking-tight mb-6">Voor wie?</h2>
+            <p className="overline mb-4">{t('overons.doelgroep')}</p>
+            <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.voor_wie_title')}</h2>
             <p className="text-foreground/80 leading-relaxed mb-4">
-              In Limbo richt zich op informele en formele verenigingen en
-              collectieven zonder winstoogmerk: sociale, culturele en artistieke
-              organisaties, kunstscholen, noodhuisvesting en tijdelijke projecten
-              in Brussel.
+              {t('overons.p3')}
             </p>
             <p className="text-foreground/80 leading-relaxed">
-              Wie zich aansluit wordt partner van In Limbo en krijgt toegang tot
-              ons platform en magazijn. We vragen een vrije bijdrage voor de materialen.
+              {t('overons.p4')}
             </p>
           </div>
           <div className="aspect-square overflow-hidden">
@@ -159,43 +130,42 @@ export default function OverOns() {
             />
           </div>
           <div>
-            <p className="overline mb-4">De werking</p>
-            <h2 className="text-3xl font-bold tracking-tight mb-8">Hoe werkt het?</h2>
+            <p className="overline mb-4">{t('overons.de_werking')}</p>
+            <h2 className="text-3xl font-bold tracking-tight mb-8">{t('overons.hoe_werkt_title')}</h2>
             <ol className="space-y-6">
               <li className="flex gap-4">
                 <span className="text-2xl font-bold text-muted-foreground/50 leading-none">01</span>
                 <div>
-                  <p className="font-semibold mb-1">Word partner</p>
+                  <p className="font-semibold mb-1">{t('overons.werking1')}</p>
                   <p className="text-sm text-foreground/70">
-                    Registreer je organisatie en krijg toegang tot het volledige platform.
+                    {t('overons.werking2')}
                   </p>
                 </div>
               </li>
               <li className="flex gap-4">
                 <span className="text-2xl font-bold text-muted-foreground/50 leading-none">02</span>
                 <div>
-                  <p className="font-semibold mb-1">Blader door het aanbod</p>
+                  <p className="font-semibold mb-1">{t('overons.werking3')}</p>
                   <p className="text-sm text-foreground/70">
-                    Ontdek beschikbare materialen van andere organisaties en donateurs.
+                    {t('overons.werking4')}
                   </p>
                 </div>
               </li>
               <li className="flex gap-4">
                 <span className="text-2xl font-bold text-muted-foreground/50 leading-none">03</span>
                 <div>
-                  <p className="font-semibold mb-1">Doe een aanvraag of bied aan</p>
+                  <p className="font-semibold mb-1">{t('overons.werking5')}</p>
                   <p className="text-sm text-foreground/70">
-                    Vraag materiaal aan of plaats zelf een aanbieding.
-                    De aanbieder kiest wie het materiaal krijgt.
+                    {t('overons.werking6')}
                   </p>
                 </div>
               </li>
               <li className="flex gap-4">
                 <span className="text-2xl font-bold text-muted-foreground/50 leading-none">04</span>
                 <div>
-                  <p className="font-semibold mb-1">Haal op of geef af</p>
+                  <p className="font-semibold mb-1">{t('overons.werking7')}</p>
                   <p className="text-sm text-foreground/70">
-                    Spreek af en geef het materiaal een tweede leven.
+                    {t('overons.werking8')}
                   </p>
                 </div>
               </li>
@@ -215,19 +185,16 @@ export default function OverOns() {
             />
           </div>
           <div>
-            <p className="overline mb-4">Doneren</p>
-            <h2 className="text-3xl font-bold tracking-tight mb-6">Materiaal doneren</h2>
+            <p className="overline mb-4">{t('overons.doneren_overline')}</p>
+            <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.doneren_title')}</h2>
             <p className="text-foreground/80 leading-relaxed mb-4">
-              Heb je als bedrijf of organisatie structureel materiaal over?
-              Neem contact met ons op. Na goedkeuring kan je het materiaal
-              rechtstreeks afzetten in het depot.
+              {t('overons.p5')}
             </p>
             <div className="border border-border bg-muted/40 px-4 py-3 text-sm text-foreground/80">
-              ⚠️ Het materiaal moet in goede staat zijn en geschikt voor hergebruik.
-              We aanvaarden geen voedsel of kledij.
+              ⚠️ {t('overons.p6')}
             </div>
             <Link to="/donateur/registreer" className="btn-primary justify-center mt-8" data-testid="over-ons-cta-donateur">
-  Donneer materiaal
+            {t('overons.ctadoneer')}
 </Link>
           </div>
         </div>
@@ -235,8 +202,8 @@ export default function OverOns() {
 
       {/* 7. FAQ */}
       <section className="py-16 border-b border-border" data-testid="over-ons-faq">
-        <p className="overline mb-4">FAQ</p>
-        <h2 className="text-3xl font-bold tracking-tight mb-10">Veelgestelde vragen</h2>
+        <p className="overline mb-4">{t('overons.faq_overline')}</p>
+        <h2 className="text-3xl font-bold tracking-tight mb-10">{t('overons.faq_title')}</h2>
         <div className="divide-y divide-border border-y border-border max-w-3xl">
           {FAQ_ITEMS.map((item, i) => (
             <div key={i} data-testid={`faq-item-${i}`}>
@@ -289,8 +256,8 @@ export default function OverOns() {
 
       {/* 9. PARTNERS */}
       <section className="py-16 border-b border-border" data-testid="over-ons-partners">
-        <p className="overline mb-4">Netwerk</p>
-        <h2 className="text-3xl font-bold tracking-tight mb-10">Onze partners</h2>
+        <p className="overline mb-4">{t('overons.netwerk_overline')}</p>
+        <h2 className="text-3xl font-bold tracking-tight mb-10">{t('overons.partners_title')}</h2>
         {CATEGORY_ORDER.map((cat) => {
           const catOrgs = grouped[cat];
           if (!catOrgs?.length) return null;
@@ -318,8 +285,8 @@ export default function OverOns() {
       <section className="py-16 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
-            <p className="overline mb-4">Samenwerking</p>
-            <h2 className="text-3xl font-bold tracking-tight mb-6">Een initiatief van</h2>
+            <p className="overline mb-4">{t('overons.samenwerking_overline')}</p>
+            <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.samenwerking_title')}</h2>
             <div className="flex flex-wrap gap-2 mb-6">
               {['Toestand', 'Zinneke', 'De Munt', 'Rotor DC'].map((p) => (
                 <span key={p} className="border border-border px-3 py-1.5 text-sm font-medium">
@@ -330,8 +297,8 @@ export default function OverOns() {
             <p className="text-sm text-foreground/70">Met steun van Leefmilieu Brussel.</p>
           </div>
           <div>
-            <p className="overline mb-4">Bezoek ons</p>
-            <h2 className="text-3xl font-bold tracking-tight mb-6">Contact</h2>
+            <p className="overline mb-4">{t('overons.contact_overline')}</p>
+            <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.contact_title')}</h2>
             <p className="text-foreground/80 text-sm leading-relaxed">
               Alphonse Vandenpeereboomstraat 31<br />
               Sint-Jans-Molenbeek, Brussel<br /><br />
@@ -350,8 +317,8 @@ export default function OverOns() {
       {/* 11. CTA */}
       <section className="py-16">
         <div className="flex flex-wrap gap-4">
-          <Link to="/registreer" className="btn-primary" data-testid="over-ons-cta-partner">Word partner →</Link>
-          <Link to="/catalogus" className="btn-secondary" data-testid="over-ons-cta-catalogus">Bekijk de catalogus</Link>
+          <Link to="/registreer" className="btn-primary" data-testid="over-ons-cta-partner">{t('overons.cta_partner')}</Link>
+          <Link to="/catalogus" className="btn-secondary" data-testid="over-ons-cta-catalogus">{t('overons.cta_catalogus')}</Link>
         </div>
       </section>
     </div>
