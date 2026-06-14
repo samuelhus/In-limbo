@@ -130,7 +130,7 @@ function ListingTile({ item, isValidated, isAdmin }) {
         <h3 className="font-medium text-base leading-snug group-hover:underline underline-offset-4 line-clamp-2">
           {item.title}
         </h3>
-        <p className="mt-1 text-xs text-muted-foreground uppercase tracking-wider">{item.material}</p>
+        {/*<p className="mt-1 text-xs text-muted-foreground uppercase tracking-wider">{item.material}</p>*/}
         {isDonateurOffer && (
           <p className="mt-1 text-xs text-muted-foreground" data-testid={`listing-tile-donateur-${item.id}`}>
             {t('catalogus.aangeboden_door')} <span className="font-medium text-foreground/85">{item.offererUsername}</span>{' '}

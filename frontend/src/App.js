@@ -25,6 +25,7 @@ import MijnAanbiedingen from '@/pages/MijnAanbiedingen';
 import AdminPanel from '@/pages/AdminPanel';
 import DonateurRegister from '@/pages/DonateurRegister';
 import OverOns from '@/pages/OverOns';
+import Partners from '@/pages/Partners';
 import Nieuws from '@/pages/Nieuws';
 import NieuwsDetail from '@/pages/NieuwsDetail';
 import Checkout from '@/pages/Checkout';
@@ -60,6 +61,7 @@ export default function App() {
               <Route path="/registreer" element={<Register />} />
               <Route path="/donateur/registreer" element={<DonateurRegister />} />
               <Route path="/over-ons" element={<OverOns />} />
+              <Route path="/partners" element={<Partners />} />
               <Route path="/nieuws" element={<Nieuws />} />
               <Route path="/nieuws/:id" element={<NieuwsDetail />} />
               <Route path="/checkout" element={<Checkout />} />

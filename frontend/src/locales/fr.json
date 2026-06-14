@@ -41,7 +41,23 @@
     "donate_material": "Faire un don de matériel",
     "join_member": "Devenir membre",
     "give_gift": "Faire un don",
-    "listings": "Offres"
+    "listings": "Offres",
+    "partners": "Partenaires"
+  },
+  "partners": {
+    "overline": "Réseau",
+    "title": "Partenaires",
+    "empty": "Aucun partenaire trouvé."
+  },
+  "org_categories": {
+    "beeldende_kunsten": "Arts visuels",
+    "educatie": "Éducation",
+    "jeugdwerk": "Travail jeunesse",
+    "podiumkunsten": "Arts de la scène",
+    "sociaal_werk": "Travail social",
+    "sport": "Sport",
+    "noodopvang": "Hébergement d'urgence",
+    "ander": "Autre"
   },
   "auth": {
     "login_title": "Connexion",
@@ -435,5 +451,12 @@
     "socials": "Réseaux",
     "terms": "Conditions",
     "material_in_transit": "Material in transit"
-  }
+  },
+
+"status": {
+  "beschikbaar": "Disponible",
+  "herbestemd": "Redistribué",
+  "in_magazijn": "En magasin",
+  "gearchiveerd": "Archivé"
+}
 }

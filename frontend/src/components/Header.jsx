@@ -178,6 +178,14 @@ export default function Header() {
             {t('nav.about')}
           </NavLink>
 
+          <NavLink
+            to="/partners"
+            data-testid="nav-partners"
+            className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
+          >
+            {t('nav.partners')}
+          </NavLink>
+
           {isAdmin && (
             <NavLink
               to="/admin"
@@ -336,6 +344,15 @@ export default function Header() {
                 className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
               >
                 {t('nav.about')}
+              </NavLink>
+
+              <NavLink
+                to="/partners"
+                data-testid="mobile-nav-partners"
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+              >
+                {t('nav.partners')}
               </NavLink>
 
               {isAdmin && (

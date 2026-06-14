@@ -41,7 +41,23 @@
     "donate_material": "Doneer materiaal",
     "join_member": "Word lid",
     "give_gift": "Doe een gift",
-    "listings": "Aanbiedingen"
+    "listings": "Aanbiedingen",
+    "partners": "Partners"
+  },
+  "partners": {
+    "overline": "Netwerk",
+    "title": "Partners",
+    "empty": "Geen partners gevonden."
+  },
+  "org_categories": {
+    "beeldende_kunsten": "Beeldende kunsten",
+    "educatie": "Educatie",
+    "jeugdwerk": "Jeugdwerk",
+    "podiumkunsten": "Podiumkunsten",
+    "sociaal_werk": "Sociaal werk",
+    "sport": "Sport",
+    "noodopvang": "Noodopvang",
+    "ander": "Ander"
   },
   "auth": {
     "login_title": "Inloggen",
@@ -408,5 +424,12 @@
     "socials": "Socials",
     "terms": "Voorwaarden",
     "material_in_transit": "Materiaal in beweging"
-  }
+},
+
+  "status": {
+    "beschikbaar": "Beschikbaar",
+    "herbestemd": "Herbestemd",
+    "in_magazijn": "In magazijn",
+    "gearchiveerd": "Gearchiveerd"
+}
 }

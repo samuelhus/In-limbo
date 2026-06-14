@@ -245,42 +245,7 @@ export default function OverOns() {
         </div>
       </div>
 
-      {/* PARTNERS BANNER */}
-      <div className="aspect-[3/1] overflow-hidden mb-12">
-        <img
-          src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261969/InLimbo_overons_7_aqrzme.jpg"
-          alt="In Limbo partners"
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* 9. PARTNERS */}
-      <section className="py-16 border-b border-border" data-testid="over-ons-partners">
-        <p className="overline mb-4">{t('overons.netwerk_overline')}</p>
-        <h2 className="text-3xl font-bold tracking-tight mb-10">{t('overons.partners_title')}</h2>
-        {CATEGORY_ORDER.map((cat) => {
-          const catOrgs = grouped[cat];
-          if (!catOrgs?.length) return null;
-          return (
-            <div key={cat} className="mb-10" data-testid={`partner-category-${cat}`}>
-              <p className="overline mb-3">{t(`org_categories.${cat}`)}</p>
-              <div className="flex flex-wrap gap-2">
-                {catOrgs.map((org) => (
-                  <Link
-                    key={org.id}
-                    to={`/organisaties/${org.id}`}
-                    data-testid={`partner-link-${org.id}`}
-                    className="border border-border px-3 py-1.5 text-sm hover:bg-muted transition-colors"
-                  >
-                    {org.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
+      
       {/* 10. SAMENWERKING + CONTACT */}
       <section className="py-16 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -294,7 +259,7 @@ export default function OverOns() {
                 </span>
               ))}
             </div>
-            <p className="text-sm text-foreground/70">Met steun van Leefmilieu Brussel.</p>
+            {/*<p className="text-sm text-foreground/70">Met steun van Leefmilieu Brussel.</p>*/}
           </div>
           <div>
             <p className="overline mb-4">{t('overons.contact_overline')}</p>
