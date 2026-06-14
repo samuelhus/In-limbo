@@ -6,8 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { uploadToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
 
 const CATS = [
-  'Beeldende kunsten', 'Jeugdwerk', 'Podiumkunsten', 'Squat',
-  'Sociaal werk', 'Sport', 'Educatie', 'Ander',
+  'beeldende_kunsten', 'jeugdwerk', 'podiumkunsten', 'noodopvang',
+  'sociaal_werk', 'sport', 'educatie', 'ander',
 ];
 
 export default function MijnOrganisatie() {
@@ -91,7 +91,7 @@ export default function MijnOrganisatie() {
         <div>
           <label className="label-overline">Categorie</label>
           <select className="input-flat" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} data-testid="org-category-input">
-            {CATS.map((c) => <option key={c} value={c}>{c}</option>)}
+            {CATS.map((key) => <option key={key} value={key}>{t(`org_categories.${key}`)}</option>)}
           </select>
         </div>
         <div>

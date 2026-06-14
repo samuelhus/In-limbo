@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
 const CATEGORY_ORDER = [
-  'Beeldende kunsten', 'Educatie', 'Jeugdwerk', 'Podiumkunsten',
-  'Sociaal werk', 'Sport', 'Squat', 'Ander',
+  'beeldende_kunsten', 'educatie', 'jeugdwerk', 'podiumkunsten',
+  'sociaal_werk', 'sport', 'noodopvang', 'ander',
 ];
 
 export default function OverOns() {
@@ -263,7 +263,7 @@ export default function OverOns() {
           if (!catOrgs?.length) return null;
           return (
             <div key={cat} className="mb-10" data-testid={`partner-category-${cat}`}>
-              <p className="overline mb-3">{cat}</p>
+              <p className="overline mb-3">{t(`org_categories.${cat}`)}</p>
               <div className="flex flex-wrap gap-2">
                 {catOrgs.map((org) => (
                   <Link

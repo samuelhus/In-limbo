@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import { api, formatApiError } from '@/lib/api';
 import AdminNieuws from './AdminNieuws';
@@ -603,8 +604,8 @@ function Statistieken() {
 const ROLES = ['user', 'admin', 'donateur'];
 const USER_STATUSES = ['pending', 'validated', 'rejected'];
 const ORG_CATEGORIES = [
-  'Beeldende kunsten', 'Educatie', 'Jeugdwerk', 'Podiumkunsten',
-  'Sociaal werk', 'Sport', 'Squat', 'Ander',
+  'beeldende_kunsten', 'educatie', 'jeugdwerk', 'podiumkunsten',
+  'sociaal_werk', 'sport', 'noodopvang', 'ander',
 ];
 const ORG_STATUSES = ['pending', 'validated', 'active', 'inactive'];
 
@@ -890,10 +891,11 @@ function AdminOrganisaties() {
 }
 
 function AdminOrgEditModal({ org, onSave, onClose, busy }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: org.name || '',
     description: org.description || '',
-    category: org.category || 'Ander',
+    category: org.category || 'ander',
     address: org.address || '',
     website: org.website || '',
     status: org.status || 'pending',
@@ -916,7 +918,7 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
           <label className="label-overline">Categorie</label>
           <select className="input-flat w-full" value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}>
-            {ORG_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {ORG_CATEGORIES.map((key) => <option key={key} value={key}>{t(`org_categories.${key}`)}</option>)}
           </select>
         </div>
         <div>

@@ -107,7 +107,10 @@
     "load_more": "Charger plus",
     "filters": "Filtres",
     "status": "Statut",
-    "count_listings": "{{count}} offres"
+    "count_listings": "{{count}} offres",
+    "aangeboden_door": "Proposé par",
+    "van": "de",
+    "geen_partner": " "
   },
   "listing": {
     "status_beschikbaar": "Disponible",

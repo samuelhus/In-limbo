@@ -8,14 +8,14 @@ from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
 # ---------- Enums ----------
 OrgCategory = Literal[
-    "Beeldende kunsten",
-    "Jeugdwerk",
-    "Podiumkunsten",
-    "Squat",
-    "Sociaal werk",
-    "Sport",
-    "Educatie",
-    "Ander",
+    "beeldende_kunsten",
+    "jeugdwerk",
+    "podiumkunsten",
+    "noodopvang",
+    "sociaal_werk",
+    "sport",
+    "educatie",
+    "ander",
 ]
 
 ListingMaterial = Literal[

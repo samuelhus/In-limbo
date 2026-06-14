@@ -107,7 +107,10 @@
     "load_more": "Meer laden",
     "filters": "Filters",
     "status": "Status",
-    "count_listings": "{{count}} aanbiedingen"
+    "count_listings": "{{count}} aanbiedingen",
+    "aangeboden_door": "Aangeboden door",
+    "van": "van",
+    "geen_partner": " "
   },
   "listing": {
     "status_beschikbaar": "Beschikbaar",

@@ -19,7 +19,7 @@ function FilterPanel({ status, setStatus, onClose }) {
   return (
     <div className="space-y-6" data-testid="filter-panel">
       <div>
-        <p className="overline mb-3">Status</p>
+        <p className="overline mb-3">{t('catalogus.status')}</p>
         <ul className="space-y-2">
           {STATUS_KEYS.map((opt) => (
             <li key={opt.v}>
@@ -43,6 +43,7 @@ function FilterPanel({ status, setStatus, onClose }) {
 
 function ListingTile({ item, isValidated, isAdmin }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
   const exportRef = useRef(null);
 
@@ -100,7 +101,7 @@ function ListingTile({ item, isValidated, isAdmin }) {
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">geen foto</div>
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">{t('listing.geen_foto')}</div>
         )}
         <div className="absolute top-3 left-3"><StatusBadge status={item.status} /></div>
         {isAdmin && item.photos?.[0] && (
@@ -132,13 +133,13 @@ function ListingTile({ item, isValidated, isAdmin }) {
         <p className="mt-1 text-xs text-muted-foreground uppercase tracking-wider">{item.material}</p>
         {isDonateurOffer && (
           <p className="mt-1 text-xs text-muted-foreground" data-testid={`listing-tile-donateur-${item.id}`}>
-            Aangeboden door <span className="font-medium text-foreground/85">{item.offererUsername}</span>{' '}
-            <span className="text-muted-foreground italic">(geen In Limbo partner)</span>
+            {t('catalogus.aangeboden_door')} <span className="font-medium text-foreground/85">{item.offererUsername}</span>{' '}
+            <span className="text-muted-foreground italic">{t('catalogus.geen_partner')}</span>
           </p>
         )}
         {showOfferer && (
           <p className="mt-1 text-xs text-muted-foreground" data-testid={`listing-tile-offerer-${item.id}`}>
-            Aangeboden door {item.offererFirstName} van{' '}
+            {t('catalogus.aangeboden_door')} {item.offererFirstName} {t('catalogus.van')}{' '}
             <span
               role="link"
               tabIndex={0}
@@ -152,7 +153,7 @@ function ListingTile({ item, isValidated, isAdmin }) {
           </p>
         )}
         {!isValidated && (
-          <p className="mt-2 text-xs text-muted-foreground italic">Log in voor de volledige aanbieding</p>
+          <p className="mt-2 text-xs text-muted-foreground italic">{t('catalogus.limited_view')}</p>
         )}
       </div>
 
@@ -206,7 +207,6 @@ export default function Catalogus() {
     }
   }, [status, skip]);
 
-  // Re-load on filter change
   useEffect(() => {
     setSkip(0);
     setItems([]);
@@ -220,14 +220,14 @@ export default function Catalogus() {
       <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
         <div>
           <h1 className="mt-2 text-5xl font-bold tracking-tight">{t('catalogus.title')}</h1>
-          <p className="overline"> {total} aanbiedingen</p>
+          <p className="overline"> {total} {t('catalogus.count_listings', { count: '' }).replace('  ', ' ').trim()}</p>
         </div>
         <button
           className="md:hidden btn-secondary !py-2"
           onClick={() => setMobileFilterOpen(true)}
           data-testid="filter-open-mobile"
         >
-          Filter
+          {t('catalogus.filters')}
         </button>
       </div>
 
@@ -246,7 +246,7 @@ export default function Catalogus() {
             data-testid="filter-mobile-drawer"
           >
             <div className="flex items-center justify-between mb-8">
-              <p className="overline">Filters</p>
+              <p className="overline">{t('catalogus.filters')}</p>
               <button onClick={() => setMobileFilterOpen(false)} data-testid="filter-close-mobile" className="text-2xl">×</button>
             </div>
             <FilterPanel status={status} setStatus={setStatus} onClose={() => setMobileFilterOpen(false)} />
@@ -256,7 +256,7 @@ export default function Catalogus() {
         {/* Grid */}
         <div className="md:col-span-9 lg:col-span-10">
           {items.length === 0 && !loading && (
-            <p className="text-muted-foreground" data-testid="catalogus-empty">Geen aanbiedingen gevonden.</p>
+            <p className="text-muted-foreground" data-testid="catalogus-empty">{t('catalogus.empty')}</p>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
@@ -273,7 +273,7 @@ export default function Catalogus() {
                 className="btn-secondary"
                 data-testid="catalogus-load-more"
               >
-                {loading ? 'Laden…' : 'Meer laden →'}
+                {loading ? t('algemeen.laden') : t('catalogus.load_more')}
               </button>
             </div>
           )}

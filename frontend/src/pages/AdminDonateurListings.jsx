@@ -11,11 +11,12 @@ export default function AdminDonnateurListings() {
   useEffect(() => {
     api.get(`/listings/by-user/${userId}`)
       .then(({ data }) => setListings(data));
-    api.get(`/admin/users`)
-      .then(({ data }) => {
-        const user = data.find(u => u.id === userId);
-        if (user) setUsername(user.username);
-      });
+   api.get(`/admin/users`, { params: { limit: 200 } })
+  .then(({ data }) => {
+    const items = data.items || [];
+    const user = items.find(u => u.id === userId);
+    if (user) setUsername(user.username);
+  });
   }, [userId]);
 
   return (

@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
 
-const ORG_CATEGORIES = [
-  'Beeldende kunsten', 'Jeugdwerk', 'Podiumkunsten', 'Squat',
-  'Sociaal werk', 'Sport', 'Educatie', 'Ander',
+const ORG_CATEGORY_KEYS = [
+  'beeldende_kunsten', 'jeugdwerk', 'podiumkunsten', 'noodopvang',
+  'sociaal_werk', 'sport', 'educatie', 'ander',
 ];
 
 function StepIndicator({ step, max }) {
@@ -41,7 +41,7 @@ export default function Register() {
     firstName: '', lastName: '', email: '', phone: '', password: '',
   });
   const [org, setOrg] = useState({
-    orgName: '', orgDescription: '', orgCategory: 'Beeldende kunsten',
+    orgName: '', orgDescription: '', orgCategory: 'beeldende_kunsten',
     orgAddress: '', orgWebsite: '',
   });
   const [orgQuery, setOrgQuery] = useState('');
@@ -235,7 +235,7 @@ export default function Register() {
             <label className="label-overline">Categorie</label>
             <select className="input-flat" data-testid="register-org-category" value={org.orgCategory}
               onChange={(e) => setOrg({...org, orgCategory: e.target.value})}>
-              {ORG_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {ORG_CATEGORY_KEYS.map((key) => <option key={key} value={key}>{t(`org_categories.${key}`)}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

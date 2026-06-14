@@ -55,7 +55,7 @@ async def seed(db) -> None:
             "id": org1_id,
             "name": "Atelier Brussel",
             "description": "Een collectief atelier in Molenbeek dat ruimte biedt aan beeldend kunstenaars en designers. We werken met gerecupereerd materiaal en delen onze infrastructuur met de buurt.",
-            "category": "Beeldende kunsten",
+            "category": "beeldende_kunsten",
             "address": "Rue de l'Avenir 12, 1080 Sint-Jans-Molenbeek",
             "website": "https://atelier-brussel.example",
             "photos": [
