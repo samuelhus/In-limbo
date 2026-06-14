@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
 const CATEGORY_ORDER = [
-  'beeldende_kunsten', 'educatie', 'jeugdwerk', 'podiumkunsten',
-  'sociaal_werk', 'sport', 'noodopvang', 'ander',
+  'Beeldende kunsten', 'Educatie', 'Jeugdwerk', 'Podiumkunsten',
+  'Sociaal werk', 'Sport', 'Noodopvang', 'Ander',
 ];
 
 export default function Partners() {
@@ -21,7 +21,7 @@ export default function Partners() {
   }, []);
 
   const grouped = orgs.reduce((acc, o) => {
-    const c = o.category || 'ander';
+    const c = o.category || 'Ander';
     (acc[c] = acc[c] || []).push(o);
     return acc;
   }, {});
@@ -36,7 +36,7 @@ export default function Partners() {
         if (!catOrgs?.length) return null;
         return (
           <div key={cat} className="mb-12 border-t border-border pt-8" data-testid={`partner-category-${cat}`}>
-            <p className="overline mb-4">{t(`org_categories.${cat}`)}</p>
+            <p className="overline mb-4">{cat}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {catOrgs.map((org) => (
                 <Link
