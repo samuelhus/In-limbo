@@ -22,7 +22,12 @@
     "error_generic": "Er liep iets mis. Probeer opnieuw.",
     "home": "Home",
     "contact": "Contact",
-    "submit": "Verstuur"
+    "submit": "Verstuur",
+    "terug": "Terug",
+    "volgende": "Volgende →",
+    "optioneel": "optioneel",
+    "geen_resultaten": "Geen resultaten."
+
   },
   "nav": {
     "catalogus": "Catalogus",
@@ -282,7 +287,9 @@
     "rejected_title": "Account afgewezen",
     "rejected_body": "Je account werd niet gevalideerd. Reden:",
     "rejected_contact": "Vragen? Contacteer ons via hello@inlimbo.be.",
-    "rejected_logout": "Uitloggen"
+    "rejected_logout": "Uitloggen",
+    "pending_heading_before": "Je account staat",
+    "pending_heading_after": "."
   },
   "landing": {
     "hero_tagline": "Materiaal in beweging",
@@ -431,5 +438,87 @@
     "herbestemd": "Herbestemd",
     "in_magazijn": "In magazijn",
     "gearchiveerd": "Gearchiveerd"
-}
+},
+
+  "voorwaarden": {
+    "overline": "Juridisch",
+    "title": "Algemene voorwaarden",
+    "missie_title": "De missie van In Limbo",
+    "missie_1": "Een kader uitwerken waarbinnen alle partners uit de culturele sector in Brussel kosteloos herbruikbare materialen kunnen doneren of ontvangen.",
+    "missie_2": "Uitwisselingen faciliteren binnen een vertrouwensrelatie, dankzij ondersteuning bij de transactie.",
+    "akkoord_title": "Wij zijn het erover eens dat",
+    "akkoord_1": "Een gift inspanning vraagt. Het is vaak makkelijker om iets weg te gooien dan er een nieuwe bestemming voor te vinden.",
+    "akkoord_2": "We moeten evolueren naar een circulairder beheer van onze middelen.",
+    "akkoord_3": "Stiptheid en betrouwbaarheid onmisbaar zijn voor het welslagen van transacties. Een gemiste afspraak of een op het laatste moment geannuleerde gift kost iedereen tijd en energie, en ontmoedigt zowel schenkers als ontvangers.",
+    "akkoord_4": "Niet alles bewaard kan worden. Sommige materialen zijn simpelweg niet geschikt voor hergebruik. In Limbo is dan ook in de eerste plaats bestemd voor materialen die, door hun aard, hoeveelheid of specifieke kenmerken, geschikt zijn voor nieuwe toepassingen.",
+    "gebruikers_title": "Gebruikers",
+    "gebruikers_1": "Bieden hun materialen gratis aan of doen hun materiaalverzoeken via het platform.",
+    "gebruikers_2": "Dragen bij aan de ontwikkeling van het platform door het te gebruiken en feedback te geven.",
+    "voorwaarden_title": "Voorwaarden",
+    "v1_label": "Verantwoordelijkheid.",
+    "v1_body": "In Limbo is verantwoordelijk voor het hosten van de inhoud en het matchen van vraag en aanbod. De betrokken partners zijn volledig verantwoordelijk voor de inhoud en de voorwaarden van de transacties.",
+    "v2_label": "Staat van de goederen.",
+    "v2_body": "De schenker kan niet verantwoordelijk worden gehouden voor de goede werking van de goederen. De ontvanger aanvaardt de goederen in de staat waarin ze zich bevinden.",
+    "v3_label": "Overdracht van verantwoordelijkheid.",
+    "v3_body": "De ontvangers nemen de verantwoordelijkheid voor de goederen op zich zodra deze de opslagplaats van de schenker verlaten.",
+    "v4_label": "Kosteloosheid.",
+    "v4_body": "Materiaaltransacties gebeuren uitsluitend gratis. Ze zijn bestemd voor gebruik binnen de culturele sector of voor socioculturele animatie. De partners verbinden zich ertoe geen winst te maken uit de via het platform georganiseerde transacties. In Limbo maakt geen winst. Het platform is gratis en zonder reclame.",
+    "v5_label": "Professionalisme.",
+    "v5_body": "De partners verbinden zich ertoe de grootst mogelijke flexibiliteit te tonen bij transacties. Dit houdt in het bijzonder in: afspraken nakomen, stipt zijn, vooraf goed nadenken over de te ondernemen acties en de informatie zo transparant mogelijk ter beschikking stellen.",
+    "v6_label": "Toegang.",
+    "v6_body": "Het platform In Limbo is toegankelijk voor erkende socio-culturele organisaties en individuen die materiaal wensen te doneren.",
+    "v7_label": "Gebruiksvoorwaarden.",
+    "v7_body": "Door je te registreren op het platform aanvaard je de hierop vermelde algemene voorwaarden.",
+    "v8_label": "Fair use.",
+    "v8_body": "We vragen je het spel eerlijk te spelen en het platform niet te omzeilen.",
+    "footer": "Laatst bijgewerkt: juni 2025 · In Limbo, Brussel"
+  },
+
+
+   "register": {
+    "terms_title": "Voorwaarden",
+    "terms_intro": "In Limbo is een platform voor socio-culturele organisaties in Brussel. Door je te registreren ga je akkoord dat:",
+    "terms_1": "Je organisatie actief is binnen de socio-culturele sector.",
+    "terms_2": "Aanbiedingen waarheidsgetrouw worden beschreven.",
+    "terms_3": "Je account wordt gevalideerd door een beheerder vóór gebruik.",
+    "terms_4": "Materiaal kosteloos wordt doorgegeven, tenzij anders aangegeven.",
+    "terms_accept": "Ik aanvaard de voorwaarden.",
+    "path_title": "Hoe sluit je je aan?",
+    "option_a": "Optie A",
+    "option_b": "Optie B",
+    "new_org": "Nieuwe organisatie",
+    "new_org_desc": "Mijn organisatie staat nog niet op in—limbo.",
+    "existing_org": "Bestaande organisatie",
+    "existing_org_desc": "Ik sluit me aan bij een organisatie die al lid is.",
+    "personal_title": "Jouw gegevens",
+    "firstname": "Voornaam",
+    "lastname": "Achternaam",
+    "email": "E-mailadres",
+    "phone": "Telefoon",
+    "password": "Wachtwoord",
+    "password_hint": "min. 6 tekens",
+    "org_title": "Jouw organisatie",
+    "org_name": "Naam organisatie",
+    "org_description": "Beschrijving",
+    "org_category": "Categorie",
+    "org_address": "Adres",
+    "org_website": "Website",
+    "select_org_title": "Selecteer je organisatie",
+    "select_org_hint": "Typ minstens 2 letters. Alleen gevalideerde organisaties verschijnen.",
+    "search_org_placeholder": "Organisatie zoeken…",
+    "submit": "Registratie versturen",
+    "submitting": "Versturen…",
+    "already_account": "Al een account?",
+    "login_link": "Inloggen"
+  },
+
+ "algemeen": {
+    "terug": "Terug",
+    "volgende": "Volgende →",
+    "optioneel": "optioneel",
+    "geen_resultaten": "Geen resultaten."
+  }
+
+
+
 }

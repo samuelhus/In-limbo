@@ -11,7 +11,9 @@ export default function Pending() {
     <div className="max-w-2xl mx-auto px-4 py-24" data-testid="pending-page">
       <p className="overline mb-4">{t('pages.pending_title')}</p>
       <h1 className="text-5xl font-bold tracking-tight">
-        Je account staat <em className="not-italic underline decoration-2 underline-offset-8">in limbo</em>.
+        {t('pages.pending_heading_before')}{' '}
+        <em className="not-italic underline decoration-2 underline-offset-8">in limbo</em>
+        {t('pages.pending_heading_after')}
       </h1>
       <p className="mt-6 text-lg leading-relaxed text-foreground/80">
         {t('pages.pending_body')}

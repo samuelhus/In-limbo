@@ -22,7 +22,11 @@
     "error_generic": "Une erreur est survenue. Veuillez réessayer.",
     "home": "Accueil",
     "contact": "Contact",
-    "submit": "Envoyer"
+    "submit": "Envoyer",
+    "terug": "Retour",
+    "volgende": "Suivant →",
+    "optioneel": "optionnel",
+    "geen_resultaten": "Aucun résultat."
   },
   "nav": {
     "catalogus": "Catalogue",
@@ -61,7 +65,7 @@
   },
   "auth": {
     "login_title": "Connexion",
-    "login_subtitle": "Bon retour parmi nous.",
+    "login_subtitle": "Bienvenu.",
     "email": "Adresse e-mail",
     "password": "Mot de passe",
     "login_btn": "Se connecter →",
@@ -308,7 +312,9 @@
     "rejected_title": "Compte refusé",
     "rejected_body": "Votre compte n'a pas été validé. Motif :",
     "rejected_contact": "Des questions ? Contactez-nous via hello@inlimbo.be.",
-    "rejected_logout": "Se déconnecter"
+    "rejected_logout": "Se déconnecter",
+    "pending_heading_before": "Votre compte est",
+    "pending_heading_after": "."
   },
   "landing": {
     "hero_tagline": "Matériaux en mouvement",
@@ -458,5 +464,85 @@
   "herbestemd": "Redistribué",
   "in_magazijn": "En magasin",
   "gearchiveerd": "Archivé"
-}
+},
+
+  "voorwaarden": {
+    "overline": "Juridique",
+    "title": "Conditions générales",
+    "missie_title": "La mission d'In Limbo",
+    "missie_1": "Développer un cadre permettant à tous les partenaires du secteur culturel à Bruxelles de donner ou recevoir gratuitement des matériaux réutilisables.",
+    "missie_2": "Faciliter les échanges dans une relation de confiance, grâce à un accompagnement lors de la transaction.",
+    "akkoord_title": "Nous sommes d'accord que",
+    "akkoord_1": "Un don demande un effort. Il est souvent plus facile de jeter quelque chose que de lui trouver une nouvelle destination.",
+    "akkoord_2": "Nous devons évoluer vers une gestion plus circulaire de nos ressources.",
+    "akkoord_3": "La ponctualité et la fiabilité sont indispensables au bon déroulement des transactions. Un rendez-vous manqué ou un don annulé à la dernière minute coûte du temps et de l'énergie à tout le monde, et décourage aussi bien les donateurs que les bénéficiaires.",
+    "akkoord_4": "Tout ne peut pas être conservé. Certains matériaux ne sont tout simplement pas adaptés à la réutilisation. In Limbo est donc avant tout destiné aux matériaux qui, par leur nature, leur quantité ou leurs caractéristiques spécifiques, conviennent à de nouvelles applications.",
+    "gebruikers_title": "Utilisateurs",
+    "gebruikers_1": "Proposent leurs matériaux gratuitement ou font leurs demandes de matériaux via la plateforme.",
+    "gebruikers_2": "Contribuent au développement de la plateforme en l'utilisant et en donnant leur avis.",
+    "voorwaarden_title": "Conditions",
+    "v1_label": "Responsabilité.",
+    "v1_body": "In Limbo est responsable de l'hébergement du contenu et de la mise en relation de l'offre et de la demande. Les partenaires concernés sont entièrement responsables du contenu et des conditions des transactions.",
+    "v2_label": "État des biens.",
+    "v2_body": "Le donateur ne peut être tenu responsable du bon fonctionnement des biens. Le bénéficiaire accepte les biens dans l'état où ils se trouvent.",
+    "v3_label": "Transfert de responsabilité.",
+    "v3_body": "Les bénéficiaires prennent en charge la responsabilité des biens dès que ceux-ci quittent le lieu de stockage du donateur.",
+    "v4_label": "Gratuité.",
+    "v4_body": "Les transactions de matériaux se font exclusivement à titre gratuit. Elles sont destinées à un usage dans le secteur culturel ou à des fins d'animation socioculturelle. Les partenaires s'engagent à ne réaliser aucun bénéfice sur les transactions organisées via la plateforme. In Limbo ne fait pas de bénéfices. La plateforme est gratuite et sans publicité.",
+    "v5_label": "Professionnalisme.",
+    "v5_body": "Les partenaires s'engagent à faire preuve de la plus grande flexibilité possible lors des transactions. Cela implique notamment : respecter les rendez-vous, être ponctuel, bien réfléchir à l'avance aux actions à entreprendre et mettre les informations à disposition de la manière la plus transparente possible.",
+    "v6_label": "Accès.",
+    "v6_body": "La plateforme In Limbo est accessible aux organisations socioculturelle reconnues et aux particuliers souhaitant donner du matériel.",
+    "v7_label": "Conditions d'utilisation.",
+    "v7_body": "En vous inscrivant sur la plateforme, vous acceptez les conditions générales qui y sont mentionnées.",
+    "v8_label": "Fair use.",
+    "v8_body": "Nous vous demandons de jouer le jeu honnêtement et de ne pas contourner la plateforme.",
+    "footer": "Dernière mise à jour : juin 2025 · In Limbo, Bruxelles"
+  },
+
+"register": {
+    "terms_title": "Conditions",
+    "terms_intro": "In Limbo est une plateforme pour les organisations socioculturelles à Bruxelles. En vous inscrivant, vous acceptez que :",
+    "terms_1": "Votre organisation est active dans le secteur socioculturel.",
+    "terms_2": "Les offres sont décrites de manière honnête.",
+    "terms_3": "Votre compte sera validé par un administrateur avant utilisation.",
+    "terms_4": "Le matériel est transmis gratuitement, sauf indication contraire.",
+    "terms_accept": "J'accepte les conditions.",
+    "path_title": "Comment souhaitez-vous vous inscrire ?",
+    "option_a": "Option A",
+    "option_b": "Option B",
+    "new_org": "Nouvelle organisation",
+    "new_org_desc": "Mon organisation n'est pas encore sur in—limbo.",
+    "existing_org": "Organisation existante",
+    "existing_org_desc": "Je rejoins une organisation déjà membre.",
+    "personal_title": "Vos coordonnées",
+    "firstname": "Prénom",
+    "lastname": "Nom",
+    "email": "Adresse e-mail",
+    "phone": "Téléphone",
+    "password": "Mot de passe",
+    "password_hint": "min. 6 caractères",
+    "org_title": "Votre organisation",
+    "org_name": "Nom de l'organisation",
+    "org_description": "Description",
+    "org_category": "Catégorie",
+    "org_address": "Adresse",
+    "org_website": "Site web",
+    "select_org_title": "Sélectionnez votre organisation",
+    "select_org_hint": "Tapez au moins 2 lettres. Seules les organisations validées apparaissent.",
+    "search_org_placeholder": "Rechercher une organisation…",
+    "submit": "Envoyer l'inscription",
+    "submitting": "Envoi en cours…",
+    "already_account": "Vous avez déjà un compte ?",
+    "login_link": "Se connecter"
+  },
+
+  "algemeen": {
+    "terug": "Retour",
+    "volgende": "Suivant →",
+    "optioneel": "optionnel",
+    "geen_resultaten": "Aucun résultat."
+  }
+
+
 }
