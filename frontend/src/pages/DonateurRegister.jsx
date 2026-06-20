@@ -57,25 +57,21 @@ export default function DonateurRegister() {
       {/* STEP 1: Terms */}
       {step === 1 && (
         <section className="space-y-6" data-testid="donateur-step-1">
-          <h2 className="text-2xl font-semibold">Voorwaarden</h2>
+          <h2 className="text-2xl font-semibold">{t('auth.donateur_terms_title')}</h2>
           <div className="border-t border-border pt-6 space-y-3 text-sm text-foreground/80 leading-relaxed">
             <p>
-              Als donateur kun je gratis materiaal aanbieden aan
-              socio-culturele organisaties in Brussel via In Limbo. Door je te
-              registreren ga je akkoord dat:
+              {t('auth.donateur_terms_intro')}
             </p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Je als individu materiaal aanbiedt in goede trouw.</li>
-              <li>Aanbiedingen kosteloos en waarheidsgetrouw worden beschreven.</li>
-              <li>Je gebruikersnaam zichtbaar is voor andere bezoekers.</li>
-              <li>Jouw aanbiedingen worden aangeduid als <em>'geen In Limbo partner'</em>.</li>
+              <li>{t('auth.donateur_terms_individual')}</li>
+              <li>{t('auth.donateur_terms_free_truthful')}</li>
+              <li>{t('auth.donateur_terms_username_visible')}</li>
+              <li>{t('auth.donateur_terms_marked_as')} <em>'{t('auth.donateur_terms_no_partner_label')}'</em>.</li>
             </ul>
             <div className="mt-4 border-l-2 border-foreground pl-4 py-1 text-sm">
-              <p className="font-medium mb-1">⚠️ Wil je materiaal aanvragen of de volledige catalogus zien?</p>
+              <p className="font-medium mb-1">{t('auth.donateur_apply_warning_title')}</p>
               <p className="text-foreground/75">
-                Dan moet je lid worden als organisatie via 'Word lid'. Als
-                donateur heb je geen toegang tot contactgegevens van aanbieders
-                en kun je geen aanvragen indienen.
+                {t('auth.donateur_apply_warning_body')}
               </p>
             </div>
           </div>
@@ -88,14 +84,13 @@ export default function DonateurRegister() {
               className="mt-1"
             />
             <span className="text-sm">
-              Ik aanvaard de voorwaarden en begrijp dat ik als donateur geen
-              aanvragen kan indienen.
+              {t('auth.donateur_terms_checkbox_label')}
             </span>
           </label>
           <div className="flex justify-between">
-            <Link to="/" className="btn-ghost" data-testid="donateur-cancel">← Annuleren</Link>
+            <Link to="/" className="btn-ghost" data-testid="donateur-cancel">← {t('common.cancel')}</Link>
             <button onClick={next} disabled={!canNext1} className="btn-primary" data-testid="donateur-step1-next">
-              Volgende →
+              {t('common.next')} →
             </button>
           </div>
         </section>
@@ -104,9 +99,9 @@ export default function DonateurRegister() {
       {/* STEP 2: Account */}
       {step === 2 && (
         <section className="space-y-5" data-testid="donateur-step-2">
-          <h2 className="text-2xl font-semibold">Jouw account</h2>
+          <h2 className="text-2xl font-semibold">{t('auth.donateur_account_title')}</h2>
           <div>
-            <label className="label-overline">Gebruikersnaam</label>
+            <label className="label-overline">{t('auth.username')}</label>
             <input
               className="input-flat"
               data-testid="donateur-username"
@@ -116,7 +111,7 @@ export default function DonateurRegister() {
             />
           </div>
           <div>
-            <label className="label-overline">E-mailadres</label>
+            <label className="label-overline">{t('auth.email')}</label>
             <input
               type="email"
               className="input-flat"
@@ -127,7 +122,7 @@ export default function DonateurRegister() {
           </div>
           <div>
             <label className="label-overline">
-              Wachtwoord <span className="text-muted-foreground normal-case">(min. 6 tekens)</span>
+              {t('auth.password')} <span className="text-muted-foreground normal-case">{t('auth.donateur_password_hint')}</span>
             </label>
             <input
               type="password"
@@ -138,9 +133,9 @@ export default function DonateurRegister() {
             />
           </div>
           <div className="flex justify-between">
-            <button onClick={back} className="btn-ghost" data-testid="donateur-step2-back">← Terug</button>
+            <button onClick={back} className="btn-ghost" data-testid="donateur-step2-back">← {t('common.back')}</button>
             <button onClick={next} disabled={!canNext2} className="btn-primary" data-testid="donateur-step2-next">
-              Volgende →
+              {t('common.next')} →
             </button>
           </div>
         </section>
@@ -149,19 +144,19 @@ export default function DonateurRegister() {
       {/* STEP 3: Confirm */}
       {step === 3 && (
         <section className="space-y-6" data-testid="donateur-step-3">
-          <h2 className="text-2xl font-semibold">Bevestiging</h2>
+          <h2 className="text-2xl font-semibold">{t('auth.donateur_confirm_title')}</h2>
           <dl className="border-t border-border divide-y divide-border">
             <div className="flex items-start gap-6 py-3">
-              <dt className="overline w-40 shrink-0 pt-0.5">Gebruikersnaam</dt>
+              <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.username')}</dt>
               <dd className="text-foreground/85">{form.username}</dd>
             </div>
             <div className="flex items-start gap-6 py-3">
-              <dt className="overline w-40 shrink-0 pt-0.5">E-mail</dt>
+              <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.donateur_confirm_email_label')}</dt>
               <dd className="text-foreground/85">{form.email}</dd>
             </div>
             <div className="flex items-start gap-6 py-3">
-              <dt className="overline w-40 shrink-0 pt-0.5">Type</dt>
-              <dd className="text-foreground/85">Donateur (individuele schenker)</dd>
+              <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.donateur_type_label')}</dt>
+              <dd className="text-foreground/85">{t('auth.donateur_type_value')}</dd>
             </div>
           </dl>
 
@@ -172,17 +167,17 @@ export default function DonateurRegister() {
           )}
 
           <div className="flex justify-between">
-            <button onClick={back} className="btn-ghost" data-testid="donateur-step3-back">← Terug</button>
+            <button onClick={back} className="btn-ghost" data-testid="donateur-step3-back">← {t('common.back')}</button>
             <button onClick={submit} disabled={submitting} className="btn-primary" data-testid="donateur-submit">
-              {submitting ? 'Aanmaken…' : 'Account aanmaken'}
+              {submitting ? t('auth.donateur_creating') : t('auth.donateur_create_account_btn')}
             </button>
           </div>
         </section>
       )}
 
       <p className="mt-10 text-sm text-muted-foreground">
-        Al een account?{' '}
-        <Link to="/login" className="industrial-link text-foreground" data-testid="donateur-to-login">Inloggen</Link>
+        {t('auth.donateur_already_account')}{' '}
+        <Link to="/login" className="industrial-link text-foreground" data-testid="donateur-to-login">{t('nav.login')}</Link>
       </p>
     </div>
   );

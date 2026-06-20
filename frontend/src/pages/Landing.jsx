@@ -31,6 +31,7 @@ function getMagazijnStatus() {
 }
 
 function MagazijnWidget({ align = 'right' }) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState(getMagazijnStatus());
 
   useEffect(() => {
@@ -47,18 +48,18 @@ function MagazijnWidget({ align = 'right' }) {
         <>
           <p className={`text-2xl font-semibold flex items-center gap-2 ${justify}`}>
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-            We zijn open
+            {t('landing.magazijn_open')}
           </p>
-          <p className="text-foreground/60 mt-1 text-sm">Vandaag open tot 17:00</p>
+          <p className="text-foreground/60 mt-1 text-sm">{t('landing.magazijn_open_until')}</p>
         </>
       ) : (
         <>
-          <p className="text-foreground/60 text-sm mb-3">Volgende opening: woensdag 10:00 – 17:00</p>
+          <p className="text-foreground/60 text-sm mb-3">{t('landing.magazijn_next_opening')}</p>
           <div className={`flex gap-3 ${justify}`}>
             {[
-              { val: status.days, label: 'dagen' },
-              { val: status.hours, label: 'uren' },
-              { val: status.mins, label: 'min' },
+              { val: status.days, label: t('landing.magazijn_days') },
+              { val: status.hours, label: t('landing.magazijn_hours') },
+              { val: status.mins, label: t('landing.magazijn_min') },
             ].map(({ val, label }) => (
               <div key={label} className="border border-border rounded-lg px-4 py-2 text-center min-w-[56px] bg-background/60 backdrop-blur-sm">
                 <span className="block text-2xl font-semibold">{val}</span>

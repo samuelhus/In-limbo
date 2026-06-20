@@ -117,7 +117,7 @@ export default function Register() {
             <span className="text-sm">{t('register.terms_accept')}</span>
           </label>
           <div className="flex justify-between">
-            <Link to="/" className="btn-ghost" data-testid="register-cancel">← {t('common.annuleren')}</Link>
+            <Link to="/" className="btn-ghost" data-testid="register-cancel">← {t('common.cancel')}</Link>
             <button onClick={next} disabled={!canNextStep1} className="btn-primary" data-testid="register-step1-next">
               {t('common.volgende')}
             </button>

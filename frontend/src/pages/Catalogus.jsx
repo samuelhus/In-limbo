@@ -273,7 +273,7 @@ export default function Catalogus() {
                 className="btn-secondary"
                 data-testid="catalogus-load-more"
               >
-                {loading ? t('algemeen.laden') : t('catalogus.load_more')}
+                {loading ? t('common.loading') : t('catalogus.load_more')}
               </button>
             </div>
           )}
