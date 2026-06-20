@@ -265,8 +265,8 @@ export default function OverOns() {
             <p className="overline mb-4">{t('overons.contact_overline')}</p>
             <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.contact_title')}</h2>
             <p className="text-foreground/80 text-sm leading-relaxed">
-              Alphonse Vandenpeereboomstraat 31<br />
-              Sint-Jans-Molenbeek, Brussel<br /><br />
+              Fernand Demetskaai 34b<br />
+              Anderlecht, Brussel<br /><br />
               Elke woensdag van 10 tot 17u<br /><br />
               IBAN: BE76 7350 3121 5695<br />
               (mededeling: IN LIMBO)<br />

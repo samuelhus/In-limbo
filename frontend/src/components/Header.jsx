@@ -29,6 +29,8 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [aanbiedingenOpen, setAanbiedingenOpen] = useState(false);
   const [mobileAanbiedingenOpen, setMobileAanbiedingenOpen] = useState(false);
+  const [overOnsOpen, setOverOnsOpen] = useState(false);
+  const [mobileOverOnsOpen, setMobileOverOnsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function Header() {
   const mobileMenuRef = useRef(null);
   const hamburgerRef = useRef(null);
   const aanbiedingenRef = useRef(null);
+  const overOnsRef = useRef(null);
 
   // Sluit mobiel menu bij klik buiten
   useEffect(() => {
@@ -74,11 +77,25 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', onMouseDown);
   }, [aanbiedingenOpen]);
 
+  // Sluit over ons dropdown bij klik buiten
+  useEffect(() => {
+    if (!overOnsOpen) return;
+    const onMouseDown = (e) => {
+      if (overOnsRef.current && !overOnsRef.current.contains(e.target)) {
+        setOverOnsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, [overOnsOpen]);
+
   // Sluit alles bij navigatie
   useEffect(() => {
     setMobileOpen(false);
     setAanbiedingenOpen(false);
     setMobileAanbiedingenOpen(false);
+    setOverOnsOpen(false);
+    setMobileOverOnsOpen(false);
   }, [location.pathname]);
 
   const mobileItemClass =
@@ -170,21 +187,41 @@ export default function Header() {
             </div>
           )}
 
-          <NavLink
-            to="/over-ons"
-            data-testid="nav-over-ons"
-            className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
-          >
-            {t('nav.about')}
-          </NavLink>
-
-          <NavLink
-            to="/partners"
-            data-testid="nav-partners"
-            className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
-          >
-            {t('nav.partners')}
-          </NavLink>
+          <div className="relative" ref={overOnsRef}>
+            <button
+              onClick={() => setOverOnsOpen((v) => !v)}
+              className={`${navLink} flex items-center gap-1`}
+              data-testid="nav-over-ons-dropdown"
+            >
+              {t('nav.about')}
+              <ChevronDown
+                size={14}
+                className={`transition-transform duration-200 ${overOnsOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {overOnsOpen && (
+              <div className="absolute left-0 top-full mt-2 w-44 bg-background border border-border shadow-lg z-50">
+                <NavLink
+                  to="/over-ons"
+                  data-testid="nav-over-ons"
+                  className={({ isActive }) =>
+                    `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                  }
+                >
+                  {t('nav.about')}
+                </NavLink>
+                <NavLink
+                  to="/partners"
+                  data-testid="nav-partners"
+                  className={({ isActive }) =>
+                    `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
+                  }
+                >
+                  {t('nav.partners')}
+                </NavLink>
+              </div>
+            )}
+          </div>
 
           {isAdmin && (
             <NavLink
@@ -309,7 +346,7 @@ export default function Header() {
                           onClick={() => setMobileOpen(false)}
                           className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
                         >
-                          → Nieuwe aanbieding
+                          → {t('nav.new_listing')}
                         </NavLink>
                       )}
                       {canCreateListings && (
@@ -319,7 +356,7 @@ export default function Header() {
                           onClick={() => setMobileOpen(false)}
                           className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
                         >
-                          → Mijn aanbiedingen
+                          → {t('nav.my_listings')}
                         </NavLink>
                       )}
                       {isValidated && (
@@ -329,7 +366,7 @@ export default function Header() {
                           onClick={() => setMobileOpen(false)}
                           className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
                         >
-                          → Mijn aanvragen
+                          → {t('nav.my_applications')}
                         </NavLink>
                       )}
                     </>
@@ -337,23 +374,37 @@ export default function Header() {
                 </>
               )}
 
-              <NavLink
-                to="/over-ons"
-                data-testid="mobile-nav-over-ons"
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+              <button
+                onClick={() => setMobileOverOnsOpen((v) => !v)}
+                className={`${mobileItemClass} w-full text-left flex items-center justify-between`}
+                data-testid="mobile-nav-over-ons-dropdown"
               >
                 {t('nav.about')}
-              </NavLink>
-
-              <NavLink
-                to="/partners"
-                data-testid="mobile-nav-partners"
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
-              >
-                {t('nav.partners')}
-              </NavLink>
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 ${mobileOverOnsOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {mobileOverOnsOpen && (
+                <>
+                  <NavLink
+                    to="/over-ons"
+                    data-testid="mobile-nav-over-ons"
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                  >
+                    → {t('nav.about')}
+                  </NavLink>
+                  <NavLink
+                    to="/partners"
+                    data-testid="mobile-nav-partners"
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                  >
+                    → {t('nav.partners')}
+                  </NavLink>
+                </>
+              )}
 
               {isAdmin && (
                 <NavLink

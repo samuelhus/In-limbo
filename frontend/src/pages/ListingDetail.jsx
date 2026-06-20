@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
@@ -96,7 +96,7 @@ export default function ListingDetail() {
                 (beschrijving, gewicht, contact, organisatie).
               </p>
               <div className="mt-5 flex gap-3">
-                <Link to="/login" className="btn-primary !py-2 !px-4 text-xs">{t('nav.login')}</Link>
+                <Link to="/login" state={{ from: location.pathname }} className="btn-primary !py-2 !px-4 text-xs">{t('nav.login')}</Link>
                 <Link to="/registreer" className="btn-secondary !py-2 !px-4 text-xs">{t('nav.register')}</Link>
               </div>
             </div>
@@ -305,7 +305,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
 function OwnerPanel({ listing, isAdmin, onChanged }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [apps, setApps] = useState([]);
+  const location = useLocation();
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
