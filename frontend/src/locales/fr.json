@@ -135,7 +135,7 @@
     "donateur_create_account_btn": "Créer le compte",
     "donateur_already_account": "Vous avez déjà un compte ?"
 
-    
+
   },
   "catalogus": {
     "title": "Catalogue",
@@ -278,7 +278,31 @@
     "selected_recipient": "Bénéficiaire sélectionné",
     "undo_rehome_confirm": "Annuler la réaffectation ? La demande de ce bénéficiaire et toutes les demandes précédemment refusées seront remises à \"ouvert\".",
     "delete_title": "Supprimer l'offre",
-    "loginforinfo": "Connectez-vous ou demandez un accès pour voir l'offre complète (description, poids, contact, organisation)."
+    "loginforinfo": "Connectez-vous ou demandez un accès pour voir l'offre complète (description, poids, contact, organisation).",
+    "wizard_loading": "Chargement de l'annonce…",
+    "wizard_photos_intro": "Ajoutez jusqu'à 5 photos. Les grandes photos sont automatiquement redimensionnées avant l'envoi.",
+    "wizard_remove_photo": "Supprimer",
+    "wizard_upload_max": "Maximum 5 photos par annonce. {{count}} photo(s) ignorée(s).",
+    "wizard_upload_failed": "L'envoi a échoué",
+    "wizard_recurrent_checkbox": "Il s'agit d'une offre récurrente (pas d'échéance)",
+    "wizard_donateur_recurrent_hint": "Les offres récurrentes sont réservées aux partenaires In Limbo.",
+    "wizard_recurrent_email_hint": "Pour les offres récurrentes, votre adresse e-mail sera visible pour les autres utilisateurs validés sur la page de détail, afin qu'ils puissent vous contacter directement.",
+    "wizard_warehouse_hint_prefix": "L'annonce sera immédiatement marquée comme",
+    "wizard_warehouse_hint_middle": "au lieu de",
+    "wizard_warehouse_hint_skip": "Les étapes Poids, Matériau, Dimensions et Transport seront sautées.",
+    "wizard_material_field_label": "Matériau principal",
+    "wizard_warehouse_stays": "Reste à l'entrepôt",
+    "wizard_warehouse_direct": "Placer directement à l'entrepôt",
+    "material_hout": "Bois",
+    "material_metaal": "Métal",
+    "material_plastic": "Plastique",
+    "material_steen": "Pierre",
+    "material_textiel": "Textile",
+    "material_electro": "Électro",
+    "material_vloeistof": "Liquide",
+    "material_papier": "Papier",
+    "material_isolatie": "Isolation",
+    "material_ander": "Autre"
 
 
   },

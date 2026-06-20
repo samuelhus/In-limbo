@@ -135,7 +135,7 @@
     "donateur_creating": "Aanmaken…",
     "donateur_create_account_btn": "Account aanmaken",
     "donateur_already_account": "Al een account?"
-    
+
   },
   "catalogus": {
     "title": "Catalogus",
@@ -253,7 +253,32 @@
     "selected_recipient": "Geselecteerde ontvanger",
     "undo_rehome_confirm": "Herbestemming ongedaan maken? Aanvraag van deze ontvanger en alle eerder afgewezen aanvragen worden terug op \"open\" gezet.",
     "delete_title": "Aanbieding verwijderen",
-    "loginforinfo": "Log in of vraag toegang aan om de volledige aanbieding te bekijken (beschrijving, gewicht, contact, organisatie)."
+    "loginforinfo": "Log in of vraag toegang aan om de volledige aanbieding te bekijken (beschrijving, gewicht, contact, organisatie).",
+    "wizard_loading": "Aanbieding laden…",
+    "wizard_photos_intro": "Voeg tot 5 foto's toe. Grote foto's worden automatisch verkleind vóór upload.",
+    "wizard_remove_photo": "Verwijder",
+    "wizard_upload_max": "Maximaal 5 foto's per aanbieding. {{count}} foto('s) overgeslagen.",
+    "wizard_upload_failed": "Upload mislukt",
+    "wizard_recurrent_checkbox": "Dit is een terugkerende aanbieding (geen deadline)",
+    "wizard_donateur_recurrent_hint": "Recurrente aanbiedingen zijn voorbehouden aan In Limbo-partners.",
+    "wizard_recurrent_email_hint": "Bij recurrente aanbiedingen wordt jouw e-mailadres zichtbaar voor andere gevalideerde gebruikers op de detailpagina, zodat ze rechtstreeks contact kunnen opnemen.",
+    "wizard_warehouse_hint_prefix": "Aanbieding wordt onmiddellijk gemarkeerd als",
+    "wizard_warehouse_hint_middle": "in plaats van",
+    "wizard_warehouse_hint_skip": "De stappen Gewicht, Materiaal, Afmetingen en Transport worden overgeslagen.",
+    "wizard_material_field_label": "Hoofdmateriaal",
+    "wizard_warehouse_stays": "Blijft in magazijn",
+    "wizard_warehouse_direct": "Direct in magazijn plaatsen",
+    "material_hout": "Hout",
+    "material_metaal": "Metaal",
+    "material_plastic": "Plastic",
+    "material_steen": "Steen",
+    "material_textiel": "Textiel",
+    "material_electro": "Electro",
+    "material_vloeistof": "Vloeistof",
+    "material_papier": "Papier",
+    "material_isolatie": "Isolatie",
+    "material_ander": "Ander"
+    
 
   },
 

@@ -10,6 +10,19 @@ const MATERIALS = [
   'Electro', 'Vloeistof', 'Papier', 'Isolatie', 'Ander',
 ];
 
+const MATERIAL_LABEL_KEYS = {
+  Hout: 'listing.material_hout',
+  Metaal: 'listing.material_metaal',
+  Plastic: 'listing.material_plastic',
+  Steen: 'listing.material_steen',
+  Textiel: 'listing.material_textiel',
+  Electro: 'listing.material_electro',
+  Vloeistof: 'listing.material_vloeistof',
+  Papier: 'listing.material_papier',
+  Isolatie: 'listing.material_isolatie',
+  Ander: 'listing.material_ander',
+};
+
 const STEP_KEYS = [
   'listing.wizard_step_photos',
   'listing.wizard_step_title',
@@ -79,7 +92,7 @@ export default function ListingWizard({ editMode = false }) {
     const room = 5 - data.photos.length;
     const toUpload = files.slice(0, room);
     if (files.length > room) {
-      setUploadErr(`Maximaal 5 foto's per aanbieding. ${files.length - room} foto('s) overgeslagen.`);
+      setUploadErr(t('listing.wizard_upload_max', { count: files.length - room }));
     }
     setUploading(true);
     try {
@@ -90,7 +103,7 @@ export default function ListingWizard({ editMode = false }) {
       }
       setData((d) => ({ ...d, photos: [...d.photos, ...urls] }));
     } catch (err) {
-      setUploadErr(err.message || 'Upload mislukt');
+      setUploadErr(err.message || t('listing.wizard_upload_failed'));
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -169,7 +182,7 @@ export default function ListingWizard({ editMode = false }) {
   if (loadingListing) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-24 text-muted-foreground" data-testid="wizard-loading">
-        Aanbieding laden…
+        {t('listing.wizard_loading')}
       </div>
     );
   }
@@ -194,7 +207,7 @@ export default function ListingWizard({ editMode = false }) {
       {step === 1 && (
         <section className="space-y-6" data-testid="wizard-step-photos">
           <p className="text-foreground/75">
-            Voeg tot 5 foto's toe. Grote foto's worden automatisch verkleind vóór upload.
+            {t('listing.wizard_photos_intro')}
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
             {data.photos.map((url, i) => (
@@ -205,7 +218,7 @@ export default function ListingWizard({ editMode = false }) {
                   className="absolute top-1 right-1 bg-background/90 px-2 py-0.5 text-xs opacity-0 group-hover:opacity-100 transition"
                   data-testid={`wizard-remove-photo-${i}`}
                 >
-                  Verwijder
+                  {t('listing.wizard_remove_photo')}
                 </button>
               </div>
             ))}
@@ -275,7 +288,7 @@ export default function ListingWizard({ editMode = false }) {
                 })}
                 data-testid="wizard-recurrent-toggle"
               />
-              <span className="text-sm">Dit is een terugkerende aanbieding (geen deadline)</span>
+              <span className="text-sm">{t('listing.wizard_recurrent_checkbox')}</span>
             </label>
           )}
           {!data.isRecurrent && !(isAdmin && data.placeInWarehouse) && (
@@ -291,16 +304,14 @@ export default function ListingWizard({ editMode = false }) {
               />
               {isDonateur && (
                 <p className="text-xs text-muted-foreground mt-2" data-testid="wizard-donateur-recurrent-hint">
-                  Recurrente aanbiedingen zijn voorbehouden aan In Limbo-partners.
+                  {t('listing.wizard_donateur_recurrent_hint')}
                 </p>
               )}
             </div>
           )}
           {data.isRecurrent && !isDonateur && (
             <p className="text-sm text-foreground/75 leading-relaxed border-l-2 border-border pl-4">
-              Bij recurrente aanbiedingen wordt jouw e-mailadres zichtbaar voor andere
-              gevalideerde gebruikers op de detailpagina, zodat ze rechtstreeks contact
-              kunnen opnemen.
+              {t('listing.wizard_recurrent_email_hint')}
             </p>
           )}
 
@@ -319,11 +330,11 @@ export default function ListingWizard({ editMode = false }) {
                   })}
                   data-testid="wizard-place-in-warehouse-toggle"
                 />
-                <span className="text-sm">Plaats direct in magazijn (status: In magazijn)</span>
+                <span className="text-sm">{t('listing.wizard_admin_warehouse_hint')}</span>
               </label>
               <p className="text-xs text-muted-foreground mt-2">
-                Aanbieding wordt onmiddellijk gemarkeerd als <em>In magazijn</em> in plaats van <em>Beschikbaar</em>.
-                {!editMode && ' De stappen Gewicht, Materiaal, Afmetingen en Transport worden overgeslagen.'}
+                {t('listing.wizard_warehouse_hint_prefix')} <em>{t('listing.status_in_magazijn')}</em> {t('listing.wizard_warehouse_hint_middle')} <em>{t('listing.status_beschikbaar')}</em>.
+                {!editMode && ` ${t('listing.wizard_warehouse_hint_skip')}`}
               </p>
             </div>
           )}
@@ -350,7 +361,7 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 6: Material */}
       {step === 6 && (
         <section className="space-y-3" data-testid="wizard-step-material">
-          <label className="label-overline">Hoofdmateriaal</label>
+          <label className="label-overline">{t('listing.wizard_material_field_label')}</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {MATERIALS.map((m) => (
               <button
@@ -363,7 +374,7 @@ export default function ListingWizard({ editMode = false }) {
                     : 'border-border bg-surface hover:border-foreground'
                 }`}
               >
-                {m}
+                {t(MATERIAL_LABEL_KEYS[m])}
               </button>
             ))}
           </div>
@@ -373,7 +384,7 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 7: Dimensions */}
       {step === 7 && (
         <section className="space-y-3" data-testid="wizard-step-dimensions">
-          <label className="label-overline">Afmetingen <span className="text-muted-foreground normal-case">(optioneel)</span></label>
+          <label className="label-overline">{t('listing.wizard_step_dimensions')} <span className="text-muted-foreground normal-case">({t('common.optional')})</span></label>
           <input
             className="input-flat"
             data-testid="wizard-dimensions-input"
@@ -387,7 +398,7 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 8: Transport */}
       {step === 8 && (
         <section className="space-y-3" data-testid="wizard-step-transport">
-          <label className="label-overline">Transport <span className="text-muted-foreground normal-case">(optioneel)</span></label>
+          <label className="label-overline">{t('listing.wizard_step_transport')} <span className="text-muted-foreground normal-case">({t('common.optional')})</span></label>
           <textarea
             rows={3}
             className="input-flat"
@@ -419,7 +430,7 @@ export default function ListingWizard({ editMode = false }) {
             {isAdmin && data.placeInWarehouse && (
               <Row
                 label={t('nav.warehouse')}
-                value={editMode ? 'Blijft in magazijn' : 'Direct in magazijn plaatsen'}
+                value={editMode ? t('listing.wizard_warehouse_stays') : t('listing.wizard_warehouse_direct')}
               />
             )}
           </dl>
