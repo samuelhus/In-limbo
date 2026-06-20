@@ -72,13 +72,27 @@ async def startup() -> None:
     await db.users.create_index("email", unique=True)
     await db.users.create_index("organisationId")
     await db.users.create_index("username", unique=True, sparse=True)
+    await db.users.create_index("role")  # admin queue: donateurs-filter
     await db.organisations.create_index("status")
     await db.listings.create_index("status")
     await db.listings.create_index("organisationId")
     await db.listings.create_index("deadline")
+    await db.listings.create_index("userId")  # GET /listings/mine
+    await db.listings.create_index([("status", 1), ("createdAt", -1)])  # catalogus sortering
     await db.applications.create_index("listingId")
     await db.applications.create_index("applicantUserId")
     await db.applications.create_index([("listingId", 1), ("applicantUserId", 1)])
+    await db.applications.create_index([("listingId", 1), ("status", 1)])  # open-count aggregatie
+    await db.notifications.create_index("userId")  # notificaties per gebruiker
+    await db.notifications.create_index([("userId", 1), ("read", 1)])  # ongelezen badge
+    await db.notifications.create_index("createdAt")  # purge oude notificaties
+    await db.platform_transfers.create_index("offererOrganisationId")  # jaarverslag
+    await db.platform_transfers.create_index("receiverOrganisationId")  # jaarverslag
+    await db.platform_transfers.create_index("createdAt")  # admin stats datumfilter
+    await db.checkins.create_index("organisationId")  # jaarverslag
+    await db.checkins.create_index("createdAt")  # admin stats datumfilter
+    await db.checkouts.create_index("organisationId")
+    await db.checkouts.create_index("createdAt")  # admin stats datumfilter
     await db.password_resets.create_index("token", unique=True)
     await db.password_resets.create_index("expiresAt", expireAfterSeconds=0)
     await seed(db)
