@@ -132,6 +132,7 @@
     "van": "de",
     "geen_partner": " "
   },
+
   "listing": {
     "status_beschikbaar": "Disponible",
     "status_herbestemd": "Redistribué",
@@ -156,7 +157,7 @@
     "deadline_label": "Date limite",
     "aangeboden_door": "Proposé par",
     "van": "de",
-    "geen_partner": "(pas un partenaire In Limbo)",
+    "geen_partner": " ",
     "eigen_org_fout": "Vous ne pouvez pas faire de demande pour les offres de votre propre organisation.",
     "niet_geselecteerd_herbestemd": "Votre demande n'a pas été retenue. Le donateur a redistribué cette offre.",
     "reeds_herbestemd": "Cette offre a déjà été redistribuée.",
@@ -179,6 +180,8 @@
     "delete_btn": "Supprimer",
     "mark_rehomed_btn": "Marquer comme redistribué",
     "unrehome_btn": "Rendre à nouveau disponible",
+    "delete_listing_btn": "Supprimer l'annonce",
+    "select_rehome_btn": "Sélectionner et redistribuer",
     "applications": "Demandes",
     "no_applications": "Pas encore de demandes.",
     "select_applicant": "Sélectionner comme destinataire",
@@ -233,7 +236,30 @@
     "no_open_applications": "Aucune demande en attente",
     "deadline_expired": "Date limite expirée",
     "view_btn": "Voir",
-    "view_details": "Détails →"
+    "view_details": "Détails →",
+    "geen_foto": "Aucune photo disponible",
+    "jij_bent_gekozen": "Vous avez été choisi !",
+    "eigen_org_fout": "Vous ne pouvez pas postuler à une annonce de votre propre organisation.",
+    "niet_geselecteerd_herbestemd": "Cette annonce a été redistribuée à un autre destinataire.",
+    "reeds_herbestemd": "Cette annonce est déjà redistribuée.",
+    "confirm_intrekken": "Êtes-vous sûr de vouloir retirer votre demande ?",
+    "niet_geselecteerd": "Vous n'avez pas été sélectionné pour cette annonce.",
+    "confirm_selecteer": "Êtes-vous sûr de vouloir sélectionner {{name}} comme destinataire ?",
+    "confirm_herbestemming_ongedaan": "Annuler la redistribution ? La demande de ce destinataire et toutes les demandes précédemment refusées seront remises à \"ouvert\".",
+    "verwijderen_bezig": "Suppression en cours…",
+    "definitief_verwijderen": "Supprimer définitivement",
+    "geselecteerd_contact": "Contactez l'organisation",
+    "requestvalidated": "Votre demande a été soumise.",
+    "not_found": "Offre introuvable.",
+    "limited_view": "Aperçu limité",
+    "contact_recurrent": "Contact (offre récurrente)",
+    "previously_withdrawn": "Vous avez déjà retiré une demande pour cette offre.",
+    "selected_recipient": "Bénéficiaire sélectionné",
+    "undo_rehome_confirm": "Annuler la réaffectation ? La demande de ce bénéficiaire et toutes les demandes précédemment refusées seront remises à \"ouvert\".",
+    "delete_title": "Supprimer l'offre",
+    "loginforinfo": "Connectez-vous ou demandez un accès pour voir l'offre complète (description, poids, contact, organisation)."
+
+
   },
   "applications": {
     "title": "Mes demandes",

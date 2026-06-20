@@ -18,6 +18,7 @@ export default function ListingDetail() {
   const { t, i18n } = useTranslation();
   const { id } = useParams();
   const { user } = useAuth();
+  const location = useLocation();
   const [item, setItem] = useState(null);
   const [active, setActive] = useState(0);
   const [applyOpen, setApplyOpen] = useState(false);
@@ -29,10 +30,10 @@ export default function ListingDetail() {
   useEffect(() => { load(); }, [load]);
 
   if (item === null) {
-    return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground" data-testid="listing-loading">Laden…</div>;
+    return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground" data-testid="listing-loading">{t('common.loading')}</div>;
   }
   if (item === false) {
-    return <div className="max-w-5xl mx-auto px-4 py-24" data-testid="listing-not-found">Aanbieding niet gevonden.</div>;
+    return <div className="max-w-5xl mx-auto px-4 py-24" data-testid="listing-not-found">{t('listing.not_found')}</div>;
   }
 
   const limited = item.limited;
@@ -83,17 +84,16 @@ export default function ListingDetail() {
           <div className="flex items-center gap-3 mb-4">
             <StatusBadge status={item.status} size="lg" />
             {item.isRecurrent && (
-              <span className="overline">Recurrent</span>
+              <span className="overline">{t('listing.recurrent')}</span>
             )}
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-6">{item.title}</h1>
 
           {limited && (
             <div className="border border-foreground p-6 my-8 bg-surface" data-testid="listing-limited-cta">
-              <p className="overline mb-3">Beperkte weergave</p>
+              <p className="overline mb-3">{t('listing.limited_view')}</p>
               <p className="text-foreground/85 leading-relaxed">
-                Log in of vraag toegang aan om de volledige aanbieding te bekijken
-                (beschrijving, gewicht, contact, organisatie).
+                {t('listing.loginforinfo')}
               </p>
               <div className="mt-5 flex gap-3">
                 <Link to="/login" state={{ from: location.pathname }} className="btn-primary !py-2 !px-4 text-xs">{t('nav.login')}</Link>
@@ -108,16 +108,16 @@ export default function ListingDetail() {
 
               <dl className="grid grid-cols-2 gap-y-4 gap-x-6 mb-8 text-sm" data-testid="listing-meta">
                 <div>
-                  <dt className="overline mb-1">{t('listing.materiaal')}</dt>
+                  <dt className="overline mb-1">{t('listing.material')}</dt>
                   <dd>{item.material}</dd>
                 </div>
                 <div>
-                  <dt className="overline mb-1">{t('listing.gewicht')}</dt>
+                  <dt className="overline mb-1">{t('listing.weight')}</dt>
                   <dd>{item.weight} kg</dd>
                 </div>
                 {item.dimensions && (
                   <div className="col-span-2">
-                    <dt className="overline mb-1">{t('listing.afmetingen')}</dt>
+                    <dt className="overline mb-1">{t('listing.dimensions')}</dt>
                     <dd>{item.dimensions}</dd>
                   </div>
                 )}
@@ -129,7 +129,7 @@ export default function ListingDetail() {
                 )}
                 {item.deadline && (
                   <div>
-                    <dt className="overline mb-1">{t('listing.deadline_label')}</dt>
+                    <dt className="overline mb-1">{t('listing.deadline')}</dt>
                     <dd>{new Date(item.deadline).toLocaleDateString(i18n.language === 'fr' ? 'fr-BE' : 'nl-BE')}</dd>
                   </div>
                 )}
@@ -138,7 +138,7 @@ export default function ListingDetail() {
               {item.organisation && item.offererFirstName && (
                 <div className="border-t border-border pt-6" data-testid="listing-offerer-block">
                   <p className="text-base">
-                    {t('listing.aangeboden_door')} <span className="font-medium">{item.offererFirstName}</span> {t('listing.van')}{' '}
+                    {t('listing.offered_by')} <span className="font-medium">{item.offererFirstName}</span> {t('listing.van')}{' '}
                     <Link
                       to={`/organisaties/${item.organisation.id}`}
                       className="industrial-link font-medium"
@@ -153,7 +153,7 @@ export default function ListingDetail() {
               {item.offererIsDonateur && item.offererUsername && (
                 <div className="border-t border-border pt-6" data-testid="listing-offerer-donateur-block">
                   <p className="text-base">
-                    {t('listing.aangeboden_door')} <span className="font-medium">{item.offererUsername}</span>{' '}
+                    {t('listing.offered_by')} <span className="font-medium">{item.offererUsername}</span>{' '}
                     <span className="text-muted-foreground italic">{t('listing.geen_partner')}</span>
                   </p>
                 </div>
@@ -161,7 +161,7 @@ export default function ListingDetail() {
 
               {item.offererEmail && (
                 <div className="mt-6 border border-border p-5 bg-surface" data-testid="listing-recurrent-contact">
-                  <p className="overline mb-2">Contact (recurrente aanbieding)</p>
+                  <p className="overline mb-2">{t('listing.contact_recurrent')}</p>
                   <a href={`mailto:${item.offererEmail}`} className="text-base industrial-link">{item.offererEmail}</a>
                 </div>
               )}
@@ -255,8 +255,8 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
     };
     return (
       <div className="mt-8 border-t border-border pt-6 space-y-3" data-testid="apply-submitted-state">
-        <p className="text-sm font-medium">Je aanvraag is ingediend.</p>
-        <p className="text-xs text-muted-foreground italic">Motivatie: "{myApp.motivation}"</p>
+        <p className="text-sm font-medium">{t('listing.requestvalidated')}</p>
+        <p className="text-xs text-muted-foreground italic">{t('listing.motivation')}: "{myApp.motivation}"</p>
         <button onClick={withdraw} disabled={busy} className="btn-secondary !py-2 text-xs" data-testid="apply-withdraw-btn">
           {t('listing.withdraw_btn')}
         </button>
@@ -276,7 +276,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
     // Can re-apply
     return (
       <div className="mt-8 border-t border-border pt-6 space-y-3" data-testid="apply-withdrawn-state">
-        <p className="text-sm text-muted-foreground">Je hebt eerder een aanvraag ingetrokken voor deze aanbieding.</p>
+        <p className="text-sm text-muted-foreground">{t('listing.previously_withdrawn')}</p>
         {listing.status === 'beschikbaar' && (
           <button onClick={onOpenApply} className="btn-primary" data-testid="apply-reapply-btn">
             {t('listing.apply_btn')}
@@ -305,7 +305,7 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
 function OwnerPanel({ listing, isAdmin, onChanged }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
+  const [apps, setApps] = useState([]);
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -373,14 +373,14 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
           {listing.status === 'beschikbaar' && (
             <button
               onClick={() => {
-                if (!window.confirm(t('listing.confirm_herbestemmen'))) return;
+                if (!window.confirm(t('listing.rehome_confirm'))) return;
                 callAction(`/listings/${listing.id}/mark-rehomed`);
               }}
               disabled={busy}
               className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-xs font-medium tracking-wide transition-all duration-200 hover:bg-green-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
               data-testid="owner-mark-rehomed-btn"
             >
-              {t('listing.markeer_herbestemd')}
+              {t('listing.mark_rehomed_btn')}
             </button>
           )}
           {listing.status === 'herbestemd' && (
@@ -413,7 +413,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
               className="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-xs font-medium tracking-wide transition-all duration-200 hover:bg-red-700 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
               style={{ borderRadius: 2 }}
             >
-              Verwijder aanbieding
+              {t('listing.delete_listing_btn')}
             </button>
           )}
         </div>
@@ -421,7 +421,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
 
       {listing.status === 'herbestemd' && selected && (
         <div className="mb-6 border border-foreground bg-surface p-5" data-testid="owner-selected-block">
-          <p className="overline mb-2">Geselecteerde ontvanger</p>
+          <p className="overline mb-2">{t('listing.selected_recipient')}</p>
           <p className="font-medium">
             {selected.applicant.firstName} {selected.applicant.lastName}{' '}
             <span className="text-muted-foreground font-normal">
@@ -441,7 +441,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
           <p className="text-xs text-muted-foreground italic mt-3">"{selected.motivation}"</p>
           <button
             onClick={() => {
-              if (!window.confirm('Herbestemming ongedaan maken? Aanvraag van deze ontvanger en alle eerder afgewezen aanvragen worden terug op "open" gezet.')) return;
+              if (!window.confirm(t('listing.undo_rehome_confirm'))) return;
               callAction(`/listings/${listing.id}/unrehome`);
             }}
             disabled={busy}
@@ -454,7 +454,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
       )}
 
       {openApps.length === 0 && listing.status === 'beschikbaar' && (
-        <p className="text-sm text-muted-foreground" data-testid="owner-no-apps">{t('listing.geen_aanvragen')}</p>
+        <p className="text-sm text-muted-foreground" data-testid="owner-no-apps">{t('listing.no_applications')}</p>
       )}
 
       {openApps.length > 0 && listing.status === 'beschikbaar' && (
@@ -482,7 +482,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
                   className="btn-primary !py-2 text-xs"
                   data-testid={`owner-select-${a.id}`}
                 >
-                  Selecteer & herbestem
+                  {t('listing.select_rehome_btn')}
                 </button>
               </div>
             </li>
@@ -517,9 +517,9 @@ function DeleteConfirmModal({ busy, error, onCancel, onConfirm }) {
         className="w-full sm:max-w-md bg-surface p-6 sm:p-8 border-t sm:border border-border"
         data-testid="delete-modal"
       >
-        <h2 className="text-2xl font-bold tracking-tight mb-3">Aanbieding verwijderen</h2>
+        <h2 className="text-2xl font-bold tracking-tight mb-3">{t('listing.delete_title')}</h2>
         <p className="text-foreground/80 leading-relaxed text-sm mb-6">
-          {t('listing.confirm_verwijderen')}
+          {t('listing.delete_confirm')}
         </p>
 
         {error && (
