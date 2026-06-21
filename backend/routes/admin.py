@@ -219,7 +219,7 @@ async def admin_delete_organisation(org_id: str, admin: dict = Depends(get_admin
     existing = await db.organisations.find_one({"id": org_id})
     if not existing:
         raise HTTPException(404, "Organisatie niet gevonden")
-    users = await db.users.find({"organisationId": org_id}, {"id": 1}).to_list(None)
+    users = await db.users.find({"organisationId": org_id}, {"id": 1}).to_list(1000)
     user_ids = [u["id"] for u in users]
     if user_ids:
         await db.listings.update_many(
@@ -243,13 +243,15 @@ async def admin_run_maintenance(admin: dict = Depends(get_admin_user)):
 # --------------------------------------------------------------------------
 @router.get("/admin/stats/available-periods")
 async def get_available_periods(admin: dict = Depends(get_admin_user)):
-    checkouts = await db.checkouts.find({}, {"createdAt": 1}).to_list(None)
-    transfers = await db.platform_transfers.find({}, {"createdAt": 1}).to_list(None)
-    checkins = await db.checkins.find({}, {"createdAt": 1}).to_list(None)
-    years = set()
-    for doc in checkouts + transfers + checkins:
-        if doc.get("createdAt"):
-            years.add(doc["createdAt"][:4])
+    pipeline = [
+        {"$group": {"_id": {"$substr": ["$createdAt", 0, 4]}}},
+        {"$project": {"year": "$_id", "_id": 0}},
+    ]
+    years: set[str] = set()
+    for coll in [db.checkouts, db.platform_transfers, db.checkins]:
+        async for doc in coll.aggregate(pipeline):
+            if doc.get("year"):
+                years.add(doc["year"])
     return {"years": sorted(years, reverse=True)}
 
 
@@ -268,63 +270,97 @@ async def get_stats(
     elif year:
         date_filter = {"createdAt": {"$gte": f"{year}-01-01", "$lte": f"{year}-12-31T23:59:59"}}
 
-    checkouts = await db.checkouts.find(date_filter).to_list(None)
-    transfers = await db.platform_transfers.find(date_filter).to_list(None)
-    checkins = await db.checkins.find(date_filter).to_list(None)
+    match_stage = ({"$match": date_filter},) if date_filter else ()
 
-    total_magazijn_kg = round(sum(c["totalWeightKg"] for c in checkouts), 2)
-    total_platform_kg = round(sum(t["weightKg"] for t in transfers), 2)
-    total_checkin_kg = round(sum(c["totalWeightKg"] for c in checkins), 2)
+    # --- Totals via aggregation (geen documenten in RAM) ---
+    async def _sum(coll, field: str) -> float:
+        pipeline = [*match_stage, {"$group": {"_id": None, "total": {"$sum": f"${field}"}, "count": {"$sum": 1}}}]
+        result = await coll.aggregate(pipeline).to_list(1)
+        return (round(result[0]["total"], 2), result[0]["count"]) if result else (0.0, 0)
 
+    total_magazijn_kg, checkouts_count = await _sum(db.checkouts, "totalWeightKg")
+    total_platform_kg, transfers_count = await _sum(db.platform_transfers, "weightKg")
+    total_checkin_kg, checkins_count = await _sum(db.checkins, "totalWeightKg")
+
+    # --- Materiaal per checkout-item (unwind items array) ---
+    material_checkout_pipeline = [
+        *match_stage,
+        {"$unwind": "$items"},
+        {"$group": {"_id": "$items.material", "kg": {"$sum": "$items.weightKg"}}},
+    ]
     material_stats: dict = {}
-    for c in checkouts:
-        for item in c["items"]:
-            m = item["material"]
-            material_stats.setdefault(m, {"magazijn": 0, "platform": 0})
-            material_stats[m]["magazijn"] = round(material_stats[m]["magazijn"] + item["weightKg"], 3)
-    for t in transfers:
-        m = t["material"]
-        material_stats.setdefault(m, {"magazijn": 0, "platform": 0})
-        material_stats[m]["platform"] = round(material_stats[m]["platform"] + t["weightKg"], 3)
+    async for doc in db.checkouts.aggregate(material_checkout_pipeline):
+        material_stats.setdefault(doc["_id"], {"magazijn": 0, "platform": 0})
+        material_stats[doc["_id"]]["magazijn"] = round(doc["kg"], 3)
 
-    org_magazijn: dict = {}
-    for c in checkouts:
-        oid = c["organisationId"]
-        org_magazijn.setdefault(oid, {"name": c["organisationName"], "kg": 0})
-        org_magazijn[oid]["kg"] = round(org_magazijn[oid]["kg"] + c["totalWeightKg"], 2)
+    material_transfer_pipeline = [
+        *match_stage,
+        {"$group": {"_id": "$material", "kg": {"$sum": "$weightKg"}}},
+    ]
+    async for doc in db.platform_transfers.aggregate(material_transfer_pipeline):
+        material_stats.setdefault(doc["_id"], {"magazijn": 0, "platform": 0})
+        material_stats[doc["_id"]]["platform"] = round(doc["kg"], 3)
 
-    org_platform: dict = {}
-    for t in transfers:
-        if not t.get("receiverOrganisationId"):
-            continue
-        oid = t["receiverOrganisationId"]
-        org_platform.setdefault(oid, {"name": t.get("receiverOrganisationName") or "", "kg": 0})
-        org_platform[oid]["kg"] = round(org_platform[oid]["kg"] + t["weightKg"], 2)
+    # --- Per organisatie: magazijn ---
+    org_magazijn_pipeline = [
+        *match_stage,
+        {"$group": {"_id": "$organisationId", "name": {"$first": "$organisationName"}, "kg": {"$sum": "$totalWeightKg"}}},
+        {"$sort": {"kg": -1}},
+    ]
+    org_magazijn = [
+        {"name": d["name"], "kg": round(d["kg"], 2)}
+        async for d in db.checkouts.aggregate(org_magazijn_pipeline)
+    ]
 
-    org_platform_givers: dict = {}
-    sender_name_cache: dict = {}
-    for t in transfers:
-        sender_oid = t.get("senderOrganisationId") or t.get("offererOrganisationId")
-        if not sender_oid:
-            continue
-        sender_name = t.get("senderOrganisationName")
-        if not sender_name:
-            if sender_oid in sender_name_cache:
-                sender_name = sender_name_cache[sender_oid]
-            else:
-                org_doc = await db.organisations.find_one({"id": sender_oid}, {"_id": 0, "name": 1})
-                sender_name = org_doc["name"] if org_doc else ""
-                sender_name_cache[sender_oid] = sender_name
-        org_platform_givers.setdefault(sender_oid, {"name": sender_name, "kg": 0})
-        org_platform_givers[sender_oid]["kg"] = round(org_platform_givers[sender_oid]["kg"] + t["weightKg"], 2)
+    # --- Per organisatie: platform ontvangen ---
+    org_platform_pipeline = [
+        *match_stage,
+        {"$match": {"receiverOrganisationId": {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": "$receiverOrganisationId", "name": {"$first": "$receiverOrganisationName"}, "kg": {"$sum": "$weightKg"}}},
+        {"$sort": {"kg": -1}},
+    ]
+    org_platform = [
+        {"name": d.get("name") or "", "kg": round(d["kg"], 2)}
+        async for d in db.platform_transfers.aggregate(org_platform_pipeline)
+    ]
 
-    org_checkin: dict = {}
-    for c in checkins:
-        if not c.get("organisationId"):
-            continue
-        oid = c["organisationId"]
-        org_checkin.setdefault(oid, {"name": c.get("organisationName") or "", "kg": 0})
-        org_checkin[oid]["kg"] = round(org_checkin[oid]["kg"] + c["totalWeightKg"], 2)
+    # --- Per organisatie: platform gegeven ---
+    org_givers_pipeline = [
+        *match_stage,
+        {"$addFields": {"_senderId": {"$ifNull": ["$senderOrganisationId", "$offererOrganisationId"]}}},
+        {"$match": {"_senderId": {"$exists": True, "$ne": None}}},
+        {"$group": {
+            "_id": "$_senderId",
+            "name": {"$first": {"$ifNull": ["$senderOrganisationName", None]}},
+            "kg": {"$sum": "$weightKg"},
+        }},
+        {"$sort": {"kg": -1}},
+    ]
+    org_platform_givers_raw = await db.platform_transfers.aggregate(org_givers_pipeline).to_list(500)
+
+    # Vul ontbrekende namen op via een batch lookup
+    missing_ids = [d["_id"] for d in org_platform_givers_raw if not d.get("name")]
+    name_map: dict = {}
+    if missing_ids:
+        async for org_doc in db.organisations.find({"id": {"$in": missing_ids}}, {"_id": 0, "id": 1, "name": 1}):
+            name_map[org_doc["id"]] = org_doc["name"]
+
+    org_platform_givers = [
+        {"name": d.get("name") or name_map.get(d["_id"], ""), "kg": round(d["kg"], 2)}
+        for d in org_platform_givers_raw
+    ]
+
+    # --- Per organisatie: checkins ---
+    org_checkin_pipeline = [
+        *match_stage,
+        {"$match": {"organisationId": {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": "$organisationId", "name": {"$first": "$organisationName"}, "kg": {"$sum": "$totalWeightKg"}}},
+        {"$sort": {"kg": -1}},
+    ]
+    org_checkin = [
+        {"name": d.get("name") or "", "kg": round(d["kg"], 2)}
+        async for d in db.checkins.aggregate(org_checkin_pipeline)
+    ]
 
     return {
         "totals": {
@@ -334,11 +370,11 @@ async def get_stats(
             "combined_kg": round(total_magazijn_kg + total_platform_kg, 2),
         },
         "by_material": material_stats,
-        "by_org_magazijn": sorted(org_magazijn.values(), key=lambda x: x["kg"], reverse=True),
-        "by_org_platform": sorted(org_platform.values(), key=lambda x: x["kg"], reverse=True),
-        "by_org_platform_givers": sorted(org_platform_givers.values(), key=lambda x: x["kg"], reverse=True),
-        "by_org_checkin": sorted(org_checkin.values(), key=lambda x: x["kg"], reverse=True),
-        "checkouts_count": len(checkouts),
-        "transfers_count": len(transfers),
-        "checkins_count": len(checkins),
+        "by_org_magazijn": org_magazijn,
+        "by_org_platform": org_platform,
+        "by_org_platform_givers": org_platform_givers,
+        "by_org_checkin": org_checkin,
+        "checkouts_count": checkouts_count,
+        "transfers_count": transfers_count,
+        "checkins_count": checkins_count,
     }

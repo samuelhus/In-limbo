@@ -4,10 +4,21 @@ from datetime import datetime, timezone, timedelta
 
 from notifications import create_notification, purge_old_notifications
 
+# In-memory cache: sla de laatste run-datum op zodat archivering per dag max 1x uitgevoerd wordt
+_archive_last_run: str | None = None
+
 
 async def archive_expired_listings(db) -> int:
-    """Set status='gearchiveerd' on listings where deadline < today and not recurrent."""
+    """Set status='gearchiveerd' on listings where deadline < today and not recurrent.
+
+    Wordt maximaal één keer per dag uitgevoerd, ook al wordt de functie
+    bij elke GET /listings aangeroepen.
+    """
+    global _archive_last_run
     today_iso = datetime.now(timezone.utc).date().isoformat()
+
+    if _archive_last_run == today_iso:
+        return 0  # Al uitgevoerd vandaag — meteen terug
     now = datetime.now(timezone.utc).isoformat()
 
     # Snapshot listings that will be archived so we can notify their owners
@@ -18,7 +29,7 @@ async def archive_expired_listings(db) -> int:
             "status": "beschikbaar",
         },
         {"_id": 0, "id": 1, "userId": 1, "title": 1},
-    ).to_list(None)
+    ).to_list(500)
 
     result = await db.listings.update_many(
         {
@@ -36,6 +47,7 @@ async def archive_expired_listings(db) -> int:
     # Purge old notifications opportunistically
     await purge_old_notifications(db, days=30)
 
+    _archive_last_run = today_iso  # Markeer als uitgevoerd voor vandaag
     return result.modified_count
 
 

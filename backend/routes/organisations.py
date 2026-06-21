@@ -420,18 +420,18 @@ async def download_org_stats_report(
             ],
             "createdAt": date_filter,
         },
-    ).to_list(None)
+    ).to_list(2000)
     platform_received = await db.platform_transfers.find(
         {"receiverOrganisationId": org_id, "createdAt": date_filter},
-    ).to_list(None)
+    ).to_list(2000)
 
     # Checkins (gedoneerd) + Checkouts (ontvangen uit magazijn)
     checkins = await db.checkins.find(
         {"organisationId": org_id, "createdAt": date_filter},
-    ).sort("createdAt", 1).to_list(None)
+    ).sort("createdAt", 1).to_list(2000)
     checkouts = await db.checkouts.find(
         {"organisationId": org_id, "createdAt": date_filter},
-    ).to_list(None)
+    ).to_list(2000)
 
     # Enrich legacy transfers without listingTitle via lookup
     missing_ids = list({

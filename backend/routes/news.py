@@ -25,8 +25,9 @@ def _serialize_news(doc: dict) -> dict:
 
 
 @router.get("/news")
-async def list_news():
-    docs = await db.news.find({}).sort("createdAt", -1).to_list(None)
+async def list_news(skip: int = 0, limit: int = 50):
+    limit = min(limit, 100)
+    docs = await db.news.find({}).sort("createdAt", -1).skip(skip).limit(limit).to_list(limit)
     return [_serialize_news(d) for d in docs]
 
 
