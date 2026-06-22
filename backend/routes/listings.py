@@ -18,7 +18,6 @@ from models import ListingCreateBody, ListingUpdate
 from auth import (
     get_current_user_optional, get_donateur_or_validated_user,
 )
-from tasks import archive_expired_listings
 
 router = APIRouter()
 
@@ -100,8 +99,6 @@ async def list_listings(
     limit: int = Query(20, ge=1, le=50),
 ):
     """Catalog listing. Excludes gearchiveerd."""
-    await archive_expired_listings(db)
-
     viewer = await get_current_user_optional(request)
     filt: dict = {"status": {"$ne": "gearchiveerd"}}
     if filter_key == "beschikbaar":

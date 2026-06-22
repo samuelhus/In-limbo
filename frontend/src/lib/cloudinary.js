@@ -53,3 +53,13 @@ export function cloudinaryThumb(url, w = 600, h = 600) {
     `/upload/c_fill,w_${w},h_${h},g_auto,q_auto,f_auto/`
   );
 }
+
+// Like cloudinaryThumb, but never crops: the full image is scaled to fit
+// within w x h, preserving its original aspect ratio.
+export function cloudinaryFit(url, w = 1400, h = 1400) {
+  if (!url || !url.includes('/upload/')) return url;
+  return url.replace(
+    '/upload/',
+    `/upload/c_limit,w_${w},h_${h},q_auto,f_auto/`
+  );
+}

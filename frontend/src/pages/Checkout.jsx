@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 
 
@@ -7,6 +7,19 @@ const MATERIALS = [
   'Hout', 'Metaal', 'Plastic', 'Steen', 'Textiel',
   'Electro', 'Vloeistof', 'Papier', 'Isolatie', 'Ander',
 ];
+
+const MATERIAL_LABEL_KEYS = {
+  Hout: 'listing.material_hout',
+  Metaal: 'listing.material_metaal',
+  Plastic: 'listing.material_plastic',
+  Steen: 'listing.material_steen',
+  Textiel: 'listing.material_textiel',
+  Electro: 'listing.material_electro',
+  Vloeistof: 'listing.material_vloeistof',
+  Papier: 'listing.material_papier',
+  Isolatie: 'listing.material_isolatie',
+  Ander: 'listing.material_ander',
+};
 
 function StepIndicator({ step }) {
   return (
@@ -47,7 +60,7 @@ export default function Checkout() {
       return;
     }
     let cancelled = false;
-    api.get('/organisations/search', { params: { q: query.trim() } })
+    api.get('/organisations/search', { params: { q: query.trim(), includeInactive: true } })
       .then(({ data }) => { if (!cancelled) setSuggestions(data); })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -108,7 +121,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
         <p className="overline mb-3">In Limbo · {t('nav.warehouse')}</p>
         <h1 className="text-4xl font-bold tracking-tight mb-2">{t('checkout.title')}</h1>
         <p className="text-sm text-muted-foreground mb-10">
-          Registreer de materialen die je vandaag meeneemt.
+          {t('checkout.subtitle')}
         </p>
 
         {step !== 4 && <StepIndicator step={step} />}
@@ -117,7 +130,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
         {step === 1 && (
           <section className="space-y-6" data-testid="checkout-step-1">
             <div>
-              <label className="label-overline">Jouw organisatie</label>
+              <label className="label-overline">{t('checkout.find_org')}</label>
               {selectedOrg ? (
                 <div
                   className="inline-flex items-center gap-2 border border-foreground bg-surface px-4 py-2"
@@ -138,7 +151,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                     type="text"
                     autoFocus
                     className="input-flat"
-                    placeholder="Typ de naam van je organisatie..."
+                    placeholder={t('checkout.type_org_name')}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     data-testid="checkout-org-search-input"
@@ -160,7 +173,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                     </ul>
                   )}
                   {query.length >= 2 && suggestions.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-2">Geen resultaten gevonden.</p>
+                    <p className="text-xs text-muted-foreground mt-2">{t('checkout.no_results')}</p>
                   )}
                 </>
               )}
@@ -171,7 +184,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
               className="btn-primary"
               data-testid="checkout-step1-next"
             >
-              Volgende →
+              {t('common.next')} →
             </button>
           </section>
         )}
@@ -181,7 +194,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
           <section className="space-y-6" data-testid="checkout-step-2">
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-3 items-end">
               <div>
-                <label className="label-overline">Materiaal</label>
+                <label className="label-overline">{t('checkout.material_label')}</label>
                 <select
                   ref={materialSelectRef}
                   className="input-flat"
@@ -189,16 +202,16 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                   onChange={(e) => setCurrentMaterial(e.target.value)}
                   data-testid="checkout-material-select"
                 >
-                  {MATERIALS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {MATERIALS.map((m) => <option key={m} value={m}>{t(MATERIAL_LABEL_KEYS[m])}</option>)}
                 </select>
               </div>
               <div>
-                <label className="label-overline">Gewicht</label>
+                <label className="label-overline">{t('checkout.weight_label')}</label>
                 <input
                   type="number"
                   step="0.1"
                   min="0.1"
-                  placeholder="0.0 kg"
+                  placeholder={t('checkout.weight_placeholder')}
                   className="input-flat"
                   value={currentWeight}
                   onChange={(e) => setCurrentWeight(e.target.value)}
@@ -212,20 +225,20 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                 className="btn-primary !py-3"
                 data-testid="checkout-add-item-btn"
               >
-                + Toevoegen
+                {t('checkout.add_btn')}
               </button>
             </div>
 
             {items.length === 0 ? (
               <p className="text-sm text-muted-foreground" data-testid="checkout-empty-items">
-                Nog niets toegevoegd.
+                {t('checkout.empty_items')}
               </p>
             ) : (
               <ul className="border-y border-border divide-y divide-border" data-testid="checkout-items-list">
                 {items.map((it, i) => (
                   <li key={i} className="py-3 flex items-center justify-between" data-testid={`checkout-item-${i}`}>
                     <span className="text-sm">
-                      <span className="font-medium">{it.material}</span>
+                      <span className="font-medium">{t(MATERIAL_LABEL_KEYS[it.material])}</span>
                       <span className="text-muted-foreground ml-2">{it.weightKg} kg</span>
                     </span>
                     <button
@@ -241,14 +254,14 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
             )}
 
             <div className="flex justify-between">
-              <button onClick={() => setStep(1)} className="btn-ghost" data-testid="checkout-step2-back">← Terug</button>
+              <button onClick={() => setStep(1)} className="btn-ghost" data-testid="checkout-step2-back">← {t('common.back')}</button>
               <button
                 onClick={() => setStep(3)}
                 disabled={items.length === 0}
                 className="btn-primary"
                 data-testid="checkout-step2-next"
               >
-                Uitchecken →
+                {t('checkout.checkout_btn')}
               </button>
             </div>
           </section>
@@ -258,16 +271,16 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
         {step === 3 && (
           <section className="space-y-6" data-testid="checkout-step-3">
             <div>
-              <p className="overline mb-1">Organisatie</p>
+              <p className="overline mb-1">{t('checkout.summary_org')}</p>
               <p className="text-lg font-medium" data-testid="checkout-summary-org">{selectedOrg.name}</p>
             </div>
 
             <div>
-              <p className="overline mb-3">Per materiaal</p>
+              <p className="overline mb-3">{t('checkout.per_material')}</p>
               <ul className="border-y border-border divide-y divide-border">
                 {Object.entries(groupedByMaterial).map(([m, kg]) => (
                   <li key={m} className="py-3 flex justify-between text-sm" data-testid={`checkout-summary-mat-${m}`}>
-                    <span className="font-medium">{m}</span>
+                    <span className="font-medium">{t(MATERIAL_LABEL_KEYS[m])}</span>
                     <span>{kg.toFixed(2)} kg</span>
                   </li>
                 ))}
@@ -275,7 +288,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
             </div>
 
             <div className="border-t-2 border-foreground pt-4 flex justify-between items-baseline">
-              <p className="overline">Totaal</p>
+              <p className="overline">{t('checkout.total')}</p>
               <p className="text-3xl font-bold tracking-tight" data-testid="checkout-summary-total">
                 {totalKg.toFixed(2)} kg
               </p>
@@ -288,14 +301,14 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
             )}
 
             <div className="flex justify-between">
-              <button onClick={() => setStep(2)} className="btn-ghost" data-testid="checkout-step3-back">← Terug</button>
+              <button onClick={() => setStep(2)} className="btn-ghost" data-testid="checkout-step3-back">← {t('common.back')}</button>
               <button
                 onClick={confirmCheckout}
                 disabled={busy}
                 className="btn-primary"
                 data-testid="checkout-confirm-btn"
               >
-                {busy ? 'Bezig…' : 'Bevestig uitcheck ✓'}
+                {busy ? t('checkout.in_progress') : t('checkout.confirm_btn')}
               </button>
             </div>
           </section>
@@ -310,21 +323,27 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
             >
               ✓
             </div>
-            <h2 className="text-3xl font-bold tracking-tight">Uitcheck geregistreerd!</h2>
+            <h2 className="text-3xl font-bold tracking-tight">{t('checkout.success_title')}</h2>
             <p className="text-foreground/80 leading-relaxed max-w-md mx-auto">
-              <span className="font-medium" data-testid="checkout-success-org">{selectedOrg.name}</span>{' '}
-              heeft <span className="font-medium" data-testid="checkout-success-kg">{confirmedTotal.toFixed(2)} kg</span>{' '}
-              materiaal meegenomen.
+              <Trans
+                i18nKey="checkout.success_body"
+                values={{ org: selectedOrg.name, kg: confirmedTotal.toFixed(2) }}
+              >
+                <span className="font-medium" data-testid="checkout-success-org" />
+                {' heeft '}
+                <span className="font-medium" data-testid="checkout-success-kg" />
+                {' materiaal meegenomen.'}
+              </Trans>
             </p>
             <p className="text-sm text-muted-foreground">
-              Bedankt voor je bijdrage aan hergebruik.
+              {t('checkin.success_thanks')}
             </p>
             <button
               onClick={resetAll}
               className="btn-primary"
               data-testid="checkout-restart-btn"
             >
-              Nieuwe uitcheck starten
+              {t('checkout.restart_btn')}
             </button>
           </section>
         )}

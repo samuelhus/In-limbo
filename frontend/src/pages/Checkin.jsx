@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 
 
@@ -7,6 +7,19 @@ const MATERIALS = [
   'Hout', 'Metaal', 'Plastic', 'Steen', 'Textiel',
   'Electro', 'Vloeistof', 'Papier', 'Isolatie', 'Ander',
 ];
+
+const MATERIAL_LABEL_KEYS = {
+  Hout: 'listing.material_hout',
+  Metaal: 'listing.material_metaal',
+  Plastic: 'listing.material_plastic',
+  Steen: 'listing.material_steen',
+  Textiel: 'listing.material_textiel',
+  Electro: 'listing.material_electro',
+  Vloeistof: 'listing.material_vloeistof',
+  Papier: 'listing.material_papier',
+  Isolatie: 'listing.material_isolatie',
+  Ander: 'listing.material_ander',
+};
 
 function StepIndicator({ step }) {
   return (
@@ -121,7 +134,7 @@ export default function Checkin() {
         {step === 1 && (
           <section className="space-y-6" data-testid="checkin-step-1">
             <div>
-              <label className="label-overline">Donerende organisatie</label>
+              <label className="label-overline">{t('checkin.find_org')}</label>
               {selectedOrg ? (
                 <div
                   className="inline-flex items-center gap-2 border border-foreground bg-surface px-4 py-2"
@@ -142,7 +155,7 @@ export default function Checkin() {
                     type="text"
                     autoFocus
                     className="input-flat"
-                    placeholder="Typ de naam van de organisatie..."
+                    placeholder={t('checkin.type_org_name')}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     data-testid="checkin-org-search-input"
@@ -164,7 +177,7 @@ export default function Checkin() {
                     </ul>
                   )}
                   {query.length >= 2 && suggestions.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-2">Geen resultaten gevonden.</p>
+                    <p className="text-xs text-muted-foreground mt-2">{t('checkin.no_results')}</p>
                   )}
                 </>
               )}
@@ -175,7 +188,7 @@ export default function Checkin() {
               className="btn-primary"
               data-testid="checkin-step1-next"
             >
-              Volgende →
+              {t('common.next')} →
             </button>
           </section>
         )}
@@ -185,7 +198,7 @@ export default function Checkin() {
           <section className="space-y-6" data-testid="checkin-step-2">
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-3 items-end">
               <div>
-                <label className="label-overline">Materiaal</label>
+                <label className="label-overline">{t('checkin.material_label')}</label>
                 <select
                   ref={materialSelectRef}
                   className="input-flat"
@@ -193,16 +206,16 @@ export default function Checkin() {
                   onChange={(e) => setCurrentMaterial(e.target.value)}
                   data-testid="checkin-material-select"
                 >
-                  {MATERIALS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {MATERIALS.map((m) => <option key={m} value={m}>{t(MATERIAL_LABEL_KEYS[m])}</option>)}
                 </select>
               </div>
               <div>
-                <label className="label-overline">Gewicht</label>
+                <label className="label-overline">{t('checkin.weight_label')}</label>
                 <input
                   type="number"
                   step="0.1"
                   min="0.1"
-                  placeholder="0.0 kg"
+                  placeholder={t('checkin.weight_placeholder')}
                   className="input-flat"
                   value={currentWeight}
                   onChange={(e) => setCurrentWeight(e.target.value)}
@@ -216,13 +229,13 @@ export default function Checkin() {
                 className="btn-primary !py-3"
                 data-testid="checkin-add-item-btn"
               >
-                + Toevoegen
+                {t('checkin.add_btn')}
               </button>
             </div>
 
             <input
               type="text"
-              placeholder="Beschrijving (optioneel)"
+              placeholder={t('checkin.description_optional')}
               className="input-flat"
               value={currentDescription}
               onChange={(e) => setCurrentDescription(e.target.value)}
@@ -232,14 +245,14 @@ export default function Checkin() {
 
             {items.length === 0 ? (
               <p className="text-sm text-muted-foreground" data-testid="checkin-empty-items">
-                Nog niets toegevoegd.
+                {t('checkin.empty_items')}
               </p>
             ) : (
               <ul className="border-y border-border divide-y divide-border" data-testid="checkin-items-list">
                 {items.map((it, i) => (
                   <li key={i} className="py-3 flex items-start justify-between gap-3" data-testid={`checkin-item-${i}`}>
                     <div className="text-sm">
-                      <span className="font-medium">{it.material}</span>
+                      <span className="font-medium">{t(MATERIAL_LABEL_KEYS[it.material])}</span>
                       <span className="text-muted-foreground ml-2">{it.weightKg} kg</span>
                       {it.description && (
                         <p className="text-xs text-muted-foreground italic mt-0.5">{it.description}</p>
@@ -258,14 +271,14 @@ export default function Checkin() {
             )}
 
             <div className="flex justify-between">
-              <button onClick={() => setStep(1)} className="btn-ghost" data-testid="checkin-step2-back">← Terug</button>
+              <button onClick={() => setStep(1)} className="btn-ghost" data-testid="checkin-step2-back">← {t('common.back')}</button>
               <button
                 onClick={() => setStep(3)}
                 disabled={items.length === 0}
                 className="btn-primary"
                 data-testid="checkin-step2-next"
               >
-                Inchecken →
+                {t('checkin.checkin_btn')}
               </button>
             </div>
           </section>
@@ -275,16 +288,16 @@ export default function Checkin() {
         {step === 3 && (
           <section className="space-y-6" data-testid="checkin-step-3">
             <div>
-              <p className="overline mb-1">Organisatie</p>
+              <p className="overline mb-1">{t('checkin.summary_org')}</p>
               <p className="text-lg font-medium" data-testid="checkin-summary-org">{selectedOrg.name}</p>
             </div>
 
             <div>
-              <p className="overline mb-3">Per materiaal</p>
+              <p className="overline mb-3">{t('checkin.per_material')}</p>
               <ul className="border-y border-border divide-y divide-border">
                 {Object.entries(groupedByMaterial).map(([m, kg]) => (
                   <li key={m} className="py-3 flex justify-between text-sm" data-testid={`checkin-summary-mat-${m}`}>
-                    <span className="font-medium">{m}</span>
+                    <span className="font-medium">{t(MATERIAL_LABEL_KEYS[m])}</span>
                     <span>{kg.toFixed(2)} kg</span>
                   </li>
                 ))}
@@ -293,11 +306,11 @@ export default function Checkin() {
 
             {items.some((i) => i.description) && (
               <div>
-                <p className="overline mb-3">Notities</p>
+                <p className="overline mb-3">{t('checkin.notes')}</p>
                 <ul className="border-y border-border divide-y divide-border">
                   {items.filter((i) => i.description).map((it, i) => (
                     <li key={i} className="py-2 text-sm" data-testid={`checkin-summary-note-${i}`}>
-                      <span className="font-medium">{it.material}</span>{' '}
+                      <span className="font-medium">{t(MATERIAL_LABEL_KEYS[it.material])}</span>{' '}
                       <span className="text-muted-foreground">({it.weightKg} kg)</span>
                       <p className="text-xs italic mt-0.5">{it.description}</p>
                     </li>
@@ -307,7 +320,7 @@ export default function Checkin() {
             )}
 
             <div className="border-t-2 border-foreground pt-4 flex justify-between items-baseline">
-              <p className="overline">Totaal</p>
+              <p className="overline">{t('checkin.total')}</p>
               <p className="text-3xl font-bold tracking-tight" data-testid="checkin-summary-total">
                 {totalKg.toFixed(2)} kg
               </p>
@@ -320,7 +333,7 @@ export default function Checkin() {
             )}
 
             <div className="flex justify-between">
-              <button onClick={() => setStep(2)} className="btn-ghost" data-testid="checkin-step3-back">← Terug</button>
+              <button onClick={() => setStep(2)} className="btn-ghost" data-testid="checkin-step3-back">← {t('common.back')}</button>
               <button
                 onClick={confirmCheckin}
                 disabled={busy}
@@ -344,12 +357,18 @@ export default function Checkin() {
             </div>
             <h2 className="text-3xl font-bold tracking-tight">{t('checkin.success_title')}</h2>
             <p className="text-foreground/80 leading-relaxed max-w-md mx-auto">
-              <span className="font-medium" data-testid="checkin-success-org">{selectedOrg.name}</span>{' '}
-              heeft <span className="font-medium" data-testid="checkin-success-kg">{confirmedTotal.toFixed(2)} kg</span>{' '}
-              materiaal gedoneerd aan het magazijn.
+              <Trans
+                i18nKey="checkin.success_body"
+                values={{ org: selectedOrg.name, kg: confirmedTotal.toFixed(2) }}
+              >
+                <span className="font-medium" data-testid="checkin-success-org" />
+                {' heeft '}
+                <span className="font-medium" data-testid="checkin-success-kg" />
+                {' materiaal gedoneerd aan het magazijn.'}
+              </Trans>
             </p>
             <p className="text-sm text-muted-foreground">
-              Bedankt voor je bijdrage aan hergebruik.
+              {t('checkin.success_thanks')}
             </p>
             <button
               onClick={resetAll}

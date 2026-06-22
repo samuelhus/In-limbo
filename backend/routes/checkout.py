@@ -13,7 +13,7 @@ router = APIRouter()
 @router.post("/checkout")
 async def create_checkout(body: CheckoutCreate):
     org = await db.organisations.find_one({"id": body.organisationId})
-    if not org or org["status"] not in ("validated", "active"):
+    if not org or org["status"] not in ("validated", "active", "inactive"):
         raise HTTPException(404, "Organisatie niet gevonden")
     now = now_iso()
     total = round(sum(item.weightKg for item in body.items), 3)
@@ -27,4 +27,12 @@ async def create_checkout(body: CheckoutCreate):
         "createdAt": now,
     }
     await db.checkouts.insert_one(doc)
+
+    # Een succesvolle checkout is bewijs van activiteit: reactiveer de organisatie.
+    if org["status"] == "inactive":
+        await db.organisations.update_one(
+            {"id": body.organisationId},
+            {"$set": {"status": "active", "updatedAt": now}},
+        )
+
     return {"ok": True, "totalWeightKg": total}

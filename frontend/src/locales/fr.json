@@ -453,7 +453,7 @@
     "confirm_btn": "Confirmer l'entrée ✓",
     "in_progress": "En cours…",
     "success_title": "Entrée enregistrée !",
-    "success_body": "{{org}} a donné {{kg}} kg de matériaux à l'entrepôt.",
+    "success_body": "<0>{{org}}</0> a emporté <1>{{kg}} kg</1> de matériaux depuis l'entrepôt.",
     "success_thanks": "Merci pour votre contribution au réemploi.",
     "restart_btn": "Nouvelle entrée"
   },
@@ -465,7 +465,18 @@
     "confirm_btn": "Confirmer la sortie ✓",
     "success_title": "Sortie enregistrée !",
     "success_body": "{{org}} a emporté {{kg}} kg de matériaux depuis l'entrepôt.",
-    "restart_btn": "Nouvelle sortie"
+    "restart_btn": "Nouvelle sortie",
+    "type_org_name": "Tapez le nom de votre organisation…",
+    "no_results": "Aucun résultat trouvé.",
+    "material_label": "Matériau",
+    "weight_label": "Poids",
+    "weight_placeholder": "0.0 kg",
+    "add_btn": "+ Ajouter",
+    "empty_items": "Rien ajouté pour l'instant.",
+    "summary_org": "Organisation",
+    "per_material": "Par matériel",
+    "total": "Total",
+    "in_progress": "En cours…"
   },
 
   "overons": {

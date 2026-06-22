@@ -67,6 +67,8 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
 # --------------------------------------------------------------------------
 # Startup / shutdown
 # --------------------------------------------------------------------------
+
+
 @app.on_event("startup")
 async def startup() -> None:
     await db.users.create_index("email", unique=True)
@@ -96,6 +98,8 @@ async def startup() -> None:
     await db.password_resets.create_index("token", unique=True)
     await db.password_resets.create_index("expiresAt", expireAfterSeconds=0)
     await seed(db)
+
+    # Eenmalige run bij opstart (vangt listings die verlopen zijn tijdens downtime)
     archived = await archive_expired_listings(db)
     inactive = await mark_inactive_orgs(db)
     log.info(f"Startup OK — archived={archived} inactive_orgs={inactive}")

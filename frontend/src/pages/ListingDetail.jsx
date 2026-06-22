@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
-import { cloudinaryThumb } from '@/lib/cloudinary';
+import { cloudinaryThumb, cloudinaryFit } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 import ApplyModal from '@/components/ApplyModal';
 
@@ -55,9 +55,9 @@ export default function ListingDetail() {
           <div className="aspect-square bg-muted overflow-hidden">
             {photos.length > 0 ? (
               <img
-                src={cloudinaryThumb(photos[active], 1400, 1400)}
+                src={cloudinaryFit(photos[active], 1400, 1400)}
                 alt={item.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">{t('listing.geen_foto')}</div>

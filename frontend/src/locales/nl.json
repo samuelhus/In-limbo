@@ -429,7 +429,7 @@
     "confirm_btn": "Bevestig incheckin ✓",
     "in_progress": "Bezig…",
     "success_title": "Incheckin geregistreerd!",
-    "success_body": "{{org}} heeft {{kg}} kg materiaal gedoneerd aan het magazijn.",
+    "success_body": "<0>{{org}}</0> heeft <1>{{kg}} kg</1> materiaal meegenomen uit het magazijn.",
     "success_thanks": "Bedankt voor je bijdrage aan hergebruik.",
     "restart_btn": "Nieuwe incheckin starten"
   },
@@ -441,7 +441,17 @@
     "confirm_btn": "Bevestig checkout ✓",
     "success_title": "Checkout geregistreerd!",
     "success_body": "{{org}} heeft {{kg}} kg materiaal meegenomen uit het magazijn.",
-    "restart_btn": "Nieuwe checkout starten"
+    "restart_btn": "Nieuwe checkout starten","type_org_name": "Typ de naam van je organisatie…",
+    "no_results": "Geen resultaten gevonden.",
+    "material_label": "Materiaal",
+    "weight_label": "Gewicht",
+    "weight_placeholder": "0.0 kg",
+    "add_btn": "+ Toevoegen",
+    "empty_items": "Nog niets toegevoegd.",
+    "summary_org": "Organisatie",
+    "per_material": "Per materiaal",
+    "total": "Totaal",
+    "in_progress": "Bezig…"
   },
   "overons": {
     "wie_zijn_we": "Wie zijn we",

@@ -95,10 +95,11 @@ async def list_organisations(
 
 
 @router.get("/organisations/search")
-async def search_organisations(q: str = Query(..., min_length=2)):
+async def search_organisations(q: str = Query(..., min_length=2), includeInactive: bool = False):
+    statuses = ["validated", "active", "inactive"] if includeInactive else ["validated", "active"]
     regex = {"$regex": q, "$options": "i"}
     docs = await db.organisations.find(
-        {"name": regex, "status": {"$in": ["validated", "active"]}},
+        {"name": regex, "status": {"$in": statuses}},
         {"_id": 0, "id": 1, "name": 1, "category": 1},
     ).limit(10).to_list(10)
     return docs
