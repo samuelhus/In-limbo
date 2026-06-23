@@ -608,6 +608,7 @@
     "lastname": "Nom",
     "email": "Adresse e-mail",
     "phone": "Téléphone",
+    "contact_hint": "Partagé uniquement lors d'une transaction avec un autre partenaire.",
     "password": "Mot de passe",
     "password_hint": "min. 6 caractères",
     "org_title": "Votre organisation",

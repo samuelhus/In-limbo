@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
+import InfoHint from '@/components/InfoHint';
 
 const ORG_CATEGORY_KEYS = [
   'beeldende_kunsten', 'jeugdwerk', 'podiumkunsten', 'noodopvang',
@@ -183,12 +184,18 @@ export default function Register() {
             </div>
           </div>
           <div>
-            <label className="label-overline">{t('register.email')}</label>
+            <label className="label-overline">
+              {t('register.email')}
+              <InfoHint text={t('register.contact_hint')} testId="register-email-hint" />
+            </label>
             <input type="email" className="input-flat" data-testid="register-email" value={user.email}
               onChange={(e) => setUser({...user, email: e.target.value})} />
           </div>
           <div>
-            <label className="label-overline">{t('register.phone')} <span className="text-muted-foreground normal-case">({t('common.optioneel')})</span></label>
+            <label className="label-overline">
+              {t('register.phone')} <span className="text-muted-foreground normal-case">({t('common.optioneel')})</span>
+              <InfoHint text={t('register.contact_hint')} testId="register-phone-hint" />
+            </label>
             <input className="input-flat" data-testid="register-phone" value={user.phone}
               onChange={(e) => setUser({...user, phone: e.target.value})} />
           </div>

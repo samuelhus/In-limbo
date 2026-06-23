@@ -161,12 +161,10 @@ async def list_listing_applications(listing_id: str, user: dict = Depends(get_do
     async for o in db.organisations.find({"id": {"$in": org_ids}}):
         orgs_map[o["id"]] = strip_mongo(o)
 
-    selected_id = listing.get("selectedApplicantId")
     out = []
     for a in apps:
         u = users_map.get(a["applicantUserId"]) or {}
         o = orgs_map.get(a["applicantOrganisationId"]) or {}
-        is_selected = a["id"] == selected_id and a["status"] == "selected"
         entry = {
             **a,
             "applicant": {
@@ -177,7 +175,10 @@ async def list_listing_applications(listing_id: str, user: dict = Depends(get_do
                 "organisationDescription": o.get("description"),
             },
         }
-        if is_selected:
+        # De aanbieder mag de contactgegevens van een aanvrager al zien zodra
+        # die aanvraag is gedaan (status "open"), niet pas na selectie.
+        # Voor afgewezen aanvragen ("not_selected") tonen we ze niet meer.
+        if a["status"] in ("open", "selected"):
             entry["applicant"]["email"] = u.get("email")
             entry["applicant"]["phone"] = u.get("phone")
         out.append(entry)

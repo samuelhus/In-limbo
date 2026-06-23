@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
-import { cloudinaryThumb, cloudinaryFit } from '@/lib/cloudinary';
+import { cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 import ApplyModal from '@/components/ApplyModal';
 
@@ -55,9 +55,9 @@ export default function ListingDetail() {
           <div className="aspect-square bg-muted overflow-hidden">
             {photos.length > 0 ? (
               <img
-                src={cloudinaryFit(photos[active], 1400, 1400)}
+                src={cloudinaryThumb(photos[active], 1400, 1400)}
                 alt={item.title}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">{t('listing.geen_foto')}</div>
@@ -473,6 +473,16 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
                   </Link>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{formatDate(a.createdAt)}</p>
+                {a.applicant.email && (
+                  <p className="text-sm mt-2">
+                    <a href={`mailto:${a.applicant.email}`} className="industrial-link">{a.applicant.email}</a>
+                  </p>
+                )}
+                {a.applicant.phone && (
+                  <p className="text-sm">
+                    <a href={`tel:${a.applicant.phone}`} className="industrial-link">{a.applicant.phone}</a>
+                  </p>
+                )}
                 <p className="text-sm mt-2 text-foreground/80 italic">"{a.motivation}"</p>
               </div>
               <div className="md:col-span-4 md:flex md:justify-end items-start">
