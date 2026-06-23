@@ -308,7 +308,7 @@ export default function Header() {
             >
               {isLoggedIn && (
                 <div className="px-5 py-3 border-b border-border bg-muted/40">
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest">Ingelogd als</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest">{t('nav.logged_in_as')}</p>
                   <p className="text-sm font-medium mt-0.5 truncate">
                     {isDonateur ? user.username : `${user.firstName || ''} ${user.lastName || ''}`.trim()}
                   </p>

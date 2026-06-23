@@ -308,6 +308,10 @@ class ContactMessageCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
     message: str = Field(..., min_length=1, max_length=1000)
+    # Honeypot: verborgen veld in de UI. Mensen laten dit leeg; spambots
+    # vullen het vaak automatisch in. Niet als spam-signaal naar de client
+    # communiceren — gewoon stilletjes negeren in de route.
+    website: Optional[str] = None
 
 
 class NewsletterSubscribeCreate(BaseModel):

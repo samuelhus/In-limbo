@@ -43,7 +43,7 @@ export default function OverOns() {
         <div className="mt-10 aspect-[21/9] overflow-hidden">
           <img
             src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261970/InLimbo_overons_1_jf6ijc.jpg"
-            alt="In Limbo magazijn"
+            alt={t('overons.alt_magazijn')}
             className="w-full h-full object-cover"
           />
         </div>
@@ -65,7 +65,7 @@ export default function OverOns() {
           <div className="aspect-square overflow-hidden">
             <img
               src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261972/InLimbo_overons_3_whcnrr.jpg"
-              alt="Materialen In Limbo"
+              alt={t('overons.alt_materialen')}
               className="w-full h-full object-cover"
             />
           </div>
@@ -112,7 +112,7 @@ export default function OverOns() {
           <div className="aspect-square overflow-hidden">
             <img
               src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_2_pyhem2.jpg"
-              alt="Voor wie is In Limbo"
+              alt={t('overons.alt_voor_wie')}
               className="w-full h-full object-cover"
             />
           </div>
@@ -125,7 +125,7 @@ export default function OverOns() {
           <div className="aspect-square overflow-hidden">
             <img
               src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261967/InLimbo_overons_5_iyd4p5.jpg"
-              alt="Hoe werkt In Limbo"
+              alt={t('overons.alt_hoe_werkt')}
               className="w-full h-full object-cover"
             />
           </div>
@@ -180,7 +180,7 @@ export default function OverOns() {
           <div className="aspect-square overflow-hidden">
             <img
               src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261972/InLimbo_overons_4_gvdavc.jpg"
-              alt="Materiaal doneren"
+              alt={t('overons.alt_doneren')}
               className="w-full h-full object-cover"
             />
           </div>
@@ -232,14 +232,14 @@ export default function OverOns() {
         <div className="aspect-[4/3] overflow-hidden">
           <img
             src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_6_pdlxmu.jpg"
-            alt="In Limbo materialen"
+            alt={t('overons.alt_materialen_balk')}
             className="w-full h-full object-cover"
           />
         </div>
         <div className="aspect-[4/3] overflow-hidden">
           <img
             src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261966/inlimbo_06_npcqbk.jpg"
-            alt="In Limbo magazijn"
+            alt={t('overons.alt_magazijn')}
             className="w-full h-full object-cover"
           />
         </div>

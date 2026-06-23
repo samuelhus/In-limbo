@@ -5,7 +5,7 @@ import { api, formatApiError } from '@/lib/api';
 export default function Contact() {
   const { t } = useTranslation();
 
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [form, setForm] = useState({ name: '', email: '', message: '', website: '' });
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -22,7 +22,7 @@ export default function Contact() {
     try {
       await api.post('/contact', form);
       setSent(true);
-      setForm({ name: '', email: '', message: '' });
+      setForm({ name: '', email: '', message: '', website: '' });
     } catch (err) {
       setError(formatApiError(err) || t('contact.error'));
     } finally {
@@ -101,6 +101,19 @@ export default function Contact() {
               </div>
             ) : (
               <form onSubmit={onSubmit} className="space-y-4" data-testid="contact-form">
+                {/* Honeypot: onzichtbaar voor mensen, spambots vullen dit vaak automatisch in. */}
+                <div className="absolute left-[-9999px] top-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+                  <label htmlFor="contact-website">Website</label>
+                  <input
+                    id="contact-website"
+                    name="website"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={form.website}
+                    onChange={(e) => setForm({ ...form, website: e.target.value })}
+                  />
+                </div>
                 <div>
                   <label className="overline block mb-2" htmlFor="contact-name">
                     {t('contact.field_name')}

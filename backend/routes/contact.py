@@ -15,6 +15,12 @@ router = APIRouter()
 @limiter.limit("5/minute")
 async def submit_contact(request: Request, body: ContactMessageCreate = Body(...)):
     """Store a contact-form submission and email the In Limbo admins."""
+    # Honeypot: als dit verborgen veld gevuld is, is het bijna zeker een bot.
+    # We doen alsof het gelukt is — geen opslag, geen mail, geen foutmelding
+    # die een spammer zou kunnen gebruiken om zijn aanpak bij te sturen.
+    if body.website:
+        return {"ok": True}
+
     doc = {
         "id": str(uuid.uuid4()),
         "name": body.name,

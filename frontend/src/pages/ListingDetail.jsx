@@ -448,7 +448,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
             className="btn-secondary !py-1.5 px-3 text-xs mt-4"
             data-testid="owner-unselect-btn"
           >
-            Herbestemming ongedaan maken
+            {t('listing.undo_rehome_btn')}
           </button>
         </div>
       )}
