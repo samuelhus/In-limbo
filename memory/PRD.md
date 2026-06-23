@@ -1,3 +1,18 @@
+# Changelog — Feb 2026
+
+## 2026-02 — Contact page + Newsletter (MailerLite-ready)
+- New public page `/contact` (`Contact.jsx`): contact details (moved from OverOns), contact form (5/min rate-limited POST /api/contact → admin email + in-app notification), newsletter signup form (POST /api/newsletter/subscribe).
+- MailerLite integration: soft-fail helper `sync_to_mailerlite(email)` in `notifications.py`. No-ops when `MAILERLITE_API_KEY` / `MAILERLITE_GROUP_ID` env vars are empty. Newsletter signup always stores locally; `mailerliteSynced` boolean flips to true once credentials are added.
+- New collections: `contact_messages`, `newsletter_subscribers` (unique index on `email` → idempotent upsert).
+- Header "Over ons" dropdown: added Contact as 3rd item (desktop + mobile). Footer "Project" column: contact link now `<a href="/contact">`.
+- OverOns section 10 collapsed: "Samenwerking" stays, contact-details column removed (now only on /contact).
+- NL + FR translations added under `contact.*` namespace, `nav.contact` key.
+- Tested end-to-end: 12/12 backend (incl. rate-limit, idempotent dedup, validation) + 8/8 frontend (incl. FR language switch).
+
+## 2026-02 — Partners page
+- New `/partners` public page grouping validated orgs by category (uses `org_categories.*` i18n keys).
+
+
 # In Limbo — Product Requirements Document
 
 ## Problem statement
