@@ -24,7 +24,7 @@ export default function Footer() {
           <p className="overline mb-3">{t('footer.project')}</p>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li><a href="/over-ons" className="industrial-link">{t('nav.about')}</a></li>
-            <li>{t('common.contact')}</li>
+            <li><a href="/contact" className="industrial-link" data-testid="footer-contact-link">{t('common.contact')}</a></li>
             <li><a href="/voorwaarden" className="industrial-link">{t('footer.terms')}</a></li>
           </ul>
         </div>

@@ -30,6 +30,7 @@ from routes.news import router as news_router
 from routes.checkout import router as checkout_router
 from routes.checkin import router as checkin_router
 from routes.admin import router as admin_router
+from routes.contact import router as contact_router
 
 
 cloudinary.config(
@@ -97,6 +98,8 @@ async def startup() -> None:
     await db.checkouts.create_index("createdAt")  # admin stats datumfilter
     await db.password_resets.create_index("token", unique=True)
     await db.password_resets.create_index("expiresAt", expireAfterSeconds=0)
+    await db.newsletter_subscribers.create_index("email", unique=True)
+    await db.contact_messages.create_index("createdAt")
     await seed(db)
 
     # Eenmalige run bij opstart (vangt listings die verlopen zijn tijdens downtime)
@@ -131,6 +134,7 @@ api.include_router(news_router)
 api.include_router(checkout_router)
 api.include_router(checkin_router)
 api.include_router(admin_router)
+api.include_router(contact_router)
 
 app.include_router(api)
 

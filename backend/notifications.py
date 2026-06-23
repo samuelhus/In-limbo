@@ -16,6 +16,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import httpx
 import resend
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 resend.api_key = os.environ.get("RESEND_API_KEY", "")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://limbo-stage.emergent.host").rstrip("/")
+MAILERLITE_API_KEY = os.environ.get("MAILERLITE_API_KEY", "")
+MAILERLITE_GROUP_ID = os.environ.get("MAILERLITE_GROUP_ID", "")
 
 LOGO_URL = (
     "https://customer-assets.emergentagent.com/job_limbo-stage/artifacts/"
@@ -147,6 +150,74 @@ async def purge_old_notifications(db, days: int = 30) -> int:
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     res = await db.notifications.delete_many({"createdAt": {"$lt": cutoff}})
     return res.deleted_count
+
+
+async def sync_to_mailerlite(email: str) -> bool:
+    """Add a subscriber to a MailerLite group. Fails soft.
+
+    No-ops (returns False) if MAILERLITE_API_KEY or MAILERLITE_GROUP_ID
+    is not configured. On API failure logs a warning and returns False.
+    Returns True only on successful API confirmation.
+    """
+    if not email or not MAILERLITE_API_KEY or not MAILERLITE_GROUP_ID:
+        return False
+    url = "https://connect.mailerlite.com/api/subscribers"
+    payload = {"email": email, "groups": [MAILERLITE_GROUP_ID]}
+    headers = {
+        "Authorization": f"Bearer {MAILERLITE_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as cli:
+            resp = await cli.post(url, json=payload, headers=headers)
+        if resp.status_code in (200, 201):
+            return True
+        logger.warning("MailerLite sync non-2xx for %s: %s %s", email, resp.status_code, resp.text[:200])
+        return False
+    except Exception as e:
+        logger.warning("MailerLite sync failed for %s: %s", email, e)
+        return False
+
+
+async def notify_admins_contact_message(
+    db, name: str, email: str, message: str,
+) -> None:
+    """Email + in-app notify all admins about a new public contact-form submission."""
+    try:
+        admins = await db.users.find(
+            {"role": "admin"},
+            {"_id": 0, "id": 1, "email": 1},
+        ).to_list(None)
+        if not admins:
+            logger.warning("notify_admins_contact_message: geen admins gevonden")
+            return
+
+        safe_msg = (message or "").replace("\n", "<br/>")
+        in_app = f"Nieuw contactbericht van {name} ({email})"
+        email_html = render_email(
+            title="Nieuw contactbericht",
+            body_lines=[
+                f"<strong>{name}</strong> ({email}) heeft een bericht achtergelaten via /contact.",
+                f"<em>{safe_msg}</em>",
+            ],
+            cta_text="Admin panel openen →",
+            cta_url=f"{FRONTEND_URL}/admin",
+        )
+        for admin in admins:
+            await create_notification(
+                db=db,
+                user_id=admin["id"],
+                n_type="contact_message",
+                message=in_app,
+            )
+            await send_email(
+                to_email=admin.get("email"),
+                subject=f"Contactbericht: {name}",
+                html_content=email_html,
+            )
+    except Exception as e:
+        logger.warning("notify_admins_contact_message failed: %s", e)
 
 
 async def notify_admins_new_registration(

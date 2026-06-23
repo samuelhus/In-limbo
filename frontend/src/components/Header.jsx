@@ -214,10 +214,19 @@ export default function Header() {
                   to="/partners"
                   data-testid="nav-partners"
                   className={({ isActive }) =>
-                    `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
+                    `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
                   }
                 >
                   {t('nav.partners')}
+                </NavLink>
+                <NavLink
+                  to="/contact"
+                  data-testid="nav-contact"
+                  className={({ isActive }) =>
+                    `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
+                  }
+                >
+                  {t('nav.contact')}
                 </NavLink>
               </div>
             )}
@@ -402,6 +411,14 @@ export default function Header() {
                     className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
                   >
                     → {t('nav.partners')}
+                  </NavLink>
+                  <NavLink
+                    to="/contact"
+                    data-testid="mobile-nav-contact"
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                  >
+                    → {t('nav.contact')}
                   </NavLink>
                 </>
               )}

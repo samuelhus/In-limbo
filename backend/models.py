@@ -302,6 +302,19 @@ class AdminUserUpdate(BaseModel):
     status: Optional[Literal["pending", "validated", "rejected"]] = None
 
 
+# ---------- Contact / Newsletter ----------
+class ContactMessageCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    name: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+    message: str = Field(..., min_length=1, max_length=1000)
+
+
+class NewsletterSubscribeCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    email: EmailStr
+
+
 class AdminOrgUpdate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     name: Optional[str] = None

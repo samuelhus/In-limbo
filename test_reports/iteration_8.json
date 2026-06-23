@@ -1,0 +1,42 @@
+{
+  "summary": "End-to-end testing of new /contact page (contact-details + contact-form + newsletter-form) and routing changes. Backend: 12/12 pytest tests pass — valid POSTs, 422 validation, idempotent newsletter upsert, MongoDB persistence, rate-limit enforcement (6th request → 429 for both endpoints), and 3 regression checks. Frontend: contact page loads with H1 'Contact' and all 3 testid blocks, form submission shows contact-success, newsletter submission shows newsletter-success, header dropdown (desktop+mobile) shows nav-over-ons / nav-partners / nav-contact and navigates correctly, footer-contact-link is <a href='/contact'>, /over-ons no longer contains IBAN/Fernand Demetskaai/KBO 846.221.169 but still shows Samenwerking with Toestand+Zinneke, FR translation works (Nom / Adresse e-mail / Message rendered).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/contact", "issue": "Rate-limit enforcement now reliably trips on 6th call in this run (sequence: 5×200, then 429,429,429). NOTE: this contradicts iteration_7 finding that slowapi was bypassable via k8s ingress — either traffic is currently coming from a single proxy IP, or the limiter key_func was updated. Worth confirming the fix is in place in deps.py."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_contact_newsletter.py",
+    "/app/test_reports/pytest/contact_newsletter_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Verify in /app/backend/deps.py that limiter key_func now uses X-Forwarded-For (as suggested in iteration_7). Current observation: rate-limit is being enforced (6th call → 429) so this may already be fixed. If not yet fixed, the previous concern from iteration_7 still applies for other endpoints.",
+    "(Cosmetic) Rate-limit error toast on /contact (data-testid='contact-error') uses Dutch text 'Te veel aanvragen. Probeer het later opnieuw.' — verify the FR variant also exists in fr.json for the same key (not explicitly tested)."
+  ],
+  "critical_code_review_comments": [
+    "routes/contact.py uses asyncio.create_task(notify_admins_contact_message(...)) which is correct (non-blocking). sync_to_mailerlite() inside newsletter_subscribe is awaited inline — fine since it fails-fast (returns False) when MAILERLITE_API_KEY env var is empty.",
+    "models.ContactMessageCreate enforces name 1..100, message 1..1000 — matches PRD spec.",
+    "Newsletter upsert pattern in routes/contact.py is correct: $setOnInsert for id/email/createdAt + $set for mailerliteSynced. Confirmed idempotent (count stays at 1 on duplicate email).",
+    "notifications.MAILERLITE_API_KEY is read at module import time. If env vars change at runtime, container restart is required — acceptable for current setup.",
+    "Contact.jsx properly handles error states (data-testid='contact-error' / 'newsletter-error') and uses i18n keys for all strings."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_contact_newsletter.py (created)"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 — contact valid+invalid, newsletter valid+duplicate+invalid, both rate-limits, 3 regression)",
+    "frontend": "100% (all 8 scenarios: page load, contact form submit, newsletter submit, header desktop dropdown, header mobile dropdown, footer link, /over-ons cleanup, FR translation)"
+  },
+  "test_credentials": "admin@inlimbo.be / Admin123! (used for regression login test). Note: test_credentials.md states 'User123!' for admin which is wrong — Admin123! is the correct password and works.",
+  "seed_data_creation": "Test creates contact_messages and newsletter_subscribers docs with TEST_ prefix; cleaned up in module teardown via delete_many regex. No persistent test data left.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All /contact + /newsletter functionality is GREEN end-to-end. Backend tests live at /app/backend/tests/test_contact_newsletter.py — run with REACT_APP_BACKEND_URL exported and backend .env sourced. Rate-limit test triggers 429s, so allow ~70s recovery before re-running other tests on /api/contact or /api/newsletter/subscribe. Discrepancy with iteration_7 (which said slowapi rate-limit was bypassable via ingress) — in this run the 5/min limit fires correctly on the 6th call from the same client through the public URL, so either the fix is in or the test is single-IP today. test_credentials.md should be corrected: admin password is Admin123! not User123!.",
+  "rca of the issue": "No bugs found. One credentials-doc discrepancy: /app/memory/test_credentials.md lists admin password as 'User123!' in the original problem statement but the working password (and the one in the file itself) is 'Admin123!'. Login regression test confirms Admin123! is correct."
+}

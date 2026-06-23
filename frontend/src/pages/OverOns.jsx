@@ -246,36 +246,19 @@ export default function OverOns() {
       </div>
 
       
-      {/* 10. SAMENWERKING + CONTACT */}
+      {/* 10. SAMENWERKING */}
       <section className="py-16 border-b border-border">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div>
-            <p className="overline mb-4">{t('overons.samenwerking_overline')}</p>
-            <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.samenwerking_title')}</h2>
-            <div className="flex flex-wrap gap-2 mb-6">
-              {['Toestand', 'Zinneke', 'De Munt', 'Rotor DC'].map((p) => (
-                <span key={p} className="border border-border px-3 py-1.5 text-sm font-medium">
-                  {p}
-                </span>
-              ))}
-            </div>
-            {/*<p className="text-sm text-foreground/70">Met steun van Leefmilieu Brussel.</p>*/}
+        <div>
+          <p className="overline mb-4">{t('overons.samenwerking_overline')}</p>
+          <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.samenwerking_title')}</h2>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {['Toestand', 'Zinneke', 'De Munt', 'Rotor DC'].map((p) => (
+              <span key={p} className="border border-border px-3 py-1.5 text-sm font-medium">
+                {p}
+              </span>
+            ))}
           </div>
-          <div>
-            <p className="overline mb-4">{t('overons.contact_overline')}</p>
-            <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.contact_title')}</h2>
-            <p className="text-foreground/80 text-sm leading-relaxed">
-              Fernand Demetskaai 34b<br />
-              Anderlecht, Brussel<br /><br />
-              Elke woensdag van 10 tot 17u<br /><br />
-              IBAN: BE76 7350 3121 5695<br />
-              (mededeling: IN LIMBO)<br />
-              KBO: 846.221.169
-            </p>
-            <p className="mt-4 text-sm text-foreground/70">
-              Donaties voor de werking zijn altijd welkom.
-            </p>
-          </div>
+          {/*<p className="text-sm text-foreground/70">Met steun van Leefmilieu Brussel.</p>*/}
         </div>
       </section>
 
