@@ -34,7 +34,7 @@ export default function DonateurRegister() {
   const back = () => setStep((s) => Math.max(1, s - 1));
 
   const canNext1 = terms;
-  const canNext2 = form.username.trim() && form.email.trim() && form.password.length >= 6;
+  const canNext2 = form.username.trim() && form.email.trim() && form.password.length >= 8;
 
   const submit = async () => {
     setSubmitting(true);

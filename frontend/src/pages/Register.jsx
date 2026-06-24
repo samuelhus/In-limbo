@@ -80,7 +80,7 @@ export default function Register() {
 
   const canNextStep1 = terms;
   const canNextStep2 = path !== null;
-  const canNextStep3 = user.firstName && user.lastName && user.email && user.password.length >= 6;
+  const canNextStep3 = user.firstName && user.lastName && user.email && user.password.length >= 8;
   const canSubmit = path === 'new'
     ? org.orgName && org.orgDescription && org.orgCategory
     : !!selectedOrgId;

@@ -109,7 +109,7 @@ class RegisterNewOrg(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     # User
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     firstName: str
     lastName: str
     phone: Optional[str] = None
@@ -126,7 +126,7 @@ class RegisterExistingOrg(BaseModel):
     """Registration where user joins an EXISTING (validated) organisation."""
     model_config = ConfigDict(str_strip_whitespace=True)
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     firstName: str
     lastName: str
     phone: Optional[str] = None
@@ -147,14 +147,14 @@ class PasswordResetRequest(BaseModel):
 class PasswordResetConfirm(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     token: str
-    newPassword: str = Field(..., min_length=6)
+    newPassword: str = Field(..., min_length=8)
 
 
 class RegisterDonateur(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     username: str
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     acceptedTerms: bool
 
 
@@ -181,7 +181,7 @@ class UserUpdate(BaseModel):
     lastName: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
-    password: Optional[str] = Field(None, min_length=6)
+    password: Optional[str] = Field(None, min_length=8)
     username: Optional[str] = None
 
 

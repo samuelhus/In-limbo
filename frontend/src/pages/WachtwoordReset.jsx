@@ -20,7 +20,7 @@ export default function WachtwoordReset() {
   }, [token, navigate]);
 
   const handleSubmit = async () => {
-    if (password.length < 6) {
+    if (password.length < 8) {
       setError(t('auth.password_too_short'));
       return;
     }
