@@ -1,6 +1,6 @@
 import React from 'react';
 
-const LOGO_URL = 'https://customer-assets.emergentagent.com/job_limbo-stage/artifacts/qxkvv7hu_in%E2%80%94limbo%20logoblack%20%282%29%20%283%29.png';
+const LOGO_URL = 'https://res.cloudinary.com/dbjizykvb/image/upload/v1782338137/logoil_uoqeoo.png';
 
 export default function Logo({ className = '', size = 'md' }) {
   const heights = { sm: 'h-6', md: 'h-8', lg: 'h-12', xl: 'h-20' };

@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { CATEGORY_LABELS, CATEGORY_COLORS, formatDateNL } from './Nieuws';
 
 const HERO_BG =
-  'https://static.prod-images.emergentagent.com/jobs/40e00778-584d-41f8-b6ee-4e48e961daf5/images/b211452b858296af0d927f008d058751bc1853be53d87eb88b8cc901809dbac6.png';
+  'https://res.cloudinary.com/dbjizykvb/image/upload/v1780092187/in-limbo/482df555-c97b-4374-b3b0-ee0302eea5c7/n0elipswg2etu9mmbx4j.jpg';
 
 function getMagazijnStatus() {
   const now = new Date();

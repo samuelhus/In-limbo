@@ -28,8 +28,7 @@ MAILERLITE_API_KEY = os.environ.get("MAILERLITE_API_KEY", "")
 MAILERLITE_GROUP_ID = os.environ.get("MAILERLITE_GROUP_ID", "")
 
 LOGO_URL = (
-    "https://customer-assets.emergentagent.com/job_limbo-stage/artifacts/"
-    "qxkvv7hu_in%E2%80%94limbo%20logoblack%20%282%29%20%283%29.png"
+    "https://res.cloudinary.com/dbjizykvb/image/upload/v1782338137/logoil_uoqeoo.png"
 )
 
 

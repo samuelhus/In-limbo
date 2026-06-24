@@ -142,9 +142,15 @@ app.include_router(api)
 # CORS
 # --------------------------------------------------------------------------
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+env = os.environ.get("ENV", "development")
+
+allowed_origins = [frontend_url]
+if env != "production":
+    allowed_origins.append("http://localhost:3000")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
