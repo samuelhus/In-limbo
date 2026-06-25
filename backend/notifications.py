@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 resend.api_key = os.environ.get("RESEND_API_KEY", "")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://limbo-stage.emergent.host").rstrip("/")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/")
 MAILERLITE_API_KEY = os.environ.get("MAILERLITE_API_KEY", "")
 MAILERLITE_GROUP_ID = os.environ.get("MAILERLITE_GROUP_ID", "")
 

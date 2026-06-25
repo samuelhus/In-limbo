@@ -67,9 +67,9 @@ h11==0.16.0
 pytest==9.0.3
 
 # Emergent platform — keep these, required by hosting infrastructure
-emergentintegrations==0.1.2
-litellm @ https://customer-assets.emergentagent.com/internal-asset/library/litellm-1.80.0-py3-none-any.whl#sha256=adf398c513273de9341f61822296c6b2145f7f2dc4a69daf3ac04829f5bde3f8
 ast_serialize==0.5.0
 annotated-doc==0.0.4
 pypdf==6.13.0
 chardet==7.4.3
+
+anthropic>=0.25.0

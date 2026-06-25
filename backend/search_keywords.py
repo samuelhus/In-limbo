@@ -15,6 +15,7 @@ log = logging.getLogger("inlimbo")
 # ---------------------------------------------------------------------------
 # Curated bilingual dictionary  (NL -> FR and FR -> NL, both directions)
 # ---------------------------------------------------------------------------
+
 DICTIONARY: dict[str, list[str]] = {
     # furniture
     "stoel": ["chaise", "siège"],
@@ -61,101 +62,597 @@ DICTIONARY: dict[str, list[str]] = {
     "balken": ["poutres"],
     "poutre": ["balk"],
     "poutres": ["balken"],
-    "multiplex": ["contreplaqué", "multiplex"],
+    # event / stage
+    "podium": ["scène", "estrade"],
+    "scènes": ["podia"],
+    "scène": ["podium"],
+    "microfoon": ["microphone", "micro"],
+    "microfoons": ["microphones"],
+    "microphone": ["microfoon"],
+    "microphones": ["microfoons"],
+    "mengpaneel": ["table de mixage", "mixeur"],
+    "mengpanelen": ["tables de mixage"],
+    "table de mixage": ["mengpaneel"],
+    "projector": ["projecteur", "beamer"],
+    "projectoren": ["projecteurs"],
+    "projecteur": ["projector"],
+    "projecteurs": ["projectoren"],
+    "beamer": ["projecteur"],
+    "versterker": ["amplificateur"],
+    "versterkers": ["amplificateurs"],
+    "amplificateur": ["versterker"],
+    "headset": ["casque micro"],
+    "headsets": ["casques micro"],
+    "koptelefoon": ["casque audio"],
+    "koptelefoons": ["casques audio"],
+    "statief": ["trépied"],
+    "statieven": ["trépieds"],
+    "trépied": ["statief"],
+    "spot": ["spot lumineux"],
+    "spots": ["spots lumineux"],
+    "dimmer": ["gradateur"],
+    "dimmers": ["gradateurs"],
+
+    # tents / outdoor
+    "tent": ["tente"],
+    "tenten": ["tentes"],
+    "tente": ["tent"],
+    "tentes": ["tenten"],
+    "partytent": ["chapiteau", "tente"],
+    "partytenten": ["chapiteaux"],
+    "chapiteau": ["partytent"],
+    "chapiteaux": ["partytenten"],
+    "parasol": ["parasol"],
+    "parasols": ["parasols"],
+    "hekwerk": ["barrière"],
+    "barrière": ["hekwerk"],
+    "dranghek": ["barrière de sécurité"],
+    "dranghekken": ["barrières de sécurité"],
+    "vlag": ["drapeau"],
+    "vlaggen": ["drapeaux"],
+    "drapeau": ["vlag"],
+    "drapeaux": ["vlaggen"],
+    "banner": ["bannière"],
+    "banners": ["bannières"],
+    "bannière": ["banner"],
+    "bannières": ["banners"],
+
+    # office / administration
+    "printer": ["imprimante"],
+    "printers": ["imprimantes"],
+    "imprimante": ["printer"],
+    "imprimantes": ["printers"],
+    "scanner": ["scanner"],
+    "scanners": ["scanners"],
+    "laptop": ["ordinateur portable"],
+    "laptops": ["ordinateurs portables"],
+    "ordinateur portable": ["laptop"],
+    "whiteboard": ["tableau blanc"],
+    "whiteboards": ["tableaux blancs"],
+    "tableau blanc": ["whiteboard"],
+    "flipchart": ["paperboard"],
+    "flipcharts": ["paperboards"],
+    "paperboard": ["flipchart"],
+    "vergadertafel": ["table de réunion"],
+    "vergadertafels": ["tables de réunion"],
+    "table de réunion": ["vergadertafel"],
+    "archiefkast": ["armoire d'archives"],
+    "archiefkasten": ["armoires d'archives"],
+    "armoire d'archives": ["archiefkast"],
+    "locker": ["casier"],
+    "lockers": ["casiers"],
+    "casier": ["locker"],
+
+    # kitchen / catering
+    "koelkast": ["frigo", "réfrigérateur"],
+    "koelkasten": ["frigos", "réfrigérateurs"],
+    "frigo": ["koelkast"],
+    "frigos": ["koelkasten"],
+    "réfrigérateur": ["koelkast"],
+    "koffiezet": ["cafetière"],
+    "koffiezetten": ["cafetières"],
+    "cafetière": ["koffiezet"],
+    "waterkoker": ["bouilloire"],
+    "waterkokers": ["bouilloires"],
+    "bouilloire": ["waterkoker"],
+    "servies": ["vaisselle"],
+    "vaisselle": ["servies"],
+    "glas": ["verre"],
+    "glazen": ["verres"],
+    "verre": ["glas"],
+    "verres": ["glazen"],
+    "bestek": ["couverts"],
+    "couverts": ["bestek"],
+    "thermos": ["thermos"],
+    "dienblad": ["plateau"],
+    "dienbladen": ["plateaux"],
+    "plateau": ["dienblad"],
+    "plateaux": ["dienbladen"],
+    "buffettafel": ["table buffet"],
+    "buffettafels": ["tables buffet"],
+    "table buffet": ["buffettafel"],
+
+    # workshop / creative
+    "schaar": ["ciseaux"],
+    "scharen": ["ciseaux"],
+    "ciseaux": ["schaar"],
+    "lijm": ["colle"],
+    "colle": ["lijm"],
+    "borstel": ["brosse"],
+    "borstels": ["brosses"],
+    "brosse": ["borstel"],
+    "kwast": ["pinceau"],
+    "kwasten": ["pinceaux"],
+    "pinceau": ["kwast"],
+    "pinceaux": ["kwasten"],
+    "klei": ["argile"],
+    "argile": ["klei"],
+    "naaimachine": ["machine à coudre"],
+    "naaimachines": ["machines à coudre"],
+    "machine à coudre": ["naaimachine"],
+    "verfroller": ["rouleau à peinture"],
+    "verfrollers": ["rouleaux à peinture"],
+    "textielverf": ["peinture textile"],
+    "peinture textile": ["textielverf"],
+
+    # youth / education
+    "spel": ["jeu"],
+    "spellen": ["jeux"],
+    "jeu": ["spel"],
+    "jeux": ["spellen"],
+    "bordspel": ["jeu de société"],
+    "bordspellen": ["jeux de société"],
+    "jeu de société": ["bordspel"],
+    "knutselmateriaal": ["matériel créatif", "bricolage"],
+    "bricolage": ["knutselmateriaal"],
+    "educatief": ["éducatif"],
+    "éducatif": ["educatief"],
+    "lesmateriaal": ["matériel pédagogique"],
+    "matériel pédagogique": ["lesmateriaal"],
+    "werkboek": ["cahier d'exercices"],
+    "werkboeken": ["cahiers d'exercices"],
+    "cahier d'exercices": ["werkboek"],
+
+    # children
+    "bouwblokken": ["blocs de construction"],
+    "blocs de construction": ["bouwblokken"],
+    "puzzel": ["puzzle"],
+    "puzzels": ["puzzles"],
+    "puzzle": ["puzzel"],
+    "puzzles": ["puzzels"],
+    "speelgoedkist": ["coffre à jouets"],
+    "coffre à jouets": ["speelgoedkist"],
+    "speelmat": ["tapis de jeu"],
+    "speelmatten": ["tapis de jeu"],
+
+    # sports
+    "bal": ["ballon", "balle"],
+    "ballon": ["bal"],
+    "fiets": ["vélo"],
+    "fietsen": ["vélos"],
+    "vélo": ["fiets"],
+    "vélos": ["fietsen"],
+    "helm": ["casque"],
+    "helmen": ["casques"],
+    "casque": ["helm"],
+    "casques": ["helmen"],
+    "tafeltennis": ["ping-pong"],
+    "ping-pong": ["tafeltennis"],
+    "badminton": ["badminton"],
+    "volleybal": ["volleyball"],
+    "volleyball": ["volleybal"],
+    "basketbal": ["basket-ball"],
+    "basket-ball": ["basketbal"],
+    "doel": ["but"],
+    "doelen": ["buts"],
+    "but": ["doel"],
+    "buts": ["doelen"],
+
+    # music
+    "gitaar": ["guitare"],
+    "gitaren": ["guitares"],
+    "guitare": ["gitaar"],
+    "guitares": ["gitaren"],
+    "piano": ["piano"],
+    "keyboard": ["clavier"],
+    "keyboards": ["claviers"],
+    "clavier": ["keyboard"],
+    "drumstel": ["batterie"],
+    "drumstellen": ["batteries"],
+    "batterie": ["drumstel"],
+    "muziekstandaard": ["pupitre"],
+    "muziekstandaards": ["pupitres"],
+    "pupitre": ["muziekstandaard"],
+
+    # exhibition
+    "vitrine": ["vitrine"],
+    "vitrines": ["vitrines"],
+    "sokkel": ["socle"],
+    "sokkels": ["socles"],
+    "socle": ["sokkel"],
+    "socles": ["sokkels"],
+    "tentoonstelling": ["exposition"],
+    "tentoonstellingen": ["expositions"],
+    "exposition": ["tentoonstelling"],
+    "expositions": ["tentoonstellingen"],
+    "display": ["présentoir"],
+    "displays": ["présentoirs"],
+    "présentoir": ["display"],
+    "infobord": ["panneau d'information"],
+    "infoborden": ["panneaux d'information"],
+
+    # gardening
+    "plantenbak": ["bac à plantes"],
+    "plantenbakken": ["bacs à plantes"],
+    "bac à plantes": ["plantenbak"],
+    "schop": ["pelle"],
+    "schoppen": ["pelles"],
+    "pelle": ["schop"],
+    "pelles": ["schoppen"],
+    "hark": ["râteau"],
+    "harken": ["râteaux"],
+    "râteau": ["hark"],
+    "gieter": ["arrosoir"],
+    "gieters": ["arrosoirs"],
+    "arrosoir": ["gieter"],
+
+    # transport / storage
+    "bakfiets": ["vélo cargo"],
+    "bakfietsen": ["vélos cargo"],
+    "vélo cargo": ["bakfiets"],
+    "aanhangwagen": ["remorque"],
+    "aanhangwagens": ["remorques"],
+    "remorque": ["aanhangwagen"],
+    "transportkar": ["chariot"],
+    "transportkarren": ["chariots"],
+    "chariot": ["transportkar"],
+    "opbergbox": ["boîte de rangement"],
+    "opbergboxen": ["boîtes de rangement"],
+
+    # accessibility
+    "rolstoel": ["fauteuil roulant"],
+    "rolstoelen": ["fauteuils roulants"],
+    "fauteuil roulant": ["rolstoel"],
+    "looprek": ["déambulateur"],
+    "looprekken": ["déambulateurs"],
+    "déambulateur": ["looprek"],
+
+    # safety
+    "ehbo": ["premiers secours"],
+    "ehbo-kit": ["trousse de secours"],
+    "trousse de secours": ["ehbo-kit"],
+    "brandblusser": ["extincteur"],
+    "brandblussers": ["extincteurs"],
+    "extincteur": ["brandblusser"],
+    "veiligheidsvest": ["gilet de sécurité"],
+    "veiligheidsvesten": ["gilets de sécurité"],
+
+    # sustainability
+    "herbruikbaar": ["réutilisable"],
+    "réutilisable": ["herbruikbaar"],
+    "recycleerbaar": ["recyclable"],
+    "recyclable": ["recycleerbaar"],
+    "compostbak": ["bac à compost"],
+    "compostbakken": ["bacs à compost"],
+
+    # digital
+    "tablet": ["tablette"],
+    "tablette": ["tablet"],
+    "wifi": ["wifi"],
+    "router": ["routeur"],
+    "routeur": ["router"],
+    "hotspot": ["point d'accès"],
+    "point d'accès": ["hotspot"],
+    "videoconferentie": ["visioconférence"],
+    "visioconférence": ["videoconferentie"],
+
+    # community
+    "vrijwilliger": ["bénévole"],
+    "vrijwilligers": ["bénévoles"],
+    "bénévole": ["vrijwilliger"],
+    "bénévoles": ["vrijwilligers"],
+    "evenement": ["événement"],
+    "evenementen": ["événements"],
+    "événement": ["evenement"],
+    "événements": ["evenementen"],
+    "festival": ["festival"],
+    "festivals": ["festivals"],
+    "ticket": ["billet"],
+    "tickets": ["billets"],
+    "billet": ["ticket"],
+    "billets": ["tickets"],
+    "inschrijving": ["inscription"],
+    "inschrijvingen": ["inscriptions"],
+    "inscription": ["inschrijving"],
+    "inscriptions": ["inschrijvingen"],
+
+    # categories - furniture
+    "meubilair": ["mobilier"],
+    "mobilier": ["meubilair"],
+    "meubels": ["meubles"],
+    "meubles": ["meubels"],
+
+    # categories - wood / construction
+    "bouwmateriaal": ["matériaux de construction"],
+    "bouwmaterialen": ["matériaux de construction"],
+    "matériaux de construction": ["bouwmaterialen"],
+    "houtmateriaal": ["matériaux en bois"],
+    "matériaux en bois": ["houtmateriaal"],
+
+    # categories - metal
+    "metaalmateriaal": ["matériel métallique"],
+    "metaalmaterialen": ["matériels métalliques"],
+    "matériel métallique": ["metaalmateriaal"],
+
+    # categories - plastic
+    "kunststof": ["plastique"],
+    "kunststoffen": ["plastiques"],
+    "plastique": ["kunststof"],
+    "plastiques": ["kunststoffen"],
+
+    # categories - textile
+    "textielmateriaal": ["matériel textile"],
+    "textielmaterialen": ["matériels textiles"],
+    "matériel textile": ["textielmateriaal"],
+
+    # categories - paper / print
+    "drukwerk": ["imprimés", "impression"],
+    "printmateriaal": ["matériel imprimé"],
+    "matériel imprimé": ["printmateriaal"],
+
+    # categories - decoration
+    "decoratiemateriaal": ["matériel de décoration"],
+    "decoratiematerialen": ["matériels de décoration"],
+    "matériel de décoration": ["decoratiemateriaal"],
+
+    # categories - events
+    "evenementmateriaal": ["matériel événementiel"],
+    "evenementmaterialen": ["matériels événementiels"],
+    "matériel événementiel": ["evenementmateriaal"],
+    "festivalmateriaal": ["matériel de festival"],
+    "matériel de festival": ["festivalmateriaal"],
+
+    # categories - stage
+    "podiummateriaal": ["matériel de scène"],
+    "podiummaterialen": ["matériels de scène"],
+    "matériel de scène": ["podiummateriaal"],
+    "scènemateriaal": ["matériel de scène"],
+
+    # categories - lighting
+    "verlichting": ["éclairage", "lumière"],
+    "lichtmateriaal": ["matériel d'éclairage"],
+    "lichtmaterialen": ["matériels d'éclairage"],
+    "matériel d'éclairage": ["lichtmateriaal"],
+
+    # categories - audio
+    "audiomateriaal": ["matériel audio", "sonorisation"],
+    "audiomaterialen": ["matériels audio"],
+    "matériel audio": ["audiomateriaal"],
+    "sonorisation": ["audiomateriaal"],
+
+    # categories - video
+    "videomateriaal": ["matériel vidéo"],
+    "videomaterialen": ["matériels vidéo"],
+    "matériel vidéo": ["videomateriaal"],
+
+    # categories - IT
+    "ict": ["informatique"],
+    "informatique": ["ict"],
+    "ict-materiaal": ["matériel informatique"],
+    "ict-materialen": ["matériels informatiques"],
+    "matériel informatique": ["ict-materiaal"],
+
+    # categories - office
+    "kantoormateriaal": ["matériel de bureau"],
+    "kantoormaterialen": ["matériels de bureau"],
+    "matériel de bureau": ["kantoormateriaal"],
+
+    # categories - workshop
+    "ateliermateriaal": ["matériel d'atelier"],
+    "ateliermaterialen": ["matériels d'atelier"],
+    "matériel d'atelier": ["ateliermateriaal"],
+    "makerspace": ["atelier partagé"],
+    "atelier partagé": ["makerspace"],
+
+    # categories - arts & crafts
+    "creatief materiaal": ["matériel créatif"],
+    "creatieve materialen": ["matériels créatifs"],
+    "matériel créatif": ["creatief materiaal"],
+    "knutselmateriaal": ["matériel de bricolage"],
+    "matériel de bricolage": ["knutselmateriaal"],
+
+    # categories - education
+    "educatief materiaal": ["matériel pédagogique"],
+    "educatieve materialen": ["matériels pédagogiques"],
+    "matériel pédagogique": ["educatief materiaal"],
+    "onderwijsmateriaal": ["matériel éducatif"],
+    "matériel éducatif": ["onderwijsmateriaal"],
+
+    # categories - youth
+    "jeugdmateriaal": ["matériel jeunesse"],
+    "jeugdmaterialen": ["matériels jeunesse"],
+    "matériel jeunesse": ["jeugdmateriaal"],
+
+    # categories - music
+    "muziekmateriaal": ["matériel musical"],
+    "muziekmaterialen": ["matériels musicaux"],
+    "matériel musical": ["muziekmateriaal"],
+
+    # categories - sports
+    "sportmateriaal": ["matériel sportif"],
+    "sportmaterialen": ["matériels sportifs"],
+    "matériel sportif": ["sportmateriaal"],
+    "sportuitrusting": ["équipement sportif"],
+    "équipement sportif": ["sportuitrusting"],
+
+    # categories - exhibition
+    "tentoonstellingsmateriaal": ["matériel d'exposition"],
+    "tentoonstellingsmaterialen": ["matériels d'exposition"],
+    "matériel d'exposition": ["tentoonstellingsmateriaal"],
+
+    # categories - kitchen
+    "keukenmateriaal": ["matériel de cuisine"],
+    "keukenmaterialen": ["matériels de cuisine"],
+    "matériel de cuisine": ["keukenmateriaal"],
+    "cateringmateriaal": ["matériel de catering"],
+    "matériel de catering": ["cateringmateriaal"],
+
+    # categories - gardening
+    "tuinmateriaal": ["matériel de jardin"],
+    "tuinmaterialen": ["matériels de jardin"],
+    "matériel de jardin": ["tuinmateriaal"],
+
+    # categories - storage
+    "opslagmateriaal": ["matériel de stockage"],
+    "opslagmaterialen": ["matériels de stockage"],
+    "matériel de stockage": ["opslagmateriaal"],
+
+    # categories - transport
+    "transportmateriaal": ["matériel de transport"],
+    "transportmaterialen": ["matériels de transport"],
+    "matériel de transport": ["transportmateriaal"],
+
+    # categories - accessibility
+    "toegankelijkheid": ["accessibilité"],
+    "accessibilité": ["toegankelijkheid"],
+    "toegankelijkheidsmateriaal": ["matériel d'accessibilité"],
+    "matériel d'accessibilité": ["toegankelijkheidsmateriaal"],
+
+    # categories - safety
+    "veiligheidsmateriaal": ["matériel de sécurité"],
+    "veiligheidsmaterialen": ["matériels de sécurité"],
+    "matériel de sécurité": ["veiligheidsmateriaal"],
+
+    # categories - sustainability
+    "duurzaamheid": ["durabilité"],
+    "durabilité": ["duurzaamheid"],
+    "hergebruik": ["réemploi"],
+    "réemploi": ["hergebruik"],
+    "duurzaam materiaal": ["matériel durable"],
+    "matériel durable": ["duurzaam materiaal"],
+
+    # categories - community
+    "gemeenschapsmateriaal": ["matériel communautaire"],
+    "gemeenschapsmaterialen": ["matériels communautaires"],
+    "matériel communautaire": ["gemeenschapsmateriaal"],
+    "verenigingsmateriaal": ["matériel associatif"],
+    "matériel associatif": ["verenigingsmateriaal"],
+
+    # generic
+    "materiaal": ["matériel", "équipement", "ressource"],
+    "materialen": ["matériels", "équipements", "ressources"],
+    "matériel": ["materiaal"],
+    "matériels": ["materialen"],
+    "équipement": ["uitrusting", "materiaal"],
+    "équipements": ["uitrustingen", "materialen"],
+
+    # Wood-based materials
+    "multiplex": ["contreplaqué", "plywood"],
     "contreplaqué": ["multiplex"],
-    "spaanplaat": ["aggloméré", "particule"],
-    "aggloméré": ["spaanplaat"],
     "mdf": ["mdf"],
-    # metal
-    "metaal": ["métal", "acier", "fer"],
-    "metalen": ["métallique", "en métal"],
-    "métal": ["metaal"],
-    "staal": ["acier"],
+    "osb": ["osb"],
+    "spaanplaat": ["aggloméré"],
+    "aggloméré": ["spaanplaat"],
+    "massief hout": ["bois massif", "solid wood"],
+    "bois massif": ["massief hout"],
+    "gelamelleerd hout": ["bois lamellé", "glulam"],
+    "bois lamellé": ["gelamelleerd hout"],
+    "hpl": ["trespa", "compact laminate"],
+    "trespa": ["hpl"],
+
+    # Metal
+    "metaal": ["métal"],
+    "galvanisé": ["verzinkt"],
+    "verzinkt": ["galvanisé"],
+    "inox": ["inox", "roestvrij staal"],
+    "roestvrij staal": ["inox"],
     "acier": ["staal"],
-    "ijzer": ["fer", "acier"],
-    "fer": ["ijzer"],
+    "staal": ["acier"],
     "aluminium": ["aluminium"],
     "koper": ["cuivre"],
     "cuivre": ["koper"],
-    # fabric / textile
-    "stof": ["tissu", "textile", "étoffe"],
-    "stoffen": ["tissus", "textiles"],
-    "tissu": ["stof", "textiel"],
-    "tissus": ["stoffen"],
-    "textiel": ["textile", "tissu"],
-    "textile": ["textiel", "stof"],
-    "gordijn": ["rideau", "voilage"],
-    "gordijnen": ["rideaux"],
-    "rideau": ["gordijn"],
-    "rideaux": ["gordijnen"],
-    "tapijt": ["tapis", "moquette"],
-    "tapis": ["tapijt", "kleed"],
-    "kleed": ["tapis", "teppich"],
-    "leer": ["cuir"],
-    "cuir": ["leer"],
-    # paper / print
+    "laiton": ["messing"],
+    "messing": ["laiton"],
+
+    # Plastic
+    "pp": ["polypropyleen", "polypropylene"],
+    "polypropyleen": ["pp"],
+    "hdpe": ["hdpe", "hogedichtheid polyethyleen"],
+    "ldpe": ["ldpe", "lagedichtheid polyethyleen"],
+    "pet": ["pet", "polyester kunststof"],
+    "polystyreen": ["polystyrene"],
+    "polystyrene": ["polystyreen"],
+    "acryl": ["acrylique", "plexiglas"],
+    "plexiglas": ["acryl"],
+    "pvc": ["pvc"],
+    "polycarbonaat": ["polycarbonate"],
+    "polycarbonate": ["polycarbonaat"],
+
+    # Textile
+    "katoen": ["coton"],
+    "coton": ["katoen"],
+    "polyester": ["polyester"],
+    "molton": ["molton"],
+    "bashe": ["bâche", "zeildoek"],
+    "bâche": ["bashe"],
+
+    # Isolation
+    "pu": ["polyurethaan"],
+    "polyurethaan": ["pu"],
+    "rotswol": ["laine de roche"],
+    "laine de roche": ["rotswol"],
+    "glaswol": ["laine de verre"],
+    "laine de verre": ["glaswol"],
+    "houtwol": ["laine de bois"],
+    "laine de bois": ["houtwol"],
+
+    # Assembly / fasteners
+    "scharnier": ["charnière"],
+    "charnière": ["scharnier"],
+    "rivet": ["rivet"],
+    "nagel": ["clou"],
+    "clou": ["nagel"],
+    "vis": ["schroef"],
+    "schroef": ["vis"],
+    "tirefond": ["coach screw", "houtdraadbout"],
+    "boulon": ["bout"],
+    "bout": ["boulon"],
+    "écrou": ["moer"],
+    "moer": ["écrou"],
+    "écrou papillon": ["vleugelmoer"],
+    "vleugelmoer": ["écrou papillon"],
+    "écrou autofrein": ["borgmoer"],
+    "borgmoer": ["écrou autofrein"],
+    "rondelle": ["ring"],
+    "ring": ["rondelle"],
+    "colle": ["lijm"],
+    "lijm": ["colle"],
+    "soudure": ["lassen"],
+    "lassen": ["soudure"],
+    "agrafe": ["nietje"],
+    "nietje": ["agrafe"],
+
+    # Other materials
+    "glasvezel": ["fibre de verre", "fiberglass"],
+    "fibre de verre": ["glasvezel"],
     "papier": ["papier"],
-    "karton": ["carton"],
-    "carton": ["karton"],
-    "dozen": ["boîtes", "cartons"],
-    "doos": ["boîte", "carton"],
-    "boîte": ["doos"],
-    "drukwerk": ["imprimés", "impression"],
-    "affiches": ["affiches", "posters"],
-    "poster": ["affiche", "poster"],
-    # decor / props
-    "decoratie": ["décoration", "décor"],
-    "decor": ["décor", "décoration"],
-    "décoration": ["decoratie"],
-    "décor": ["decor"],
-    "rekwisieten": ["accessoires", "props"],
-    "rekwisiet": ["accessoire", "prop"],
-    "accessoires": ["rekwisieten"],
+    "vinyl": ["vinyle"],
+    "vinyle": ["vinyl"],
+    "cement": ["ciment"],
+    "ciment": ["cement"],
+    "pleister": ["plâtre"],
+    "plâtre": ["pleister"],
+    "terracotta": ["terre cuite"],
+    "terre cuite": ["terracotta"],
+    "zand": ["sable"],
+    "sable": ["zand"],
+    "keramiek": ["céramique"],
+    "céramique": ["keramiek"],
     "verf": ["peinture"],
     "peinture": ["verf"],
-    "verlichting": ["éclairage", "lumière"],
-    "éclairage": ["verlichting"],
-    "licht": ["lumière", "éclairage"],
-    "lumière": ["licht"],
-    "spiegel": ["miroir"],
-    "miroir": ["spiegel"],
-    "kleding": ["vêtements", "habits"],
-    "vêtements": ["kleding"],
-    "kostuum": ["costume"],
-    "kostuums": ["costumes"],
-    "costume": ["kostuum"],
-    "schoenen": ["chaussures"],
-    "chaussures": ["schoenen"],
-    # electronics / equipment
-    "kabel": ["câble"],
-    "kabels": ["câbles"],
-    "câble": ["kabel"],
-    "elektrisch": ["électrique"],
-    "électrique": ["elektrisch"],
-    "computer": ["ordinateur"],
-    "ordinateur": ["computer"],
-    "scherm": ["écran"],
-    "écran": ["scherm"],
-    "luidspreker": ["haut-parleur", "enceinte"],
-    "haut-parleur": ["luidspreker"],
-    "camera": ["caméra", "appareil photo"],
-    "caméra": ["camera"],
-    # misc
-    "kratten": ["caisses", "cageots"],
-    "krat": ["caisse", "cageot"],
-    "caisse": ["krat"],
-    "pallet": ["palette"],
-    "palette": ["pallet"],
-    "container": ["conteneur", "bac"],
-    "conteneur": ["container"],
-    "gereedschap": ["outils", "outillage"],
-    "outils": ["gereedschap"],
-    "speelgoed": ["jouets"],
-    "jouets": ["speelgoed"],
-    "boeken": ["livres"],
-    "boek": ["livre"],
-    "livre": ["boek"],
-    "livres": ["boeken"],
+    "vernis": ["vernis"],
+    "lak": ["vernis"],
+
 }
 
 
@@ -171,32 +668,36 @@ def _curated_translations(text: str) -> list[str]:
 
 
 async def _ai_translations(text: str) -> list[str]:
-    """Use Anthropic Claude Haiku (via Emergent LLM key) as fallback for unusual terms."""
-    api_key = os.environ.get("EMERGENT_LLM_KEY", "")
+    """Use Anthropic API directly as fallback for unusual terms not in the curated dict."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
         return []
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        import httpx
+        import json
+        import re
         prompt = (
             f"Given this Dutch or French text from a material listing: '{text[:200]}'\n"
             "Return ONLY a JSON array of 5-10 keywords that are translations or synonyms "
             "in the OTHER language (if Dutch give French, if French give Dutch). "
             "Only common material/object words. No explanation, just the JSON array."
         )
-        chat = (
-            LlmChat(
-                api_key=api_key,
-                session_id=f"kw-{abs(hash(text[:50])) % 10_000_000}",
-                system_message="You are a precise bilingual NL<->FR translator. Output ONLY a JSON array of translated keywords, no explanations.",
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": "claude-haiku-4-5-20251001",
+                    "max_tokens": 200,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
             )
-            .with_model("anthropic", "claude-haiku-4-5-20251001")
-            .with_params(max_tokens=200)
-        )
-        raw = await chat.send_message(UserMessage(text=prompt))
-        if not isinstance(raw, str):
-            return []
-        import json
-        import re
+        data = resp.json()
+        raw = data["content"][0]["text"].strip()
         match = re.search(r"\[.*?\]", raw, re.DOTALL)
         if match:
             keywords = json.loads(match.group())
