@@ -22,6 +22,7 @@ def strip_mongo(d: dict) -> dict:
     d.pop("_id", None)
     d.pop("_seed", None)
     d.pop("passwordHash", None)
+    d.pop("searchKeywords", None)  # server-only field, never expose
     return d
 
 

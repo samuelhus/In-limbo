@@ -18,6 +18,7 @@ from models import ListingCreateBody, ListingUpdate
 from auth import (
     get_current_user_optional, get_donateur_or_validated_user,
 )
+from search_keywords import enrich_listing_keywords
 
 router = APIRouter()
 
@@ -25,6 +26,8 @@ router = APIRouter()
 def _public_listing_view(listing: dict, viewer: dict | None) -> dict:
     """Three visibility levels: validated user/admin (full), donateur (full minus offerer identity), visitor/pending (limited)."""
     lst = strip_mongo(dict(listing))
+    # searchKeywords is server-only — never exposed in any response
+    lst.pop("searchKeywords", None)
     if viewer and viewer.get("status") == "validated" and viewer.get("role") != "donateur":
         return lst
     if viewer and viewer.get("role") == "donateur":
@@ -95,11 +98,38 @@ async def _require_listing_owner_or_admin(listing_id: str, user: dict) -> dict:
 async def list_listings(
     request: Request,
     filter_key: str | None = Query(None, alias="filter"),
+    q: str | None = Query(None, max_length=100),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=50),
 ):
-    """Catalog listing. Excludes gearchiveerd."""
+    """Catalog listing. Excludes gearchiveerd.
+
+    When `q` is non-empty, perform a MongoDB $text search across all non-archived
+    listings (beschikbaar + in_magazijn + herbestemd), ignoring the filter param,
+    sorted by relevance score. Returns isSearch:true.
+    """
     viewer = await get_current_user_optional(request)
+
+    q_clean = (q or "").strip()
+    if q_clean:
+        filt = {
+            "status": {"$ne": "gearchiveerd"},
+            "$text": {"$search": q_clean},
+        }
+        total = await db.listings.count_documents(filt)
+        cursor = (
+            db.listings.find(filt, {"score": {"$meta": "textScore"}})
+            .sort([("score", {"$meta": "textScore"})])
+            .skip(skip)
+            .limit(limit)
+        )
+        items = []
+        async for lst in cursor:
+            lst.pop("score", None)
+            items.append(_public_listing_view(lst, viewer))
+        items = await _enrich_listings(items)
+        return {"total": total, "items": items, "skip": skip, "limit": limit, "isSearch": True}
+
     filt: dict = {"status": {"$ne": "gearchiveerd"}}
     if filter_key == "beschikbaar":
         filt["status"] = {"$in": ["beschikbaar", "in_magazijn"]}
@@ -114,7 +144,7 @@ async def list_listings(
     async for lst in cursor:
         items.append(_public_listing_view(lst, viewer))
     items = await _enrich_listings(items)
-    return {"total": total, "items": items, "skip": skip, "limit": limit}
+    return {"total": total, "items": items, "skip": skip, "limit": limit, "isSearch": False}
 
 @router.get("/listings/by-user/{user_id}")
 async def listings_by_user(user_id: str, admin: dict = Depends(get_admin_user)):
@@ -245,6 +275,13 @@ async def create_listing(body: ListingCreateBody, user: dict = Depends(get_donat
         "updatedAt": now,
     })
     await db.listings.insert_one(doc)
+    # Best-effort: enrich searchKeywords so the listing is immediately findable
+    try:
+        kws = await enrich_listing_keywords(doc)
+        if kws is not None:
+            await db.listings.update_one({"id": listing_id}, {"$set": {"searchKeywords": kws}})
+    except Exception:
+        pass
     return strip_mongo(doc)
 
 
@@ -305,6 +342,15 @@ async def update_listing(
 
     await db.listings.update_one({"id": listing_id}, {"$set": update})
     updated = await db.listings.find_one({"id": listing_id})
+    # Refresh searchKeywords if any searchable field changed
+    if any(k in update for k in ("title", "description", "material")):
+        try:
+            kws = await enrich_listing_keywords(updated)
+            if kws is not None:
+                await db.listings.update_one({"id": listing_id}, {"$set": {"searchKeywords": kws}})
+                updated["searchKeywords"] = kws
+        except Exception:
+            pass
     return strip_mongo(updated)
 
 

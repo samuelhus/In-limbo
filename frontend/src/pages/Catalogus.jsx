@@ -188,47 +188,140 @@ export default function Catalogus() {
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [fallbackItems, setFallbackItems] = useState([]);
+  const [showFallback, setShowFallback] = useState(false);
+  const debounceRef = useRef(null);
+
   const limit = 20;
   const isValidated = user && typeof user === 'object' && user.status === 'validated';
   const isAdmin = user && typeof user === 'object' && user.role === 'admin';
+
+  // 350ms debounce on the search input
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 350);
+    return () => debounceRef.current && clearTimeout(debounceRef.current);
+  }, [query]);
 
   const load = useCallback(async (reset = false) => {
     setLoading(true);
     const startSkip = reset ? 0 : skip;
     try {
-      const { data } = await api.get('/listings', {
-        params: { filter: status || undefined, skip: startSkip, limit },
-      });
+      const params = { skip: startSkip, limit };
+      if (debouncedQuery) {
+        params.q = debouncedQuery;
+      } else {
+        params.filter = status || undefined;
+      }
+      const { data } = await api.get('/listings', { params });
       setTotal(data.total);
       setItems((prev) => reset ? data.items : [...prev, ...data.items]);
       setSkip(startSkip + data.items.length);
+
+      // Zero-results fallback for search: show all beschikbaar
+      if (debouncedQuery && reset && data.total === 0) {
+        try {
+          const { data: fb } = await api.get('/listings', {
+            params: { filter: 'beschikbaar', skip: 0, limit },
+          });
+          setFallbackItems(fb.items || []);
+          setShowFallback(true);
+        } catch {
+          setFallbackItems([]);
+          setShowFallback(false);
+        }
+      } else if (!debouncedQuery || data.total > 0) {
+        setShowFallback(false);
+        setFallbackItems([]);
+      }
     } finally {
       setLoading(false);
     }
-  }, [status, skip]);
+  }, [status, skip, debouncedQuery]);
 
+  // Reload whenever status filter changes OR debounced search changes
   useEffect(() => {
     setSkip(0);
     setItems([]);
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, [status, debouncedQuery]);
+
+  const clearSearch = () => {
+    setQuery('');
+    setDebouncedQuery('');
+    setShowFallback(false);
+    setFallbackItems([]);
+  };
+
+  const isSearching = !!debouncedQuery;
+  const displayItems = showFallback ? fallbackItems : items;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12" data-testid="catalogus-page">
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
-        <div>
-          <h1 className="mt-2 text-5xl font-bold tracking-tight">{t('catalogus.title')}</h1>
-          <p className="overline"> {total} {t('catalogus.count_listings', { count: '' }).replace('  ', ' ').trim()}</p>
+      <div className="mb-8">
+        <h1 className="text-5xl font-bold tracking-tight">{t('catalogus.title')}</h1>
+      </div>
+
+      {/* Search bar */}
+      <div className="mb-4">
+        <div className="relative">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('catalogus.search_placeholder')}
+            data-testid="catalogus-search-input"
+            className="w-full bg-transparent border-b-2 border-foreground/20 focus:border-foreground/80 outline-none py-4 pr-12 text-xl placeholder:text-foreground/40 transition-colors"
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={clearSearch}
+              aria-label={t('catalogus.search_clear')}
+              data-testid="catalogus-search-clear"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors text-xl"
+            >
+              ×
+            </button>
+          ) : (
+            <span
+              aria-hidden="true"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40 text-xl pointer-events-none"
+            >
+              ⌕
+            </span>
+          )}
         </div>
-        <button
-          className="md:hidden btn-secondary !py-2"
-          onClick={() => setMobileFilterOpen(true)}
-          data-testid="filter-open-mobile"
-        >
-          {t('catalogus.filters')}
-        </button>
+        <div className="mt-3 flex items-center justify-between gap-4 flex-wrap">
+          <p className="text-sm text-muted-foreground" data-testid="catalogus-result-count">
+            {isSearching && total > 0 && (
+              <>
+                <span className="font-medium text-foreground">{total}</span>{' '}
+                {t('catalogus.count_listings', { count: '' }).replace('  ', ' ').trim()}{' '}
+                — {t('catalogus.search_results_for')} <em>"{debouncedQuery}"</em>
+              </>
+            )}
+            {!isSearching && (
+              <>
+                <span className="font-medium text-foreground">{total}</span>{' '}
+                {t('catalogus.count_listings', { count: '' }).replace('  ', ' ').trim()}
+              </>
+            )}
+          </p>
+          <button
+            className="md:hidden btn-secondary !py-2"
+            onClick={() => setMobileFilterOpen(true)}
+            data-testid="filter-open-mobile"
+          >
+            {t('catalogus.filters')}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -255,17 +348,29 @@ export default function Catalogus() {
 
         {/* Grid */}
         <div className="md:col-span-9 lg:col-span-10">
-          {items.length === 0 && !loading && (
+          {/* Zero-results banner */}
+          {isSearching && showFallback && (
+            <div className="mb-8 border-l-2 border-foreground/20 pl-4" data-testid="catalogus-no-results">
+              <p className="text-foreground/80 mb-1">
+                {t('catalogus.search_no_results')} <em>"{debouncedQuery}"</em>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t('catalogus.search_fallback')}
+              </p>
+            </div>
+          )}
+
+          {displayItems.length === 0 && !loading && (
             <p className="text-muted-foreground" data-testid="catalogus-empty">{t('catalogus.empty')}</p>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
-            {items.map((item) => (
+            {displayItems.map((item) => (
               <ListingTile key={item.id} item={item} isValidated={isValidated} isAdmin={isAdmin} />
             ))}
           </div>
 
-          {skip < total && (
+          {!showFallback && skip < total && (
             <div className="flex justify-center mt-16">
               <button
                 onClick={() => load(false)}

@@ -184,7 +184,12 @@
     "count_listings": "{{count}} offres",
     "aangeboden_door": "Proposé par",
     "van": "de",
-    "geen_partner": " "
+    "geen_partner": " ",
+    "search_placeholder": "Rechercher par titre, matériau, description…",
+    "search_clear": "Effacer la recherche",
+    "search_no_results": "Aucun résultat pour",
+    "search_fallback": "Voici toutes les offres disponibles :",
+    "search_results_for": "Résultats pour"
   },
 
   "listing": {

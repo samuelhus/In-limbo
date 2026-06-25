@@ -1,0 +1,39 @@
+{
+  "summary": "End-to-end testing of bilingual NL↔FR search on /catalogus. Backend: 14/14 pytest cases pass — default GET /api/listings returns isSearch:false sorted by createdAt DESC, filter=in_magazijn returns isSearch:false with filtered status, q=hout and q=bois both return isSearch:true and bilingually surface 'Lariks balken — 4 stuks' + 'Houten paletten (15x)' via searchKeywords, q=stoel vs q=chaise are symmetric, q=nonsense returns total:0 with no error, searchKeywords field is stripped in ALL responses (list + detail + admin + search), POST /api/listings inline-enrichment makes a freshly-created TEST_ listing findable via FR query within ~2s, regression: /api/auth/me, /api/news, /api/organisations all 200. Frontend: search input present with data-testid='catalogus-search-input', NL placeholder 'Zoek op titel, materiaal, beschrijving…' & FR 'Rechercher par titre, matériau, description…', ⌕ icon when empty, × clear button (data-testid='catalogus-search-clear') when text present, 350ms debounce verified by 700ms wait, NL result count '7 aanbiedingen — Resultaten voor \"bois\"', FR '7 offres — Résultats pour \"bois\"', NL zero-results banner shows 'Geen resultaten voor … / We tonen je alle beschikbare aanbiedingen:' and grid auto-populates with fallback listings, FR banner shows 'Aucun résultat pour … / Voici toutes les offres disponibles :', search overrides filter on backend (in_magazijn=4 results, in_magazijn+q=hout=7 search results). APScheduler confirmed running in backend.err.log: 3 jobs added tentatively + 'APScheduler started — archive/inactive/enrichment jobs scheduled'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_catalogus_search.py",
+    "/app/test_reports/pytest/catalogus_search_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "search_keywords.py: DICTIONARY is well-curated and bidirectional. _ai_translations fallback uses claude-haiku-4-5-20251001 via emergentintegrations with strict 'JSON array only' system prompt — sensible. Inline enrichment in create_listing/update_listing is correctly wrapped in try/except to avoid blocking writes if LLM/dict fails.",
+    "routes/listings.py: searchKeywords is stripped in TWO places (_public_listing_view explicitly + deps.strip_mongo default) — belt-and-braces is good. Confirmed via 4 separate assertions that searchKeywords never leaks (list/search/admin/detail).",
+    "server.py: MongoDB text index built with default_language='none' (correct for bilingual NL/FR — disables stemming as documented). Wrapped in try/except so re-create on hot reload is safe.",
+    "APScheduler is set up with 3 cron jobs at 03:00 / 03:10 / 03:20 and verified active in backend logs.",
+    "Catalogus.jsx ⌕ icon span has no data-testid (only the × clear button does). Not a bug — visually present and aria-hidden. Could add data-testid='catalogus-search-icon' for future test ergonomics, optional.",
+    "Catalogus.jsx result-count uses i18n keys 'catalogus.search_results_for' / 'count_listings' / 'search_no_results' / 'search_fallback' — all present in both nl.json and fr.json (FR fallback copy verified visually).",
+    "GET /api/listings q parameter has max_length=100 server-side — matches PRD."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_catalogus_search.py (created)"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 — default behavior, filter regression, NL/FR search, bilingual symmetry, zero-results, searchKeywords stripping ×4, create+enrich+cleanup, /auth/me + /news + /organisations regression)",
+    "frontend": "100% (search input render, NL/FR placeholders, ⌕ icon empty + × clear typed, debounce + result count NL/FR, zero-results banner NL/FR with fallback grid, clear restores filter view, search overrides filter)"
+  },
+  "test_credentials": "admin@inlimbo.be / Admin123! (httpOnly cookie il_token used for the admin-only create/delete path)",
+  "seed_data_creation": "Test creates exactly one listing with title 'TEST_search hout stoel' (material=Hout) and deletes it in the finally block. No persistent test data left. Note: existing TEST_* listings (TEST_ignored_warehouse, TEST_warehouse_listing, TEST_phase2_listing, TEST_pending, TEST 2b5469) were already in DB from prior iterations and were NOT touched by this run.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Catalogus search feature is fully GREEN. Backend regression suite at /app/backend/tests/test_catalogus_search.py — run via `pytest backend/tests/test_catalogus_search.py -v` with REACT_APP_BACKEND_URL exported. To verify searchKeywords stripping in future, query GET /api/listings?q=hout as admin and grep for 'searchKeywords' in response — must always be absent. APScheduler nightly jobs (03:00/03:10/03:20) won't fire during test runs; check `grep 'APScheduler started' /var/log/supervisor/backend.err.log` to confirm scheduler is active after restarts. The MongoDB text index is named 'listings_search_idx' with default_language='none' — stemming intentionally off, so 'rideau' ≠ 'rideaux' (acceptable per PRD).",
+  "rca of the issue": "No bugs found. Initial test failure was a TEST-side issue: I sent dimensions as an object and material as lowercase 'hout' — fixed to use string '50x50x50' + 'Hout' (matching Pydantic Literal enum in models). Implementation code is correct."
+}

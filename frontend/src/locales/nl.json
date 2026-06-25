@@ -184,7 +184,12 @@
     "count_listings": "{{count}} aanbiedingen",
     "aangeboden_door": "Aangeboden door",
     "van": "van",
-    "geen_partner": " "
+    "geen_partner": " ",
+    "search_placeholder": "Zoek op titel, materiaal, beschrijving…",
+    "search_clear": "Zoekopdracht wissen",
+    "search_no_results": "Geen resultaten voor",
+    "search_fallback": "We tonen je alle beschikbare aanbiedingen:",
+    "search_results_for": "Resultaten voor"
   },
   "listing": {
     "status_beschikbaar": "Beschikbaar",
