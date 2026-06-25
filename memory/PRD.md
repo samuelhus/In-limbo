@@ -1,3 +1,16 @@
+## 2026-02 — Bilingual search bar on /catalogus
+- New hero-style search input on `/catalogus` (350ms debounce, ⌕ icon empty / × clear button typed).
+- Backend: `GET /api/listings?q=...` performs MongoDB `$text` search across non-archived listings sorted by relevance; returns `isSearch:true`. Existing filter behavior unchanged when no `q`.
+- New `backend/search_keywords.py`: curated NL↔FR dictionary (~150 term pairs) + Claude Haiku 4.5 fallback (via emergentintegrations + EMERGENT_LLM_KEY) for unusual terms. Stores hidden `searchKeywords` on each listing.
+- `searchKeywords` is never exposed (stripped in `deps.strip_mongo` + `_public_listing_view`).
+- MongoDB text index `listings_search_idx` with `default_language="none"` (no stemming → no NL/FR conflicts).
+- APScheduler running nightly: archive 03:00, inactive orgs 03:10, keyword enrichment 03:20.
+- Inline best-effort enrichment on `POST /listings` and `PATCH /listings/{id}` so new/edited listings are immediately findable bilingually.
+- Frontend: zero-result fallback automatically shows all beschikbaar listings under a NL/FR banner.
+- NL+FR copy added to `catalogus.search_*` keys.
+- Tested e2e via testing agent: 14/14 backend, 8/8 frontend, 100% pass.
+
+
 # Changelog — Feb 2026
 
 ## 2026-02 — Contact page + Newsletter (MailerLite-ready)
