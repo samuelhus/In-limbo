@@ -36,7 +36,7 @@ export default function MijnAanbiedingen() {
   if (items === null) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground" data-testid="mijn-aanbiedingen-loading">
-        Laden…
+        {t('common.loading')}
       </div>
     );
   }
@@ -47,8 +47,7 @@ export default function MijnAanbiedingen() {
         <p className="overline mb-3">{t('nav.my_listings')}</p>
         <h1 className="text-4xl font-bold tracking-tight">{t('listing.no_listings')}</h1>
         <p className="mt-4 text-foreground/75 max-w-xl">
-          Heb je materiaal dat je wil doorgeven? Plaats je eerste aanbieding en
-          help het in transit te brengen.
+          {t('listing.empty_subtitle')}
         </p>
         <Link
           to="/aanbieding/nieuw"
@@ -94,7 +93,7 @@ export default function MijnAanbiedingen() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{it.title}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Geplaatst op {formatDate(it.createdAt)}
+                        {t('listing.posted_on', { date: formatDate(it.createdAt) })}
                       </p>
                     </div>
                     {showCount && it.openApplicationCount > 0 && (
@@ -102,7 +101,7 @@ export default function MijnAanbiedingen() {
                         className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 border border-orange-300 px-2.5 py-0.5 text-xs font-medium whitespace-nowrap"
                         data-testid={`mijn-aanbiedingen-badge-${it.id}`}
                       >
-                        ● {it.openApplicationCount} {it.openApplicationCount === 1 ? 'aanvraag' : 'aanvragen'}
+                        ● {t('listing.application_count', { count: it.openApplicationCount })}
                       </span>
                     )}
                     {['beschikbaar', 'gearchiveerd'].includes(it.status) && (
@@ -112,7 +111,7 @@ export default function MijnAanbiedingen() {
                         className="btn-secondary !py-1 px-3 text-xs"
                         data-testid={`edit-listing-btn-${it.id}`}
                       >
-                        Bewerken
+                        {t('common.edit')}
                       </Link>
                     )}
                     <StatusBadge status={it.status} size="xs" />

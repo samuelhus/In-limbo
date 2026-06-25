@@ -311,7 +311,11 @@
     "material_vloeistof": "Vloeistof",
     "material_papier": "Papier",
     "material_isolatie": "Isolatie",
-    "material_ander": "Ander"
+    "material_ander": "Ander",
+    "empty_subtitle": "Heb je materiaal dat je wil doorgeven? Plaats je eerste aanbieding en help het in transit te brengen.",
+    "posted_on": "Geplaatst op {{date}}",
+    "application_count_one": "{{count}} aanvraag",
+    "application_count_other": "{{count}} aanvragen"
     
 
   },
@@ -354,7 +358,11 @@
     "username_label": "Gebruikersnaam",
     "phone_label": "Telefoon",
     "first_name_label": "Voornaam",
-    "last_name_label": "Naam"
+    "last_name_label": "Naam",
+    "username_public_hint": "Deze naam is publiek zichtbaar bij je aanbiedingen.",
+    "pref_saved": "Opgeslagen",
+    "update_success": "Wijzigingen opgeslagen."
+
   },
   "organisation": {
     "title": "Mijn organisatie",
@@ -368,7 +376,17 @@
     "no_members": "Nog geen leden.",
     "page_title": "Organisatie",
     "active_listings": "Lopende aanbiedingen",
-    "no_listings": "Deze organisatie heeft geen aanbiedingen."
+    "no_listings": "Deze organisatie heeft geen aanbiedingen.",
+    "name": "Naam",
+    "no_organisation": "Je hebt nog geen organisatie.",
+    "public_link": "Bekijk publieke pagina →",
+    "uploading": "Uploaden…",
+    "upload_failed": "Upload mislukt",
+    "add_photo": "+ Foto",
+    "remove_photo": "Verwijder",
+    "saving": "Opslaan…",
+    "update_success": "Organisatie bijgewerkt."
+
   },
   "notifications": {
     "title": "Notificaties",

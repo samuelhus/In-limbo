@@ -336,7 +336,11 @@
     "material_vloeistof": "Liquide",
     "material_papier": "Papier",
     "material_isolatie": "Isolation",
-    "material_ander": "Autre"
+    "material_ander": "Autre",
+    "empty_subtitle": "Vous avez du matériel à transmettre ? Publiez votre première offre et aidez-le à trouver une nouvelle vie.",
+    "posted_on": "Publié le {{date}}",
+    "application_count_one": "{{count}} demande",
+    "application_count_other": "{{count}} demandes"
 
 
   },
@@ -378,8 +382,12 @@
     "username_label": "Nom d'utilisateur",
     "phone_label": "Téléphone",
     "first_name_label": "Prénom",
-    "last_name_label": "Nom"
+    "last_name_label": "Nom",
+    "username_public_hint": "Ce nom est visible publiquement sur vos offres.",
+    "pref_saved": "Enregistré",
+    "update_success": "Modifications enregistrées."
   },
+  
   "organisation": {
     "title": "Mon organisation",
     "description": "Description",
@@ -392,7 +400,17 @@
     "no_members": "Pas encore de membres.",
     "page_title": "Organisation",
     "active_listings": "Offres en cours",
-    "no_listings": "Cette organisation n'a aucune offre."
+    "no_listings": "Cette organisation n'a aucune offre.",
+    "name": "Nom",
+    "no_organisation": "Vous n'avez pas encore d'organisation.",
+    "public_link": "Voir la page publique →",
+    "uploading": "Téléchargement…",
+    "upload_failed": "Échec du téléchargement",
+    "add_photo": "+ Photo",
+    "remove_photo": "Supprimer",
+    "saving": "Enregistrement…",
+    "update_success": "Organisation mise à jour."
+
   },
   "notifications": {
     "title": "Notifications",

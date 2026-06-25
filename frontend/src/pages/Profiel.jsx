@@ -5,10 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
 
 const EMAIL_PREF_LABELS = [
-  { key: 'new_application', label: 'Nieuwe aanvraag op mijn aanbieding' },
-  { key: 'selected_as_receiver', label: 'Aangeduid als ontvanger' },
-  { key: 'application_withdrawn', label: 'Aanvraag ingetrokken door ontvanger' },
-  { key: 'unrehomed', label: 'Aanbieding terug beschikbaar na unrehome' },
+  { key: 'new_application', labelKey: 'profile.pref_new_application' },
+  { key: 'selected_as_receiver', labelKey: 'profile.pref_selected_as_receiver' },
+  { key: 'application_withdrawn', labelKey: 'profile.pref_application_withdrawn' },
+  { key: 'unrehomed', labelKey: 'profile.pref_unrehomed' },
 ];
 
 export default function Profiel() {
@@ -90,7 +90,7 @@ export default function Profiel() {
     try {
       const { data } = await api.patch('/users/me/email-preferences', { [key]: next[key] });
       setPrefs(data);
-      setPrefMsg('Opgeslagen');
+      setPrefMsg(t('profile.pref_saved'));
       setTimeout(() => setPrefMsg(''), 1500);
     } catch (e) {
       setPrefs(prefs); // revert
@@ -113,7 +113,7 @@ export default function Profiel() {
       }
       await api.patch('/users/me', payload);
       await refresh();
-      setMsg('Wijzigingen opgeslagen.');
+      setMsg(t('profile.update_success'));
       setForm((f) => ({ ...f, password: '' }));
     } catch (e) {
       setErr(formatApiError(e));
@@ -138,7 +138,7 @@ export default function Profiel() {
               data-testid="profiel-username"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Deze naam is publiek zichtbaar bij je aanbiedingen.
+              {t('profile.username_public_hint')}
             </p>
           </div>
         ) : (
@@ -226,9 +226,9 @@ export default function Profiel() {
       <div className="mt-16 border-t border-border pt-6" data-testid="profiel-email-prefs">
         <div className="flex items-end justify-between gap-3 mb-4">
           <div>
-            <p className="overline mb-2">E-mailvoorkeuren</p>
+            <p className="overline mb-2">{t('profile.email_prefs')}</p>
             <p className="text-sm text-muted-foreground">
-              Beheer welke meldingen je per e-mail wil ontvangen. In-app notificaties krijg je sowieso.
+              {t('profile.email_prefs_subtitle')}
             </p>
           </div>
           {prefMsg && (
@@ -240,7 +240,7 @@ export default function Profiel() {
         <ul className="divide-y divide-border border-y border-border">
           {EMAIL_PREF_LABELS.map((p) => (
             <li key={p.key} className="py-3 flex items-center justify-between gap-4">
-              <span className="text-sm">{p.label}</span>
+              <span className="text-sm">{t(p.labelKey)}</span>
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
