@@ -166,7 +166,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                             className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors"
                           >
                             <span className="font-medium">{o.name}</span>
-                            <span className="text-muted-foreground ml-2 text-xs">{o.category}</span>
+                            <span className="text-muted-foreground ml-2 text-xs">{t(`org_categories.${o.category}`)}</span>
                           </button>
                         </li>
                       ))}

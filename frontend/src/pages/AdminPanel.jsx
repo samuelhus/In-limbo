@@ -27,6 +27,7 @@ const SECTION_TITLES = {
 };
 
 export default function AdminPanel() {
+  const { t } = useTranslation();
   const [section, setSection] = useState('validatie');
   const [queue, setQueue] = useState(null);
   const [err, setErr] = useState('');
@@ -186,7 +187,7 @@ export default function AdminPanel() {
                         <p className="mt-3 text-sm">
                           <span className="overline text-[10px] mr-2">Organisatie</span>
                           <span className="font-medium">{u.organisation.name}</span>
-                          <span className="text-muted-foreground"> · {u.organisation.category} · status: <em>{u.organisation.status}</em></span>
+                          <span className="text-muted-foreground"> · {t(`org_categories.${u.organisation.category}`)} · status: <em>{u.organisation.status}</em></span>
                         </p>
                       )}
                       {u.previousRejections > 0 && (
@@ -233,7 +234,7 @@ export default function AdminPanel() {
                   <li key={o.id} className="py-6 grid grid-cols-1 md:grid-cols-12 gap-4" data-testid={`admin-pending-org-${o.id}`}>
                     <div className="md:col-span-8">
                       <p className="font-medium">{o.name}</p>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{o.category}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{t(`org_categories.${o.category}`)}</p>
                       <p className="mt-2 text-sm text-foreground/80 line-clamp-3">{o.description}</p>
                     </div>
                     <div className="md:col-span-4 flex flex-wrap gap-2 md:justify-end items-start">
@@ -804,6 +805,7 @@ function AdminUserEditModal({ user, onSave, onClose, busy }) {
 }
 
 function AdminOrganisaties() {
+  const { t } = useTranslation();
   const [orgs, setOrgs] = useState([]);
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState(null);
@@ -862,7 +864,7 @@ function AdminOrganisaties() {
               >
                 {org.name}
               </Link>
-              <p className="text-sm text-muted-foreground">{org.category}</p>
+              <p className="text-sm text-muted-foreground">{t(`org_categories.${org.category}`)}</p>
             </div>
             <div className="md:col-span-3 text-sm text-muted-foreground">
               {org.userCount} gebruiker(s)

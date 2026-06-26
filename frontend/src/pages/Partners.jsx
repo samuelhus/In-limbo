@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
+// Must match the actual org.category values (see Register.jsx / MijnOrganisatie.jsx CATS),
+// not the display label — grouping below keys off the raw value.
 const CATEGORY_ORDER = [
-  'Beeldende kunsten', 'Educatie', 'Jeugdwerk', 'Podiumkunsten',
-  'Sociaal werk', 'Sport', 'Noodopvang', 'Ander',
+  'beeldende_kunsten', 'jeugdwerk', 'podiumkunsten', 'noodopvang',
+  'sociaal_werk', 'sport', 'educatie', 'ander',
 ];
 
 export default function Partners() {
@@ -21,7 +23,7 @@ export default function Partners() {
   }, []);
 
   const grouped = orgs.reduce((acc, o) => {
-    const c = o.category || 'Ander';
+    const c = o.category || 'ander';
     (acc[c] = acc[c] || []).push(o);
     return acc;
   }, {});
@@ -36,7 +38,7 @@ export default function Partners() {
         if (!catOrgs?.length) return null;
         return (
           <div key={cat} className="mb-12 border-t border-border pt-8" data-testid={`partner-category-${cat}`}>
-            <p className="overline mb-4">{cat}</p>
+            <p className="overline mb-4">{t(`org_categories.${cat}`)}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {catOrgs.map((org) => (
                 <Link
