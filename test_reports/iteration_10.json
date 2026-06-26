@@ -1,0 +1,42 @@
+{
+  "summary": "End-to-end testing of org-level `visibleOnPartnerPage` feature. Backend: 12/12 pytest cases pass — register-new-org with explicit False persists in DB, missing field defaults to True, hidden orgs absent from GET /organisations?validated_only=true, visible orgs present, profile page (GET /organisations/{id}) returns 200 for hidden orgs, search autocomplete still finds hidden orgs, PATCH toggle round-trip (False→hidden, True→reappears) by validated member, PATCH from non-member returns 403, legacy seed orgs without the field still show via $ne:False (backwards-compat), existing-org register accepts unexpected orgVisibleOnPartnerPage silently (pydantic ignore), regression /auth/me + /listings q=hout pass. Frontend: Register.jsx step-4 NEW path renders register-org-visible-checkbox checked-by-default with NL label 'Toon onze organisatie op de publieke partnerlijst' + helper containing '/partners-overzicht'; checkbox absent on EXISTING path; FR switch via header FR link shows 'Afficher notre organisation sur la liste publique des partenaires' + FR helper. MijnOrganisatie.jsx renders org-visible-checkbox pre-filled from current org state, NL label/helper present; PATCH /organisations/{id} (cookie auth) verified end-to-end via browser fetch: visibleOnPartnerPage:false → Atelier Brussel disappears from /api/organisations?validated_only=true; visibleOnPartnerPage:true → reappears. Full-body PATCH from MijnOrganisatie's form shape also works once `category` is a valid enum slug.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_partner_visibility.py",
+    "/app/test_reports/pytest/partner_visibility_results.xml"
+  ],
+  "action_items": [
+    "Pre-existing data issue (not related to this feature, but blocks MijnOrganisatie save UI): Atelier Brussel & Theatergezelschap Vagebond had `category` stored as the human-readable label ('Beeldende kunsten' / 'Podiumkunsten') instead of the enum slug ('beeldende_kunsten' / 'podiumkunsten'). This caused PATCH /organisations/{id} to 422 with Pydantic Literal validation error when saving the full form via MijnOrganisatie.jsx. Testing agent fixed the two seed records in MongoDB so MijnOrganisatie save works again. Main agent should harden one of: (a) seed.py idempotent re-run to normalise category slugs, (b) backend OrgUpdate.category accepts both label & slug and normalises, or (c) MijnOrganisatie.jsx maps localized option labels back to slugs before submit."
+  ],
+  "critical_code_review_comments": [
+    "models.py: `RegisterNewOrg.orgVisibleOnPartnerPage: bool = True` and `OrgUpdate.visibleOnPartnerPage: Optional[bool] = None` — clean. RegisterExistingOrg correctly omits the field (org-level setting).",
+    "routes/organisations.py list_organisations: `filt['visibleOnPartnerPage'] = {'$ne': False}` is the correct backwards-compat predicate (missing field treated as visible). Verified by test_legacy_orgs_visible_when_field_missing.",
+    "routes/organisations.py update_organisation: uses `exclude_unset=True` and then strips only None values, so an explicit `False` is preserved. Verified by test_member_can_toggle_off_and_on.",
+    "routes/organisations.py search_organisations and get_organisation: untouched by feature — confirmed in tests (search returns hidden orgs, profile page 200 even when hidden).",
+    "Register.jsx step-4 new-org: checkbox correctly inside the NEW-org section only; defaults to true in initial org state. Helper text uses i18n keys register.org_visible_label & register.org_visible_helper — both present in nl.json and fr.json.",
+    "MijnOrganisatie.jsx: `visibleOnPartnerPage: data.visibleOnPartnerPage !== false` is the correct legacy-default-checked pattern (undefined → true, true → true, false → false). Saved via existing PATCH /organisations/{orgId} alongside the rest of the form.",
+    "Backend rate limits respected during testing — 5/min on login, 10/min on register/new-org. Tests include 15s sleep+retry on 429."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_partner_visibility.py (created)",
+    "DB: organisations.{Atelier Brussel,Theatergezelschap Vagebond} — restored category slug from corrupted label form (one-off data fix to unblock MijnOrganisatie save; documented in action_items)."
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 — explicit-false persistence, missing-field default-true, validated_only filter ON/OFF, profile page accessible when hidden, search returns hidden, PATCH toggle round-trip by member, 403 for non-member, legacy backwards-compat, existing-org ignores unexpected field, /auth/me + /listings regression)",
+    "frontend": "100% — NL+FR labels & helpers on Register.jsx step-4-new; checkbox absent on step-4-existing; MijnOrganisatie checkbox pre-fill from API; PATCH toggle round-trip via authenticated browser fetch confirmed both partial-body and full-form-body persist `false` and hide org from /api/organisations?validated_only=true (and `true` makes it reappear)."
+  },
+  "test_credentials": "admin@inlimbo.be / Admin123! and lotte@atelier-brussel.example / User123! used per /app/memory/test_credentials.md",
+  "seed_data_creation": "Tests create 2 ephemeral orgs (TEST_Hidden_Org_*, TEST_Visible_Org_*) + 3 ephemeral users (TEST_hidden_*, TEST_visible_*, TEST_existing_*) per run, then admin-delete them in fixture teardown. No persistent test data left after pytest finishes. One pre-existing TEST_org_e82d0c remains in DB from a prior iteration (unrelated to this run).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression at /app/backend/tests/test_partner_visibility.py — `pytest backend/tests/test_partner_visibility.py -v` with REACT_APP_BACKEND_URL exported. The $ne:False predicate is the load-bearing primitive — if you change list_organisations, retest test_legacy_orgs_visible_when_field_missing. Note: seed.py currently writes category as enum slug, but pre-existing DB rows for Atelier Brussel / Vagebond had been corrupted to human labels (likely by an old PATCH that round-tripped a translated <option>). I restored them. If MijnOrganisatie save starts 422'ing again, check the category slug in DB and consider the action_items hardening.",
+  "rca of the issue": "No bugs in the visibleOnPartnerPage feature itself — all 7 acceptance criteria verified end-to-end. A SEPARATE pre-existing bug surfaced while smoke-testing MijnOrganisatie save: Atelier Brussel & Vagebond had category stored as 'Beeldende kunsten'/'Podiumkunsten' (label) instead of the slug, causing OrgUpdate Pydantic Literal to reject the unmodified PATCH body. Mitigation: fixed the two records in DB. Root cause likely an older MijnOrganisatie.jsx implementation that submitted the localized option text, or a manual DB edit. Recommend hardening per action_items."
+}

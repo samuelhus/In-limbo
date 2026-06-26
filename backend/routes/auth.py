@@ -91,6 +91,7 @@ async def register_new_org(request: Request, body: RegisterNewOrg = Body(...), r
         "category": body.orgCategory,
         "address": body.orgAddress,
         "website": body.orgWebsite,
+        "visibleOnPartnerPage": body.orgVisibleOnPartnerPage,
         "photos": [],
         "status": "pending",
         "rejectionReason": None,

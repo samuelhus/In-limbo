@@ -32,6 +32,7 @@ export default function MijnOrganisatie() {
         address: data.address || '',
         website: data.website || '',
         photos: data.photos || [],
+        visibleOnPartnerPage: data.visibleOnPartnerPage !== false,
       });
     }).catch(() => setOrg(false));
   }, [orgId]);
@@ -102,6 +103,20 @@ export default function MijnOrganisatie() {
           <label className="label-overline">{t('organisation.website')}</label>
           <input className="input-flat" value={form.website} onChange={(e) => setForm({...form, website: e.target.value})} data-testid="org-website-input" />
         </div>
+
+        <label className="flex items-start gap-3 cursor-pointer pt-1" data-testid="org-visible-label">
+          <input
+            type="checkbox"
+            checked={form.visibleOnPartnerPage}
+            onChange={(e) => setForm({ ...form, visibleOnPartnerPage: e.target.checked })}
+            data-testid="org-visible-checkbox"
+            className="mt-1"
+          />
+          <span className="text-sm">
+            <span className="block">{t('register.org_visible_label')}</span>
+            <span className="block text-xs text-muted-foreground mt-1">{t('register.org_visible_helper')}</span>
+          </span>
+        </label>
 
         <div>
           <label className="label-overline">{t('organisation.photos')}</label>

@@ -15,7 +15,7 @@ export default function Partners() {
   useEffect(() => {
     api.get('/organisations', { params: { validated_only: true } })
       .then(({ data }) =>
-        setOrgs(data.filter((o) => o.status === 'validated' || o.status === 'active'))
+        setOrgs(data.filter((o) => ['validated', 'active', 'inactive'].includes(o.status)))
       )
       .catch(() => {});
   }, []);

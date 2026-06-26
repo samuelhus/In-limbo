@@ -119,6 +119,7 @@ class RegisterNewOrg(BaseModel):
     orgCategory: OrgCategory
     orgAddress: Optional[str] = None
     orgWebsite: Optional[str] = None
+    orgVisibleOnPartnerPage: bool = True
     acceptedTerms: bool
 
 
@@ -192,6 +193,7 @@ class OrgUpdate(BaseModel):
     address: Optional[str] = None
     website: Optional[str] = None
     photos: Optional[List[str]] = None
+    visibleOnPartnerPage: Optional[bool] = None
 
 
 class ListingUpdate(BaseModel):

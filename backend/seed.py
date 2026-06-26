@@ -58,6 +58,7 @@ async def seed(db) -> None:
             "category": "beeldende_kunsten",
             "address": "Rue de l'Avenir 12, 1080 Sint-Jans-Molenbeek",
             "website": "https://atelier-brussel.example",
+            "visibleOnPartnerPage": True,
             "photos": [
                 "https://images.unsplash.com/photo-1596441560141-87a7c7b3a443?crop=entropy&cs=srgb&fm=jpg&w=1200&q=80"
             ],
@@ -74,6 +75,7 @@ async def seed(db) -> None:
             "category": "Podiumkunsten",
             "address": "Vlaamsesteenweg 80, 1000 Brussel",
             "website": "https://vagebond.example",
+            "visibleOnPartnerPage": True,
             "photos": [
                 "https://images.unsplash.com/photo-1576544403918-c47d52572a9a?crop=entropy&cs=srgb&fm=jpg&w=1200&q=80"
             ],
@@ -90,6 +92,7 @@ async def seed(db) -> None:
             "category": "Sociaal werk",
             "address": "Bergensesteenweg 145, 1070 Anderlecht",
             "website": None,
+            "visibleOnPartnerPage": True,
             "photos": [],
             "status": "pending",
             "rejectionReason": None,

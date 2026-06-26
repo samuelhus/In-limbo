@@ -42,7 +42,7 @@ export default function Register() {
   });
   const [org, setOrg] = useState({
     orgName: '', orgDescription: '', orgCategory: 'beeldende_kunsten',
-    orgAddress: '', orgWebsite: '',
+    orgAddress: '', orgWebsite: '', orgVisibleOnPartnerPage: true,
   });
   const [orgQuery, setOrgQuery] = useState('');
   const [orgResults, setOrgResults] = useState([]);
@@ -246,6 +246,20 @@ export default function Register() {
                 onChange={(e) => setOrg({...org, orgWebsite: e.target.value})} />
             </div>
           </div>
+
+          <label className="flex items-start gap-3 cursor-pointer pt-2" data-testid="register-org-visible-label">
+            <input
+              type="checkbox"
+              checked={org.orgVisibleOnPartnerPage}
+              onChange={(e) => setOrg({ ...org, orgVisibleOnPartnerPage: e.target.checked })}
+              data-testid="register-org-visible-checkbox"
+              className="mt-1"
+            />
+            <span className="text-sm">
+              <span className="block">{t('register.org_visible_label')}</span>
+              <span className="block text-xs text-muted-foreground mt-1">{t('register.org_visible_helper')}</span>
+            </span>
+          </label>
           {error && (
             <p data-testid="register-error" className="text-sm text-destructive bg-destructive/10 border border-destructive/40 px-3 py-2">{error}</p>
           )}

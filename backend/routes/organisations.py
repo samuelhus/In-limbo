@@ -78,10 +78,16 @@ async def list_organisations(
     q: str = Query("", description="Search query for org name"),
     validated_only: bool = Query(True),
 ):
-    """Public list. If validated_only, only orgs visible to public."""
+    """Public list. If validated_only, only orgs that passed validation —
+    this includes 'inactive' (dormant >24mo, see tasks.mark_inactive_orgs):
+    an org doesn't stop being a validated partner just because it's been
+    quiet, so the partner page still lists it.
+    """
     filt: dict = {}
     if validated_only:
-        filt["status"] = {"$in": ["validated", "active"]}
+        filt["status"] = {"$in": ["validated", "active", "inactive"]}
+        # Hide orgs that explicitly opted out; treat missing field as visible (backwards-compat).
+        filt["visibleOnPartnerPage"] = {"$ne": False}
     if q:
         if len(q) < 2:
             return []
@@ -121,7 +127,11 @@ async def update_organisation(
 ):
     if user["organisationId"] != org_id and user["role"] != "admin":
         raise HTTPException(403, "Niet toegestaan")
-    update = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
+    # `exclude_unset` keeps fields the client didn't send out of the update.
+    # We then drop only None values so an explicit `False` (e.g. visibleOnPartnerPage)
+    # still gets persisted.
+    raw = body.model_dump(exclude_unset=True)
+    update = {k: v for k, v in raw.items() if v is not None}
     if not update:
         return await get_organisation(org_id)
     update["updatedAt"] = now_iso()
