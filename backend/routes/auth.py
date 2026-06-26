@@ -211,7 +211,18 @@ async def login(request: Request, body: LoginRequest = Body(...), response: Resp
     if not user or not verify_password(body.password, user["passwordHash"]):
         raise HTTPException(status_code=401, detail=msg("login_failed", request))
 
-    await db.users.update_one({"id": user["id"]}, {"$set": {"dateLastLogin": now_iso()}})
+    now = now_iso()
+    await db.users.update_one({"id": user["id"]}, {"$set": {"dateLastLogin": now}})
+
+    # Een login is bewijs van activiteit: reactiveer de organisatie indien die
+    # door de nachtelijke job als inactief was gemarkeerd (zie tasks.mark_inactive_orgs).
+    org_id = user.get("organisationId")
+    if org_id:
+        await db.organisations.update_one(
+            {"id": org_id, "status": "inactive"},
+            {"$set": {"status": "active", "updatedAt": now}},
+        )
+
     token = create_access_token(user["id"], user["email"], user["role"])
     set_auth_cookie(response, token)
     user = strip_mongo(dict(user))
