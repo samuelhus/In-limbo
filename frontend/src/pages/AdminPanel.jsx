@@ -613,29 +613,42 @@ const ORG_STATUSES = ['pending', 'validated', 'active', 'inactive'];
 function AdminGebruikers() {
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState('');
+  const [filterOrg, setFilterOrg] = useState('');
+  const [orgOptions, setOrgOptions] = useState([]);
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const LIMIT = 50;
 
-  const load = (query = '', currentPage = 0) => {
-  const params = { skip: currentPage * LIMIT, limit: LIMIT };
-  if (query.length >= 2) params.q = query;
-  api.get('/admin/users', { params })
-    .then(({ data }) => {
-      setUsers(data.items);
-      setTotal(data.total);
-    })
-    .catch(() => {});
-};
+  // Load all organisations once for the dropdown
+  useEffect(() => {
+    api.get('/admin/organisations')
+      .then(({ data }) => {
+        const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name, 'nl'));
+        setOrgOptions(sorted);
+      })
+      .catch(() => {});
+  }, []);
 
-useEffect(() => { load(q, page); }, [page]);
-useEffect(() => {
-  setPage(0);
-  const t = setTimeout(() => load(q, 0), 300);
-  return () => clearTimeout(t);
-}, [q]);
+  const load = (query = '', orgId = filterOrg, currentPage = 0) => {
+    const params = { skip: currentPage * LIMIT, limit: LIMIT };
+    if (query.length >= 2) params.q = query;
+    if (orgId) params.organisation_id = orgId;
+    api.get('/admin/users', { params })
+      .then(({ data }) => {
+        setUsers(data.items);
+        setTotal(data.total);
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => { load(q, filterOrg, page); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setPage(0);
+    const t = setTimeout(() => load(q, filterOrg, 0), 300);
+    return () => clearTimeout(t);
+  }, [q, filterOrg]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteUser = async (userId) => {
     if (!window.confirm('Gebruiker definitief verwijderen? Hun aanbiedingen worden gearchiveerd.')) return;
@@ -659,13 +672,35 @@ useEffect(() => {
 
   return (
     <div data-testid="admin-gebruikers-section">
-      <input
-        className="input-flat w-full max-w-md mb-8"
-        placeholder="Zoek op naam of e-mail..."
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        data-testid="admin-gebruikers-search"
-      />
+      <div className="flex flex-wrap gap-3 mb-6 items-end">
+        <input
+          className="input-flat w-48"
+          placeholder="Zoek op naam of e-mail..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          data-testid="admin-gebruikers-search"
+        />
+        <select
+          className="input-flat"
+          value={filterOrg}
+          onChange={(e) => setFilterOrg(e.target.value)}
+          data-testid="admin-gebruikers-filter-org"
+        >
+          <option value="">Alle organisaties</option>
+          {orgOptions.map((org) => (
+            <option key={org.id} value={org.id}>{org.name}</option>
+          ))}
+        </select>
+        {filterOrg && (
+          <button
+            className="text-xs text-muted-foreground hover:underline"
+            onClick={() => setFilterOrg('')}
+          >
+            ✕ Filter wissen
+          </button>
+        )}
+        <span className="text-sm text-muted-foreground self-center">{total} gebruiker(s)</span>
+      </div>
       <div className="divide-y divide-border border-y border-border">
         {users.map((u) => (
           <div key={u.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
@@ -808,20 +843,29 @@ function AdminOrganisaties() {
   const { t } = useTranslation();
   const [orgs, setOrgs] = useState([]);
   const [q, setQ] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [sort, setSort] = useState('createdAt_desc');
   const [editing, setEditing] = useState(null);
+  const [statsOrg, setStatsOrg] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const load = (query = '') => {
-    api.get('/admin/organisations', { params: query.length >= 2 ? { q: query } : {} })
+  const load = (query = '', category = filterCategory, status = filterStatus, sortVal = sort) => {
+    const params = {};
+    if (query.length >= 2) params.q = query;
+    if (category) params.category = category;
+    if (status) params.status = status;
+    if (sortVal) params.sort = sortVal;
+    api.get('/admin/organisations', { params })
       .then(({ data }) => setOrgs(data))
       .catch(() => {});
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const t = setTimeout(() => load(q), 300);
-    return () => clearTimeout(t);
-  }, [q]);
+    const timer = setTimeout(() => load(q, filterCategory, filterStatus, sort), 300);
+    return () => clearTimeout(timer);
+  }, [q, filterCategory, filterStatus, sort]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteOrg = async (orgId, orgName, userCount) => {
     if (!window.confirm(`"${orgName}" verwijderen? Dit verwijdert ook ${userCount} gebruiker(s) en archiveert hun aanbiedingen.`)) return;
@@ -843,18 +887,69 @@ function AdminOrganisaties() {
     finally { setBusy(false); }
   };
 
+  const formatInactiveSince = (iso) => {
+    if (!iso) return null;
+    const date = new Date(iso);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.floor(diffDays / 30);
+    if (diffMonths >= 2) return `Inactief since ${diffMonths} maanden geleden`;
+    if (diffDays >= 1) return `Inactief since ${diffDays} dag${diffDays > 1 ? 'en' : ''} geleden`;
+    return 'Inactief since vandaag';
+  };
+
   return (
     <div data-testid="admin-organisaties-section">
-      <input
-        className="input-flat w-full max-w-md mb-8"
-        placeholder="Zoek op naam..."
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        data-testid="admin-organisaties-search"
-      />
+      {/* Filters row */}
+      <div className="flex flex-wrap gap-3 mb-6 items-end">
+        <input
+          className="input-flat w-48"
+          placeholder="Zoek op naam..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          data-testid="admin-organisaties-search"
+        />
+        <select
+          className="input-flat"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          data-testid="admin-organisaties-filter-category"
+        >
+          <option value="">Alle categorieën</option>
+          {ORG_CATEGORIES.map((key) => (
+            <option key={key} value={key}>{t(`org_categories.${key}`)}</option>
+          ))}
+        </select>
+        <select
+          className="input-flat"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          data-testid="admin-organisaties-filter-status"
+        >
+          <option value="">Alle statussen</option>
+          {ORG_STATUSES.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select
+          className="input-flat"
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          data-testid="admin-organisaties-sort"
+        >
+          <option value="createdAt_desc">Datum toegevoegd ↓ (nieuwste eerst)</option>
+          <option value="createdAt_asc">Datum toegevoegd ↑ (oudste eerst)</option>
+          <option value="name_asc">Naam A→Z</option>
+          <option value="name_desc">Naam Z→A</option>
+        </select>
+        <span className="text-sm text-muted-foreground self-center">{orgs.length} resultaten</span>
+      </div>
+
+      {/* Org list */}
       <div className="divide-y divide-border border-y border-border">
         {orgs.map((org) => (
-          <div key={org.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+          <div key={org.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-start"
                data-testid={`admin-org-row-${org.id}`}>
             <div className="md:col-span-5">
               <Link
@@ -865,6 +960,16 @@ function AdminOrganisaties() {
                 {org.name}
               </Link>
               <p className="text-sm text-muted-foreground">{t(`org_categories.${org.category}`)}</p>
+              {org.createdAt && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Toegevoegd: {new Date(org.createdAt).toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
+              )}
+              {org.status === 'inactive' && org.inactiveSince && (
+                <p className="text-xs text-destructive mt-1 font-medium" data-testid={`admin-org-inactive-since-${org.id}`}>
+                  {formatInactiveSince(org.inactiveSince)}
+                </p>
+              )}
             </div>
             <div className="md:col-span-3 text-sm text-muted-foreground">
               {org.userCount} gebruiker(s)
@@ -872,7 +977,9 @@ function AdminOrganisaties() {
             <div className="md:col-span-2">
               <StatusBadge status={org.status} />
             </div>
-            <div className="md:col-span-2 flex gap-2 justify-end">
+            <div className="md:col-span-2 flex gap-2 justify-end flex-wrap">
+              <button onClick={() => setStatsOrg(org)} className="btn-secondary !py-1 px-3 text-xs"
+                      data-testid={`admin-org-stats-${org.id}`}>Stats</button>
               <button onClick={() => setEditing(org)} className="btn-secondary !py-1 px-3 text-xs"
                       data-testid={`admin-org-edit-${org.id}`}>Bewerken</button>
               <button onClick={() => deleteOrg(org.id, org.name, org.userCount)} disabled={busy}
@@ -888,6 +995,140 @@ function AdminOrganisaties() {
       {editing && (
         <AdminOrgEditModal org={editing} onSave={saveOrg} onClose={() => setEditing(null)} busy={busy} />
       )}
+      {statsOrg && (
+        <AdminOrgStatsModal org={statsOrg} onClose={() => setStatsOrg(null)} />
+      )}
+    </div>
+  );
+}
+
+function AdminOrgStatsModal({ org, onClose }) {
+  const { t } = useTranslation();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get(`/admin/organisations/${org.id}/stats`)
+      .then(({ data }) => setStats(data))
+      .catch(() => setStats(null))
+      .finally(() => setLoading(false));
+  }, [org.id]);
+
+  const StatRow = ({ label, total_kg, total_count, per_year }) => (
+    <div className="py-3 border-b border-border last:border-0">
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-sm text-muted-foreground">
+          {total_count} keer · {total_kg} kg
+        </span>
+      </div>
+      {Object.keys(per_year).length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-1">
+          {Object.entries(per_year).sort().map(([year, data]) => (
+            <span key={year} className="text-xs bg-secondary px-2 py-0.5 rounded">
+              {year}: {data.count}× · {data.kg}kg
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const ListingsRow = ({ label, count, per_year }) => (
+    <div className="py-3 border-b border-border last:border-0">
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-sm text-muted-foreground">{count} aanbiedingen</span>
+      </div>
+      {per_year && Object.keys(per_year).length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-1">
+          {Object.entries(per_year).sort().map(([year, count]) => (
+            <span key={year} className="text-xs bg-secondary px-2 py-0.5 rounded">
+              {year}: {count}×
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-background border border-border p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <p className="overline">Statistieken</p>
+            <h2 className="text-xl font-bold mt-1">{org.name}</h2>
+            <p className="text-sm text-muted-foreground">{t(`org_categories.${org.category}`)}</p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-2xl leading-none">×</button>
+        </div>
+
+        {loading && <p className="text-muted-foreground text-sm">Laden...</p>}
+        {!loading && !stats && <p className="text-destructive text-sm">Kon statistieken niet laden.</p>}
+
+        {stats && (
+          <div>
+            {/* Leden */}
+            <div className="py-3 border-b border-border">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Leden</span>
+                <span className="text-sm text-muted-foreground">{stats.members}</span>
+              </div>
+            </div>
+
+            {/* Aanbiedingen */}
+            <p className="overline text-xs mt-4 mb-1">Aanbiedingen</p>
+            <ListingsRow
+              label="Actief"
+              count={stats.listings.active}
+            />
+            <ListingsRow
+              label="Herbestemd"
+              count={stats.listings.herbestemd}
+            />
+            <ListingsRow
+              label="Gearchiveerd"
+              count={stats.listings.archived}
+              per_year={stats.listings.per_year}
+            />
+
+            {/* Uitwisseling via platform */}
+            <p className="overline text-xs mt-4 mb-1">Via platform</p>
+            <StatRow
+              label="Ontvangen materiaal"
+              total_kg={stats.platform_received.total_kg}
+              total_count={stats.platform_received.total_count}
+              per_year={stats.platform_received.per_year}
+            />
+            <StatRow
+              label="Gegeven materiaal"
+              total_kg={stats.platform_given.total_kg}
+              total_count={stats.platform_given.total_count}
+              per_year={stats.platform_given.per_year}
+            />
+
+            {/* Magazijn */}
+            <p className="overline text-xs mt-4 mb-1">Via magazijn</p>
+            <StatRow
+              label="Gedoneerd aan magazijn"
+              total_kg={stats.checkins.total_kg}
+              total_count={stats.checkins.total_count}
+              per_year={stats.checkins.per_year}
+            />
+            <StatRow
+              label="Ontvangen uit magazijn"
+              total_kg={stats.checkouts.total_kg}
+              total_count={stats.checkouts.total_count}
+              per_year={stats.checkouts.per_year}
+            />
+          </div>
+        )}
+
+        <div className="mt-6">
+          <button onClick={onClose} className="btn-secondary w-full">Sluiten</button>
+        </div>
+      </div>
     </div>
   );
 }

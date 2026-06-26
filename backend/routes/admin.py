@@ -112,6 +112,7 @@ async def admin_decide_org(
 @router.get("/admin/users")
 async def admin_list_users(
     q: str | None = Query(None),
+    organisation_id: str | None = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     admin: dict = Depends(get_admin_user)
@@ -123,6 +124,8 @@ async def admin_list_users(
             {"firstName": regex}, {"lastName": regex},
             {"username": regex}, {"email": regex},
         ]
+    if organisation_id:
+        filt["organisationId"] = organisation_id
     total = await db.users.count_documents(filt)
     users = await db.users.find(filt, {"_id": 0, "passwordHash": 0}).skip(skip).limit(limit).to_list(limit)
     org_ids = [u["organisationId"] for u in users if u.get("organisationId")]
@@ -181,13 +184,35 @@ async def admin_delete_user(user_id: str, admin: dict = Depends(get_admin_user))
 
 
 @router.get("/admin/organisations")
-async def admin_list_organisations(q: str | None = Query(None), admin: dict = Depends(get_admin_user)):
+async def admin_list_organisations(
+    q: str | None = Query(None),
+    category: str | None = Query(None),
+    status: str | None = Query(None),
+    sort: str | None = Query("createdAt_desc"),
+    admin: dict = Depends(get_admin_user),
+):
     filt: dict = {}
     if q and len(q) >= 2:
         filt["name"] = {"$regex": q, "$options": "i"}
-    orgs = await db.organisations.find(filt, {"_id": 0}).to_list(500)
+    if category:
+        filt["category"] = category
+    if status:
+        filt["status"] = status
+
+    sort_field, sort_dir = "createdAt", -1
+    if sort == "createdAt_asc":
+        sort_field, sort_dir = "createdAt", 1
+    elif sort == "name_asc":
+        sort_field, sort_dir = "name", 1
+    elif sort == "name_desc":
+        sort_field, sort_dir = "name", -1
+
+    orgs = await db.organisations.find(filt, {"_id": 0}).sort(sort_field, sort_dir).to_list(500)
     for org in orgs:
         org["userCount"] = await db.users.count_documents({"organisationId": org["id"]})
+        # Expose inactiveSince from updatedAt when org is inactive
+        if org.get("status") == "inactive" and org.get("updatedAt"):
+            org["inactiveSince"] = org["updatedAt"]
     return orgs
 
 
@@ -212,6 +237,116 @@ async def admin_update_organisation(org_id: str, body: AdminOrgUpdate, admin: di
     await db.organisations.update_one({"id": org_id}, {"$set": update})
     updated = await db.organisations.find_one({"id": org_id}, {"_id": 0})
     return strip_mongo(updated)
+
+
+@router.get("/admin/organisations/{org_id}/stats")
+async def admin_org_stats(org_id: str, admin: dict = Depends(get_admin_user)):
+    """Statistieken per organisatie: totalen + evolutie per jaar."""
+    org = await db.organisations.find_one({"id": org_id}, {"_id": 0})
+    if not org:
+        raise HTTPException(404, "Organisatie niet gevonden")
+
+    # Haal alle user IDs op voor deze org
+    user_docs = await db.users.find({"organisationId": org_id}, {"id": 1, "_id": 0}).to_list(1000)
+    user_ids = [u["id"] for u in user_docs]
+    member_count = len(user_ids)
+
+    # Helper: evolutie per jaar voor een aggregatie
+    async def _per_year(coll, match_filt, sum_field):
+        pipeline = [
+            {"$match": match_filt},
+            {"$addFields": {"year": {"$substr": ["$createdAt", 0, 4]}}},
+            {"$group": {"_id": "$year", "total": {"$sum": f"${sum_field}"}, "count": {"$sum": 1}}},
+            {"$sort": {"_id": 1}},
+        ]
+        result = {}
+        async for doc in coll.aggregate(pipeline):
+            result[doc["_id"]] = {"kg": round(doc["total"], 2), "count": doc["count"]}
+        return result
+
+    # 1. Ontvangen via platform (platform_transfers waar receiver = deze org)
+    platform_recv_filt = {"receiverOrganisationId": org_id}
+    platform_recv_total_doc = await db.platform_transfers.aggregate([
+        {"$match": platform_recv_filt},
+        {"$group": {"_id": None, "kg": {"$sum": "$weightKg"}, "count": {"$sum": 1}}},
+    ]).to_list(1)
+    platform_recv_total = platform_recv_total_doc[0] if platform_recv_total_doc else {"kg": 0, "count": 0}
+    platform_recv_per_year = await _per_year(db.platform_transfers, platform_recv_filt, "weightKg")
+
+    # 2. Gegeven via platform (platform_transfers waar sender = deze org)
+    platform_given_filt = {"$or": [{"senderOrganisationId": org_id}, {"offererOrganisationId": org_id}]}
+    platform_given_total_doc = await db.platform_transfers.aggregate([
+        {"$match": platform_given_filt},
+        {"$group": {"_id": None, "kg": {"$sum": "$weightKg"}, "count": {"$sum": 1}}},
+    ]).to_list(1)
+    platform_given_total = platform_given_total_doc[0] if platform_given_total_doc else {"kg": 0, "count": 0}
+    platform_given_per_year = await _per_year(db.platform_transfers, platform_given_filt, "weightKg")
+
+    # 3. Gedoneerd aan magazijn via check-in (org doet check-in)
+    checkin_filt = {"organisationId": org_id}
+    checkin_total_doc = await db.checkins.aggregate([
+        {"$match": checkin_filt},
+        {"$group": {"_id": None, "kg": {"$sum": "$totalWeightKg"}, "count": {"$sum": 1}}},
+    ]).to_list(1)
+    checkin_total = checkin_total_doc[0] if checkin_total_doc else {"kg": 0, "count": 0}
+    checkin_per_year = await _per_year(db.checkins, checkin_filt, "totalWeightKg")
+
+    # 4. Ontvangen via magazijn check-out
+    checkout_filt = {"organisationId": org_id}
+    checkout_total_doc = await db.checkouts.aggregate([
+        {"$match": checkout_filt},
+        {"$group": {"_id": None, "kg": {"$sum": "$totalWeightKg"}, "count": {"$sum": 1}}},
+    ]).to_list(1)
+    checkout_total = checkout_total_doc[0] if checkout_total_doc else {"kg": 0, "count": 0}
+    checkout_per_year = await _per_year(db.checkouts, checkout_filt, "totalWeightKg")
+
+    # 5. Aanbiedingen (listings) van leden van deze org
+    listings_filt = {"userId": {"$in": user_ids}} if user_ids else {"userId": "__none__"}
+    listings_active = await db.listings.count_documents({**listings_filt, "status": {"$in": ["beschikbaar", "in_magazijn"]}})
+    listings_archived = await db.listings.count_documents({**listings_filt, "status": "gearchiveerd"})
+    listings_herbestemd = await db.listings.count_documents({**listings_filt, "status": "herbestemd"})
+
+    # Evolutie listings per jaar (op basis van createdAt)
+    listings_per_year_raw = {}
+    if user_ids:
+        async for doc in db.listings.aggregate([
+            {"$match": listings_filt},
+            {"$addFields": {"year": {"$substr": ["$createdAt", 0, 4]}}},
+            {"$group": {"_id": "$year", "count": {"$sum": 1}}},
+            {"$sort": {"_id": 1}},
+        ]):
+            listings_per_year_raw[doc["_id"]] = doc["count"]
+
+    return {
+        "org": {"id": org["id"], "name": org["name"], "category": org.get("category"), "status": org.get("status")},
+        "members": member_count,
+        "platform_received": {
+            "total_kg": round(platform_recv_total.get("kg", 0), 2),
+            "total_count": platform_recv_total.get("count", 0),
+            "per_year": platform_recv_per_year,
+        },
+        "platform_given": {
+            "total_kg": round(platform_given_total.get("kg", 0), 2),
+            "total_count": platform_given_total.get("count", 0),
+            "per_year": platform_given_per_year,
+        },
+        "checkins": {
+            "total_kg": round(checkin_total.get("kg", 0), 2),
+            "total_count": checkin_total.get("count", 0),
+            "per_year": checkin_per_year,
+        },
+        "checkouts": {
+            "total_kg": round(checkout_total.get("kg", 0), 2),
+            "total_count": checkout_total.get("count", 0),
+            "per_year": checkout_per_year,
+        },
+        "listings": {
+            "active": listings_active,
+            "archived": listings_archived,
+            "herbestemd": listings_herbestemd,
+            "per_year": listings_per_year_raw,
+        },
+    }
 
 
 @router.delete("/admin/organisations/{org_id}")

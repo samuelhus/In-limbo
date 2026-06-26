@@ -39,29 +39,53 @@ async def archive_expired_listings(db) -> int:
 
 
 async def mark_inactive_orgs(db) -> int:
-    """Mark organisations inactive if no member logged in for 24 months."""
-    threshold = (datetime.now(timezone.utc) - timedelta(days=730)).isoformat()
+    """Mark organisations inactive if NO member logged in for 24+ months.
 
-    active_orgs = set()
+    Rules:
+    - Only organisations with status 'validated' or 'active' are candidates.
+    - A member counts as active if dateLastLogin exists AND >= threshold (24 months ago).
+    - If dateLastLogin is missing on a user, we fall back to their createdAt date
+      so a recently registered user doesn't accidentally make the org inactive.
+    - We never touch orgs that are already 'pending' or 'inactive' (unless they
+      become active again, in which case we restore them to 'validated').
+    """
+    threshold = (datetime.now(timezone.utc) - timedelta(days=730)).isoformat()
+    now_str = datetime.now(timezone.utc).isoformat()
+
+    # Collect orgs that have at least one recently active member.
+    # A member is "active" if dateLastLogin >= threshold,
+    # OR if dateLastLogin is missing but createdAt >= threshold (new member).
+    active_orgs: set = set()
     async for user in db.users.find(
-        {"status": "validated", "dateLastLogin": {"$gte": threshold}},
+        {
+            "status": "validated",
+            "organisationId": {"$exists": True, "$ne": None},
+            "$or": [
+                {"dateLastLogin": {"$gte": threshold}},
+                {"dateLastLogin": {"$exists": False}, "createdAt": {"$gte": threshold}},
+            ],
+        },
         {"organisationId": 1, "_id": 0},
     ):
-        active_orgs.add(user.get("organisationId"))
+        org_id = user.get("organisationId")
+        if org_id:
+            active_orgs.add(org_id)
 
-    # Set to active first (for those that have any active members)
+    # Restore previously inactive orgs that now have active members back to 'validated'
+    # (do NOT touch orgs in 'pending' status)
     if active_orgs:
         await db.organisations.update_many(
-            {"id": {"$in": list(active_orgs)}, "status": {"$in": ["validated", "active", "inactive"]}},
-            {"$set": {"status": "active", "updatedAt": datetime.now(timezone.utc).isoformat()}},
+            {"id": {"$in": list(active_orgs)}, "status": "inactive"},
+            {"$set": {"status": "validated", "updatedAt": now_str}},
         )
 
-    # Mark the rest as inactive (but only those that are currently active/validated)
+    # Mark as inactive only orgs that are currently 'validated' or 'active'
+    # and have NO active members — never touch 'pending' orgs
     result = await db.organisations.update_many(
         {
             "id": {"$nin": list(active_orgs)},
             "status": {"$in": ["validated", "active"]},
         },
-        {"$set": {"status": "inactive", "updatedAt": datetime.now(timezone.utc).isoformat()}},
+        {"$set": {"status": "inactive", "updatedAt": now_str}},
     )
     return result.modified_count
