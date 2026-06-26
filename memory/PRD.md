@@ -1,3 +1,13 @@
+## 2026-02 — Org-level visibility on /partners
+- New `visibleOnPartnerPage: bool` field on organisations (default True). Set once at registration, editable later by any validated member.
+- Register.jsx step-4 NEW-org path: checkbox (default checked) with NL+FR copy. Existing-org path unchanged.
+- MijnOrganisatie.jsx: same checkbox, pre-filled from current state with legacy-default-checked (`!== false`).
+- Backend filter: `GET /organisations?validated_only=true` adds `visibleOnPartnerPage: {$ne: False}` → orgs that explicitly opted out are hidden; missing field treated as visible (backwards-compat, no migration needed).
+- Unchanged: `GET /organisations/{id}` profile page, `GET /organisations/search` autocomplete (checkout/checkin), org links on listings — all keep working for hidden orgs.
+- seed.py: 3 sample orgs now explicitly include `visibleOnPartnerPage: True`.
+- Tested e2e: 12/12 backend pytest cases + full frontend round-trip. Regression file at `backend/tests/test_partner_visibility.py`.
+
+
 ## 2026-02 — Bilingual search bar on /catalogus
 - New hero-style search input on `/catalogus` (350ms debounce, ⌕ icon empty / × clear button typed).
 - Backend: `GET /api/listings?q=...` performs MongoDB `$text` search across non-archived listings sorted by relevance; returns `isSearch:true`. Existing filter behavior unchanged when no `q`.
