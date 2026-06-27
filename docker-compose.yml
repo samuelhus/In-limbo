@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      MONGO_URL: ${MONGO_URL}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      FRONTEND_URL: ${FRONTEND_URL}
+    expose:
+      - "8000"
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    expose:
+      - "27017"
+
+volumes:
+  mongo_data:

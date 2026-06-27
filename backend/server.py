@@ -15,11 +15,14 @@ from starlette.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+
 from deps import db, client, log, limiter
 from seed import seed
 from tasks import archive_expired_listings, mark_inactive_orgs
-from search_keywords import run_keyword_enrichment
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+scheduler = AsyncIOScheduler(timezone="Europe/Brussels")
 
 # Route-modules
 from routes.auth import router as auth_router
@@ -70,6 +73,11 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
 # --------------------------------------------------------------------------
 # Startup / shutdown
 # --------------------------------------------------------------------------
+async def _nightly_maintenance() -> None:
+    """Nachtelijke taak: archiveer verlopen listings en markeer inactieve orgs."""
+    archived = await archive_expired_listings(db)
+    inactive = await mark_inactive_orgs(db)
+    log.info(f"Nachtelijke maintenance — archived={archived} inactive_orgs={inactive}")
 
 
 @app.on_event("startup")
@@ -102,30 +110,6 @@ async def startup() -> None:
     await db.password_resets.create_index("expiresAt", expireAfterSeconds=0)
     await db.newsletter_subscribers.create_index("email", unique=True)
     await db.contact_messages.create_index("createdAt")
-
-    # Bilingual search: text index on title + description + material + searchKeywords.
-    # MongoDB allows only one text index per collection — drop any existing one first.
-    try:
-        existing = await db.listings.index_information()
-        for name, info in existing.items():
-            if any(field[1] == "text" for field in info.get("key", [])):
-                try:
-                    await db.listings.drop_index(name)
-                except Exception as drop_err:
-                    log.warning(f"Could not drop existing text index {name}: {drop_err}")
-        await db.listings.create_index(
-            [
-                ("title", "text"),
-                ("description", "text"),
-                ("material", "text"),
-                ("searchKeywords", "text"),
-            ],
-            default_language="none",
-            name="listings_search_idx",
-        )
-    except Exception as e:
-        log.warning(f"Listings text index setup skipped: {e}")
-
     await seed(db)
 
     # Eenmalige run bij opstart (vangt listings die verlopen zijn tijdens downtime)
@@ -133,28 +117,15 @@ async def startup() -> None:
     inactive = await mark_inactive_orgs(db)
     log.info(f"Startup OK — archived={archived} inactive_orgs={inactive}")
 
-    # APScheduler: nightly maintenance jobs. Wrap in try/except so any scheduler
-    # failure never blocks the app from starting.
-    try:
-        scheduler = AsyncIOScheduler(timezone="Europe/Brussels")
-        scheduler.add_job(archive_expired_listings, "cron", hour=3, minute=0, args=[db])
-        scheduler.add_job(mark_inactive_orgs, "cron", hour=3, minute=10, args=[db])
-        scheduler.add_job(run_keyword_enrichment, "cron", hour=3, minute=20, args=[db])
-        scheduler.start()
-        app.state.scheduler = scheduler
-        log.info("APScheduler started — archive/inactive/enrichment jobs scheduled")
-    except Exception as e:
-        log.warning(f"APScheduler startup skipped: {e}")
+    # Nachtelijke scheduler: elke dag om 02:00 Brusselse tijd
+    scheduler.add_job(_nightly_maintenance, CronTrigger(hour=2, minute=0))
+    scheduler.start()
+    log.info("Scheduler gestart — nachtelijke maintenance om 02:00")
 
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
-    scheduler = getattr(app.state, "scheduler", None)
-    if scheduler is not None:
-        try:
-            scheduler.shutdown()
-        except Exception as e:
-            log.warning(f"Scheduler shutdown failed: {e}")
+    scheduler.shutdown(wait=False)
     client.close()
 
 
@@ -187,15 +158,9 @@ app.include_router(api)
 # CORS
 # --------------------------------------------------------------------------
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-env = os.environ.get("ENV", "development")
-
-allowed_origins = [frontend_url]
-if env != "production":
-    allowed_origins.append("http://localhost:3000")
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=[frontend_url, "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
