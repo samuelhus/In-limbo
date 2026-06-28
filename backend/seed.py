@@ -2,12 +2,32 @@
 from __future__ import annotations
 import os
 import uuid
+import typing
 from datetime import datetime, timezone, timedelta
 from auth import hash_password
+from models import OrgCategory
+
+VALID_ORG_CATEGORIES = set(typing.get_args(OrgCategory)) - {""}
 
 
 def _iso_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _assert_valid_categories(orgs: list[dict]) -> None:
+    """Fail loudly at startup if seed data ever drifts from the real
+    OrgCategory values again (snake_case keys, not display labels —
+    see Partners.jsx / MijnOrganisatie.jsx / Register.jsx CATS).
+    A silent typo here previously made organisations vanish from the
+    Partners page without any error anywhere.
+    """
+    for org in orgs:
+        cat = org.get("category")
+        if cat not in VALID_ORG_CATEGORIES:
+            raise ValueError(
+                f"seed.py: invalid category {cat!r} for organisation {org.get('name')!r}. "
+                f"Must be one of {sorted(VALID_ORG_CATEGORIES)}."
+            )
 
 
 async def seed(db) -> None:
@@ -50,7 +70,7 @@ async def seed(db) -> None:
     org2_id = str(uuid.uuid4())
     org_pending_id = str(uuid.uuid4())
 
-    await db.organisations.insert_many([
+    seed_orgs = [
         {
             "id": org1_id,
             "name": "Atelier Brussel",
@@ -72,7 +92,7 @@ async def seed(db) -> None:
             "id": org2_id,
             "name": "Theatergezelschap Vagebond",
             "description": "Een onafhankelijk theatergezelschap dat sociaal-geëngageerd werk maakt. Na elke productie zoeken we een nieuwe bestemming voor decorstukken, kostuums en rekwisieten.",
-            "category": "Podiumkunsten",
+            "category": "podiumkunsten",
             "address": "Vlaamsesteenweg 80, 1000 Brussel",
             "website": "https://vagebond.example",
             "visibleOnPartnerPage": True,
@@ -89,7 +109,7 @@ async def seed(db) -> None:
             "id": org_pending_id,
             "name": "Buurtwerk De Schakel",
             "description": "Buurtorganisatie die jongerenwerking en sociale activiteiten organiseert in Anderlecht. We zijn op zoek naar materiaal voor onze ateliers.",
-            "category": "Sociaal werk",
+            "category": "sociaal_werk",
             "address": "Bergensesteenweg 145, 1070 Anderlecht",
             "website": None,
             "visibleOnPartnerPage": True,
@@ -100,7 +120,10 @@ async def seed(db) -> None:
             "updatedAt": _iso_now(),
             "_seed": True,
         },
-    ])
+    ]
+
+    _assert_valid_categories(seed_orgs)
+    await db.organisations.insert_many(seed_orgs)
 
     # 3. Validated users -------------------------------------------------
     user1_id = str(uuid.uuid4())

@@ -7,6 +7,7 @@ Strategy:
 """
 from __future__ import annotations
 import os
+import re
 import logging
 import asyncio
 
@@ -656,14 +657,31 @@ DICTIONARY: dict[str, list[str]] = {
 }
 
 
+_WORD_RE = re.compile(r"[a-zà-ÿœ]+", re.IGNORECASE)
+MIN_PREFIX_KEY_LEN = 4  # below this, only exact matches count — avoids "pp"/"vis"/"bal" etc. matching inside unrelated words
+
+
 def _curated_translations(text: str) -> list[str]:
-    """Return curated cross-language synonyms for words found in text."""
-    words = text.lower().split()
+    """Return curated cross-language synonyms for words found in text.
+
+    Matches dictionary keys both exactly AND as a *prefix* of a longer word,
+    so a Dutch compound like "verfresten" (verf + resten) still triggers the
+    "verf" -> "peinture" translation — the same substring-matching principle
+    now used by the catalogue search itself (see listings.py), instead of
+    only ever matching whole tokens.
+
+    Prefix-only (not "anywhere in the word") on purpose: Dutch compounds put
+    the qualifying noun at the *start* ("verfroller", "houtblok", ...), so
+    matching the start is linguistically correct and far less noisy than a
+    free substring match — which would, for example, make the 3-letter key
+    "vis" match inside completely unrelated words like "advies" or "visie".
+    """
+    words = _WORD_RE.findall(text.lower())
     extras: set[str] = set()
     for word in words:
-        clean = word.strip(".,;:!?()")
-        if clean in DICTIONARY:
-            extras.update(DICTIONARY[clean])
+        for key, translations in DICTIONARY.items():
+            if word == key or (len(key) >= MIN_PREFIX_KEY_LEN and word.startswith(key)):
+                extras.update(translations)
     return list(extras)
 
 
@@ -675,7 +693,6 @@ async def _ai_translations(text: str) -> list[str]:
     try:
         import httpx
         import json
-        import re
         prompt = (
             f"Given this Dutch or French text from a material listing: '{text[:200]}'\n"
             "Return ONLY a JSON array of 5-10 keywords that are translations or synonyms "
