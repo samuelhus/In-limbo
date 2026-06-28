@@ -167,7 +167,9 @@
     "donateur_type_value": "Donateur (individuele schenker)",
     "donateur_creating": "Aanmaken…",
     "donateur_create_account_btn": "Account aanmaken",
-    "donateur_already_account": "Al een account?"
+    "donateur_already_account": "Al een account?",
+    "newsletter_checkbox": "Ik schrijf me in op de nieuwsbrief van In Limbo."
+
 
   },
   "catalogus": {
@@ -534,7 +536,7 @@
     "werking8": "Spreek af en geef het materiaal een tweede leven.",
     "doneren_overline": "Doneren",
     "doneren_title": "Materiaal doneren",
-    "p5": "Heb je als bedrijf of organisatie structureel materiaal over? Neem contact met ons op. Na goedkeuring kan je het materiaal rechtstreeks afzetten in het depot.",
+    "p5": "Heb je als bedrijf of organisatie structureel materiaal over? Neem contact met ons op. Na goedkeuring kan je het materiaal rechtstreeks afzetten in het magazijn.",
     "p6": "Het materiaal moet in goede staat zijn en geschikt voor hergebruik. We aanvaarden geen voedsel of kledij.",
     "ctadoneer": "Doneer materiaal",
     "faq_overline": "FAQ",

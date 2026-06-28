@@ -34,6 +34,7 @@ export default function Register() {
   const [step, setStep] = useState(1);
   const [path, setPath] = useState(null);
   const [terms, setTerms] = useState(false);
+  const [newsletter, setNewsletter] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -75,6 +76,9 @@ export default function Register() {
     }
     setSubmitting(false);
     if (!res.ok) { setError(res.error); return; }
+    if (newsletter && user.email) {
+      try { await api.post('/newsletter/subscribe', { email: user.email }); } catch (_) {}
+    }
     navigate('/wachtkamer');
   };
 
@@ -116,6 +120,15 @@ export default function Register() {
               className="mt-1"
             />
             <span className="text-sm">{t('register.terms_accept')}</span>
+          </label>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={newsletter}
+              onChange={(e) => setNewsletter(e.target.checked)}
+              className="mt-1"
+            />
+            <span className="text-sm">{t('auth.newsletter_checkbox')}</span>
           </label>
           <div className="flex justify-between">
             <Link to="/" className="btn-ghost" data-testid="register-cancel">← {t('common.cancel')}</Link>

@@ -166,7 +166,8 @@
     "donateur_type_value": "Donateur (particulier)",
     "donateur_creating": "Création en cours…",
     "donateur_create_account_btn": "Créer le compte",
-    "donateur_already_account": "Vous avez déjà un compte ?"
+    "donateur_already_account": "Vous avez déjà un compte ?",
+    "newsletter_checkbox": "Je m'inscris à la newsletter d'In Limbo."
 
 
   },
