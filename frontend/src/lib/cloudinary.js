@@ -63,3 +63,33 @@ export function cloudinaryFit(url, w = 1400, h = 1400) {
     `/upload/c_limit,w_${w},h_${h},q_auto,f_auto/`
   );
 }
+
+export async function uploadPdfToCloudinary(file) {
+  if (!file || file.type !== 'application/pdf') {
+    throw new Error('Enkel PDF bestanden zijn toegestaan.');
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('PDF mag maximaal 10 MB zijn.');
+  }
+
+  // Get signature from backend (raw resource type)
+  const { data: sig } = await api.get('/cloudinary/pdf-signature');
+
+  const form = new FormData();
+  form.append('file', file);
+  form.append('api_key', sig.api_key);
+  form.append('timestamp', sig.timestamp);
+  form.append('signature', sig.signature);
+  form.append('folder', sig.folder);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${sig.cloud_name}/raw/upload`,
+    { method: 'POST', body: form }
+  );
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`PDF upload mislukt: ${txt}`);
+  }
+  const data = await res.json();
+  return data.secure_url;
+}

@@ -5,7 +5,6 @@ zodat het applications-router deze kan hergebruiken.
 """
 from __future__ import annotations
 import os
-import re
 import time
 import uuid
 
@@ -105,36 +104,28 @@ async def list_listings(
 ):
     """Catalog listing. Excludes gearchiveerd.
 
-    When `q` is non-empty, perform a case-insensitive substring search across
-    title/description/material/searchKeywords, restricted to listings that
-    are actually available (beschikbaar + in_magazijn) — same scope as the
-    default "Beschikbaar" status filter. herbestemd/gearchiveerd listings are
-    never search results: showing an item that's already been given away
-    would be confusing, not useful.
-
-    Deliberately regex-based rather than MongoDB's $text index: $text only
-    matches whole tokens, so searching "verf" would never find "verfresten" —
-    substring matching is the actual requirement here, at the cost of not
-    having a relevance score to sort by (so we fall back to newest-first).
+    When `q` is non-empty, perform a MongoDB $text search across all non-archived
+    listings (beschikbaar + in_magazijn + herbestemd), ignoring the filter param,
+    sorted by relevance score. Returns isSearch:true.
     """
     viewer = await get_current_user_optional(request)
 
     q_clean = (q or "").strip()
     if q_clean:
-        pattern = re.escape(q_clean)
         filt = {
-            "status": {"$in": ["beschikbaar", "in_magazijn"]},
-            "$or": [
-                {"title": {"$regex": pattern, "$options": "i"}},
-                {"description": {"$regex": pattern, "$options": "i"}},
-                {"material": {"$regex": pattern, "$options": "i"}},
-                {"searchKeywords": {"$regex": pattern, "$options": "i"}},
-            ],
+            "status": {"$ne": "gearchiveerd"},
+            "$text": {"$search": q_clean},
         }
         total = await db.listings.count_documents(filt)
-        cursor = db.listings.find(filt).sort("createdAt", -1).skip(skip).limit(limit)
+        cursor = (
+            db.listings.find(filt, {"score": {"$meta": "textScore"}})
+            .sort([("score", {"$meta": "textScore"})])
+            .skip(skip)
+            .limit(limit)
+        )
         items = []
         async for lst in cursor:
+            lst.pop("score", None)
             items.append(_public_listing_view(lst, viewer))
         items = await _enrich_listings(items)
         return {"total": total, "items": items, "skip": skip, "limit": limit, "isSearch": True}
@@ -326,6 +317,8 @@ async def update_listing(
         update["material"] = body.material
     if body.photos is not None:
         update["photos"] = body.photos
+    if body.documents is not None:
+        update["documents"] = body.documents
     if body.dimensions is not None:
         update["dimensions"] = body.dimensions
     if body.transport is not None:
@@ -382,6 +375,25 @@ async def delete_listing(listing_id: str, user: dict = Depends(get_donateur_or_v
     await db.applications.delete_many({"listingId": listing_id})
     await db.listings.delete_one({"id": listing_id})
     return {"success": True}
+
+
+
+# Cloudinary signature voor PDF-uploads (technische fiches)
+@router.get("/cloudinary/pdf-signature")
+async def cloudinary_pdf_signature(user: dict = Depends(get_donateur_or_validated_user)):
+    folder = f"in-limbo/{user['id']}/documents"
+    timestamp = int(time.time())
+    params = {"timestamp": timestamp, "folder": folder, "resource_type": "raw"}
+    signature = cloudinary.utils.api_sign_request(
+        params, os.environ["CLOUDINARY_API_SECRET"]
+    )
+    return {
+        "signature": signature,
+        "timestamp": timestamp,
+        "cloud_name": os.environ["CLOUDINARY_CLOUD_NAME"],
+        "api_key": os.environ["CLOUDINARY_API_KEY"],
+        "folder": folder,
+    }
 
 
 # Cloudinary signature voor foto-uploads

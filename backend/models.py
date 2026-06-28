@@ -83,6 +83,7 @@ class ListingBase(BaseModel):
     weight: Optional[float] = Field(None, ge=0)
     material: ListingMaterial
     photos: List[str] = Field(default_factory=list, max_length=5)
+    documents: List[str] = Field(default_factory=list, max_length=3)  # Cloudinary URLs van technische fiches (PDF)
     deadline: Optional[str] = None  # ISO date string
     isRecurrent: bool = False
     dimensions: Optional[str] = None
@@ -203,6 +204,7 @@ class ListingUpdate(BaseModel):
     weight: Optional[float] = Field(None, ge=0)
     material: Optional[ListingMaterial] = None
     photos: Optional[List[str]] = None
+    documents: Optional[List[str]] = None
     dimensions: Optional[str] = None
     transport: Optional[str] = None
     deadline: Optional[str] = None

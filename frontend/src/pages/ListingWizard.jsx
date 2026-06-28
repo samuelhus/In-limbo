@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
-import { uploadToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
+import { uploadToCloudinary, cloudinaryThumb, uploadPdfToCloudinary } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 
 const MATERIALS = [
@@ -48,7 +48,7 @@ export default function ListingWizard({ editMode = false }) {
   const [loadingListing, setLoadingListing] = useState(editMode);
 
   const [data, setData] = useState({
-    photos: [], title: '', description: '', weight: '',
+    photos: [], documents: [], title: '', description: '', weight: '',
     material: 'Hout', deadline: '', isRecurrent: false,
     dimensions: '', transport: '', placeInWarehouse: false,
   });
@@ -67,6 +67,7 @@ export default function ListingWizard({ editMode = false }) {
         }
         setData({
           photos: listing.photos || [],
+          documents: listing.documents || [],
           title: listing.title || '',
           description: listing.description || '',
           weight: listing.weight?.toString() || '',
@@ -85,6 +86,8 @@ export default function ListingWizard({ editMode = false }) {
 
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState('');
+  const [pdfUploading, setPdfUploading] = useState(false);
+  const [pdfErr, setPdfErr] = useState('');
 
   const onFilesPicked = async (e) => {
     setUploadErr('');
@@ -112,6 +115,30 @@ export default function ListingWizard({ editMode = false }) {
 
   const removePhoto = (idx) => {
     setData((d) => ({ ...d, photos: d.photos.filter((_, i) => i !== idx) }));
+  };
+
+  const onPdfPicked = async (e) => {
+    setPdfErr('');
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (data.documents.length >= 3) {
+      setPdfErr('Maximum 3 PDF bestanden toegestaan.');
+      return;
+    }
+    setPdfUploading(true);
+    try {
+      const url = await uploadPdfToCloudinary(file);
+      setData((d) => ({ ...d, documents: [...d.documents, url] }));
+    } catch (err) {
+      setPdfErr(err.message || 'PDF upload mislukt.');
+    } finally {
+      setPdfUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const removePdf = (idx) => {
+    setData((d) => ({ ...d, documents: d.documents.filter((_, i) => i !== idx) }));
   };
 
   const next = () => {
@@ -158,6 +185,7 @@ export default function ListingWizard({ editMode = false }) {
         weight: hasWeight ? parsedWeight : (warehouseShortcut ? 0 : parsedWeight),
         material: hasWeight ? data.material : (warehouseShortcut ? 'Ander' : data.material),
         photos: data.photos,
+        documents: data.documents,
         deadline: data.isRecurrent ? null : (data.deadline || null),
         isRecurrent: data.isRecurrent,
         dimensions: data.dimensions || null,
@@ -237,6 +265,34 @@ export default function ListingWizard({ editMode = false }) {
             )}
           </div>
           {uploadErr && <p className="text-sm text-destructive" data-testid="wizard-upload-error">{uploadErr}</p>}
+
+          {/* PDF technische fiches */}
+          <div className="border-t border-border pt-6 space-y-3">
+            <p className="label-overline">Technische fiches (optioneel)</p>
+            <p className="text-sm text-foreground/75">Voeg maximaal 3 PDF bestanden toe (max. 10 MB per bestand).</p>
+            <div className="space-y-2">
+              {data.documents.map((url, i) => {
+                const filename = url.split('/').pop().split('?')[0];
+                return (
+                  <div key={i} className="flex items-center justify-between bg-muted rounded px-3 py-2 text-sm">
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="truncate text-primary underline underline-offset-2 max-w-xs">
+                      {decodeURIComponent(filename)}
+                    </a>
+                    <button onClick={() => removePdf(i)} className="ml-3 text-muted-foreground hover:text-destructive transition text-xs shrink-0">
+                      Verwijder
+                    </button>
+                  </div>
+                );
+              })}
+              {data.documents.length < 3 && (
+                <label className="inline-flex items-center gap-2 border border-dashed border-border rounded px-4 py-2 cursor-pointer hover:border-foreground transition text-sm text-muted-foreground">
+                  <input type="file" accept="application/pdf" onChange={onPdfPicked} className="hidden" />
+                  {pdfUploading ? 'Uploaden...' : '+ PDF toevoegen'}
+                </label>
+              )}
+            </div>
+            {pdfErr && <p className="text-sm text-destructive">{pdfErr}</p>}
+          </div>
         </section>
       )}
 

@@ -135,6 +135,31 @@ export default function ListingDetail() {
                 )}
               </dl>
 
+              {/* Technische fiches */}
+              {item.documents && item.documents.length > 0 && (
+                <div className="border-t border-border pt-6">
+                  <p className="overline mb-3">Technische fiches</p>
+                  <ul className="space-y-2">
+                    {item.documents.map((url, i) => {
+                      const filename = url.split('/').pop().split('?')[0];
+                      return (
+                        <li key={i}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-primary underline underline-offset-2 hover:text-primary/80 transition"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            {decodeURIComponent(filename)}
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+
               {item.organisation && item.offererFirstName && (
                 <div className="border-t border-border pt-6" data-testid="listing-offerer-block">
                   <p className="text-base">
