@@ -1,17 +1,17 @@
 """Magazijn-checkout (publiek)."""
-from __future__ import annotations
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Body
 
-from deps import db, now_iso
+from deps import db, now_iso, limiter
 from models import CheckoutCreate
 
 router = APIRouter()
 
 
 @router.post("/checkout")
-async def create_checkout(body: CheckoutCreate):
+@limiter.limit("10/minute")
+async def create_checkout(request: Request, body: CheckoutCreate = Body(...)):
     org = await db.organisations.find_one({"id": body.organisationId})
     if not org or org["status"] not in ("validated", "active", "inactive"):
         raise HTTPException(404, "Organisatie niet gevonden")
