@@ -5,6 +5,7 @@ zodat het applications-router deze kan hergebruiken.
 """
 from __future__ import annotations
 import os
+import re
 import time
 import uuid
 
@@ -18,7 +19,7 @@ from models import ListingCreateBody, ListingUpdate
 from auth import (
     get_current_user_optional, get_donateur_or_validated_user,
 )
-from search_keywords import enrich_listing_keywords
+from search_keywords import enrich_listing_keywords, DICTIONARY
 
 router = APIRouter()
 
@@ -104,28 +105,58 @@ async def list_listings(
 ):
     """Catalog listing. Excludes gearchiveerd.
 
-    When `q` is non-empty, perform a MongoDB $text search across all non-archived
-    listings (beschikbaar + in_magazijn + herbestemd), ignoring the filter param,
-    sorted by relevance score. Returns isSearch:true.
+    When `q` is non-empty, performs a regex-based substring search across
+    title, description, material and searchKeywords. Each query token must
+    match at least one of those fields (AND logic). Full-word synonyms from
+    the bilingual dictionary are automatically added as alternatives per token,
+    enabling cross-language search (e.g. "stoel" also finds listings with "chaise").
+    Returns isSearch:true.
     """
     viewer = await get_current_user_optional(request)
 
     q_clean = (q or "").strip()
     if q_clean:
+        # Build a set of search terms: the original query + any dictionary synonyms
+        # for whole words found in the query.
+        base_terms = [t.strip(".,;:!?()").lower() for t in q_clean.split() if t.strip(".,;:!?()")]
+        all_terms: set[str] = set(base_terms)
+        for word in base_terms:
+            if word in DICTIONARY:
+                all_terms.update(DICTIONARY[word])
+
+        # Each term is matched as a substring (case-insensitive) against
+        # title, description, material, and searchKeywords.
+        # A listing matches if ALL original query tokens are found (AND logic),
+        # with synonyms acting as alternatives for each token.
+        def _term_clause(term: str) -> dict:
+            pattern = {"$regex": re.escape(term), "$options": "i"}
+            return {"$or": [
+                {"title": pattern},
+                {"description": pattern},
+                {"material": pattern},
+                {"searchKeywords": pattern},
+            ]}
+
+        # For each original token, accept the token itself OR any of its synonyms.
+        token_clauses = []
+        for word in base_terms:
+            synonyms = [word] + ([s for s in DICTIONARY.get(word, [])])
+            token_clauses.append({"$or": [_term_clause(s) for s in synonyms]})
+
         filt = {
             "status": {"$ne": "gearchiveerd"},
-            "$text": {"$search": q_clean},
+            "$and": token_clauses,
         }
+
         total = await db.listings.count_documents(filt)
         cursor = (
-            db.listings.find(filt, {"score": {"$meta": "textScore"}})
-            .sort([("score", {"$meta": "textScore"})])
+            db.listings.find(filt)
+            .sort("createdAt", -1)
             .skip(skip)
             .limit(limit)
         )
         items = []
         async for lst in cursor:
-            lst.pop("score", None)
             items.append(_public_listing_view(lst, viewer))
         items = await _enrich_listings(items)
         return {"total": total, "items": items, "skip": skip, "limit": limit, "isSearch": True}
@@ -317,8 +348,6 @@ async def update_listing(
         update["material"] = body.material
     if body.photos is not None:
         update["photos"] = body.photos
-    if body.documents is not None:
-        update["documents"] = body.documents
     if body.dimensions is not None:
         update["dimensions"] = body.dimensions
     if body.transport is not None:
@@ -375,25 +404,6 @@ async def delete_listing(listing_id: str, user: dict = Depends(get_donateur_or_v
     await db.applications.delete_many({"listingId": listing_id})
     await db.listings.delete_one({"id": listing_id})
     return {"success": True}
-
-
-
-# Cloudinary signature voor PDF-uploads (technische fiches)
-@router.get("/cloudinary/pdf-signature")
-async def cloudinary_pdf_signature(user: dict = Depends(get_donateur_or_validated_user)):
-    folder = f"in-limbo/{user['id']}/documents"
-    timestamp = int(time.time())
-    params = {"timestamp": timestamp, "folder": folder, "resource_type": "raw"}
-    signature = cloudinary.utils.api_sign_request(
-        params, os.environ["CLOUDINARY_API_SECRET"]
-    )
-    return {
-        "signature": signature,
-        "timestamp": timestamp,
-        "cloud_name": os.environ["CLOUDINARY_CLOUD_NAME"],
-        "api_key": os.environ["CLOUDINARY_API_KEY"],
-        "folder": folder,
-    }
 
 
 # Cloudinary signature voor foto-uploads
