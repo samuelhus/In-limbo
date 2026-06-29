@@ -51,6 +51,7 @@ export default function Checkin() {
   const [currentWeight, setCurrentWeight] = useState('');
   const [currentDescription, setCurrentDescription] = useState('');
   const materialSelectRef = useRef(null);
+  const weightInputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [confirmedTotal, setConfirmedTotal] = useState(0);
@@ -143,7 +144,7 @@ export default function Checkin() {
                   <span className="font-medium">{selectedOrg.name}</span>
                   <button
                     onClick={() => { setSelectedOrg(null); setQuery(''); }}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground w-8 h-8 inline-flex items-center justify-center text-xl -mr-1"
                     data-testid="checkin-clear-org"
                   >
                     ×
@@ -153,7 +154,6 @@ export default function Checkin() {
                 <>
                   <input
                     type="text"
-                    autoFocus
                     className="input-flat"
                     placeholder={t('checkin.type_org_name')}
                     value={query}
@@ -167,7 +167,7 @@ export default function Checkin() {
                           <button
                             onClick={() => { setSelectedOrg(o); setQuery(o.name); setSuggestions([]); }}
                             data-testid={`checkin-org-option-${o.id}`}
-                            className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors"
+                            className="w-full text-left px-4 py-4 text-sm hover:bg-muted active:bg-muted transition-colors"
                           >
                             <span className="font-medium">{o.name}</span>
                             <span className="text-muted-foreground ml-2 text-xs">{t(`org_categories.${o.category}`)}</span>
@@ -203,7 +203,10 @@ export default function Checkin() {
                   ref={materialSelectRef}
                   className="input-flat"
                   value={currentMaterial}
-                  onChange={(e) => setCurrentMaterial(e.target.value)}
+                  onChange={(e) => {
+                    setCurrentMaterial(e.target.value);
+                    weightInputRef.current?.focus();
+                  }}
                   data-testid="checkin-material-select"
                 >
                   {MATERIALS.map((m) => <option key={m} value={m}>{t(MATERIAL_LABEL_KEYS[m])}</option>)}
@@ -212,7 +215,9 @@ export default function Checkin() {
               <div>
                 <label className="label-overline">{t('checkin.weight_label')}</label>
                 <input
+                  ref={weightInputRef}
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   min="0.1"
                   placeholder={t('checkin.weight_placeholder')}
@@ -260,7 +265,7 @@ export default function Checkin() {
                     </div>
                     <button
                       onClick={() => removeItem(i)}
-                      className="text-muted-foreground hover:text-destructive text-lg leading-none px-2"
+                      className="text-muted-foreground hover:text-destructive text-xl leading-none w-10 h-10 inline-flex items-center justify-center -mr-2"
                       data-testid={`checkin-remove-item-${i}`}
                     >
                       ×

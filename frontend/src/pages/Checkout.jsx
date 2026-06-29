@@ -50,6 +50,7 @@ export default function Checkout() {
   const [currentMaterial, setCurrentMaterial] = useState('Hout');
   const [currentWeight, setCurrentWeight] = useState('');
   const materialSelectRef = useRef(null);
+  const weightInputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [confirmedTotal, setConfirmedTotal] = useState(0);
@@ -139,7 +140,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                   <span className="font-medium">{selectedOrg.name}</span>
                   <button
                     onClick={() => { setSelectedOrg(null); setQuery(''); }}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground w-8 h-8 inline-flex items-center justify-center text-xl -mr-1"
                     data-testid="checkout-clear-org"
                   >
                     ×
@@ -149,7 +150,6 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                 <>
                   <input
                     type="text"
-                    autoFocus
                     className="input-flat"
                     placeholder={t('checkout.type_org_name')}
                     value={query}
@@ -163,7 +163,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                           <button
                             onClick={() => { setSelectedOrg(o); setQuery(o.name); setSuggestions([]); }}
                             data-testid={`checkout-org-option-${o.id}`}
-                            className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors"
+                            className="w-full text-left px-4 py-4 text-sm hover:bg-muted active:bg-muted transition-colors"
                           >
                             <span className="font-medium">{o.name}</span>
                             <span className="text-muted-foreground ml-2 text-xs">{t(`org_categories.${o.category}`)}</span>
@@ -199,7 +199,10 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                   ref={materialSelectRef}
                   className="input-flat"
                   value={currentMaterial}
-                  onChange={(e) => setCurrentMaterial(e.target.value)}
+                  onChange={(e) => {
+                    setCurrentMaterial(e.target.value);
+                    weightInputRef.current?.focus();
+                  }}
                   data-testid="checkout-material-select"
                 >
                   {MATERIALS.map((m) => <option key={m} value={m}>{t(MATERIAL_LABEL_KEYS[m])}</option>)}
@@ -208,7 +211,9 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
               <div>
                 <label className="label-overline">{t('checkout.weight_label')}</label>
                 <input
+                  ref={weightInputRef}
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   min="0.1"
                   placeholder={t('checkout.weight_placeholder')}
@@ -243,7 +248,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                     </span>
                     <button
                       onClick={() => removeItem(i)}
-                      className="text-muted-foreground hover:text-destructive text-lg leading-none px-2"
+                      className="text-muted-foreground hover:text-destructive text-xl leading-none w-10 h-10 inline-flex items-center justify-center -mr-2"
                       data-testid={`checkout-remove-item-${i}`}
                     >
                       ×
