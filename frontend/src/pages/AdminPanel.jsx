@@ -608,7 +608,7 @@ const ORG_CATEGORIES = [
   'beeldende_kunsten', 'educatie', 'jeugdwerk', 'podiumkunsten',
   'sociaal_werk', 'sport', 'noodopvang', 'ander',
 ];
-const ORG_STATUSES = ['pending', 'validated', 'active', 'inactive'];
+const ORG_STATUSES = ['pending', 'active', 'inactive', 'rejected'];
 
 function AdminGebruikers() {
   const [users, setUsers] = useState([]);
@@ -929,7 +929,7 @@ function AdminOrganisaties() {
         >
           <option value="">Alle statussen</option>
           {ORG_STATUSES.map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>{t(`status.${s}`, { defaultValue: s })}</option>
           ))}
         </select>
         <select
@@ -1178,7 +1178,7 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
           <label className="label-overline">Status</label>
           <select className="input-flat w-full" value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}>
-            {ORG_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            {ORG_STATUSES.map((s) => <option key={s} value={s}>{t(`status.${s}`, { defaultValue: s })}</option>)}
           </select>
         </div>
         <div className="flex gap-3 pt-4">

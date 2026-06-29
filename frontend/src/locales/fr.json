@@ -615,7 +615,11 @@
   "beschikbaar": "Disponible",
   "herbestemd": "Redistribué",
   "in_magazijn": "En magasin",
-  "gearchiveerd": "Archivé"
+  "gearchiveerd": "Archivé",
+  "pending": "En attente",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "rejected": "Refusé"
 },
 
   "voorwaarden": {

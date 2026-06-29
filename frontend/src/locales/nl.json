@@ -590,7 +590,12 @@
     "beschikbaar": "Beschikbaar",
     "herbestemd": "Herbestemd",
     "in_magazijn": "In magazijn",
-    "gearchiveerd": "Gearchiveerd"
+    "gearchiveerd": "Gearchiveerd",
+    "pending": "In afwachting",
+    "active": "Actief",
+    "inactive": "Inactief",
+    "rejected": "Afgewezen"
+    
 },
 
   "voorwaarden": {
