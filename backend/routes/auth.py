@@ -139,7 +139,7 @@ async def register_existing_org(request: Request, body: RegisterExistingOrg = Bo
         raise HTTPException(status_code=409, detail=msg("email_exists", request))
 
     org = await db.organisations.find_one({"id": body.organisationId})
-    if not org or org["status"] not in ("validated", "active"):
+    if not org or org["status"] not in ("active",):
         raise HTTPException(status_code=404, detail=msg("org_not_found", request))
 
     user_id = str(uuid.uuid4())

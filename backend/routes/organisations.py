@@ -85,7 +85,7 @@ async def list_organisations(
     """
     filt: dict = {}
     if validated_only:
-        filt["status"] = {"$in": ["validated", "active", "inactive"]}
+        filt["status"] = {"$in": ["active", "inactive"]}
         # Hide orgs that explicitly opted out; treat missing field as visible (backwards-compat).
         filt["visibleOnPartnerPage"] = {"$ne": False}
     if q:
@@ -102,7 +102,7 @@ async def list_organisations(
 
 @router.get("/organisations/search")
 async def search_organisations(q: str = Query(..., min_length=2), includeInactive: bool = False):
-    statuses = ["validated", "active", "inactive"] if includeInactive else ["validated", "active"]
+    statuses = ["active", "inactive"] if includeInactive else ["active"]
     regex = {"$regex": q, "$options": "i"}
     docs = await db.organisations.find(
         {"name": regex, "status": {"$in": statuses}},
@@ -116,7 +116,7 @@ async def get_organisation(org_id: str):
     org = await db.organisations.find_one({"id": org_id})
     if not org:
         raise HTTPException(404, "Organisatie niet gevonden")
-    if org["status"] not in ("validated", "active", "inactive"):
+    if org["status"] not in ("active", "inactive"):
         raise HTTPException(404, "Organisatie niet beschikbaar")
     return strip_mongo(org)
 

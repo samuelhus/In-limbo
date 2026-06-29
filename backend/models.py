@@ -25,7 +25,7 @@ ListingMaterial = Literal[
 
 UserStatus = Literal["pending", "validated", "rejected"]
 UserRole = Literal["user", "admin", "donateur"]
-OrgStatus = Literal["pending", "validated", "rejected", "active", "inactive"]
+OrgStatus = Literal["pending", "rejected", "active", "inactive"]
 ListingStatus = Literal[
     "beschikbaar", "herbestemd", "in_magazijn", "gearchiveerd"
 ]
@@ -330,4 +330,4 @@ class AdminOrgUpdate(BaseModel):
     category: Optional[str] = None
     address: Optional[str] = None
     website: Optional[str] = None
-    status: Optional[Literal["pending", "validated", "active", "inactive", "rejected"]] = None
+    status: Optional[Literal["pending", "active", "inactive", "rejected"]] = None
