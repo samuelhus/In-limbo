@@ -348,6 +348,8 @@ async def update_listing(
         update["material"] = body.material
     if body.photos is not None:
         update["photos"] = body.photos
+    if body.technicalFiles is not None:
+        update["technicalFiles"] = body.technicalFiles
     if body.dimensions is not None:
         update["dimensions"] = body.dimensions
     if body.transport is not None:
@@ -421,4 +423,23 @@ async def cloudinary_signature(user: dict = Depends(get_donateur_or_validated_us
         "cloud_name": os.environ["CLOUDINARY_CLOUD_NAME"],
         "api_key": os.environ["CLOUDINARY_API_KEY"],
         "folder": folder,
+    }
+
+
+# Cloudinary signature voor PDF-uploads (raw resource type)
+@router.get("/cloudinary/pdf-signature")
+async def cloudinary_pdf_signature(user: dict = Depends(get_donateur_or_validated_user)):
+    folder = f"in-limbo/{user['id']}/fiches"
+    timestamp = int(time.time())
+    params = {"timestamp": timestamp, "folder": folder, "access_mode": "public"}
+    signature = cloudinary.utils.api_sign_request(
+        params, os.environ["CLOUDINARY_API_SECRET"]
+    )
+    return {
+        "signature": signature,
+        "timestamp": timestamp,
+        "cloud_name": os.environ["CLOUDINARY_CLOUD_NAME"],
+        "api_key": os.environ["CLOUDINARY_API_KEY"],
+        "folder": folder,
+        "access_mode": "public",
     }

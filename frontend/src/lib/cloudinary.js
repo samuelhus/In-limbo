@@ -46,6 +46,37 @@ export async function uploadToCloudinary(file) {
   return data.secure_url;
 }
 
+export async function uploadPdfToCloudinary(file) {
+  // 1. Get PDF-specific signature from backend
+  const { data: sig } = await api.get('/cloudinary/pdf-signature');
+
+  // 2. Upload directly to Cloudinary as raw resource type
+  const form = new FormData();
+  form.append('file', file);
+  form.append('api_key', sig.api_key);
+  form.append('timestamp', sig.timestamp);
+  form.append('signature', sig.signature);
+  form.append('folder', sig.folder);
+  form.append('access_mode', sig.access_mode);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${sig.cloud_name}/raw/upload`,
+    { method: 'POST', body: form }
+  );
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Cloudinary PDF upload mislukt: ${txt}`);
+  }
+  const data = await res.json();
+  return data.secure_url;
+}
+
+export function cloudinaryPdfUrl(url) {
+  // Strip any transformation flags that were incorrectly added to raw URLs
+  if (!url) return url;
+  return url.replace(/\/raw\/upload\/[^/]+\//, '/raw/upload/');
+}
+
 export function cloudinaryThumb(url, w = 600, h = 600) {
   if (!url || !url.includes('/upload/')) return url;
   return url.replace(
@@ -62,34 +93,4 @@ export function cloudinaryFit(url, w = 1400, h = 1400) {
     '/upload/',
     `/upload/c_limit,w_${w},h_${h},q_auto,f_auto/`
   );
-}
-
-export async function uploadPdfToCloudinary(file) {
-  if (!file || file.type !== 'application/pdf') {
-    throw new Error('Enkel PDF bestanden zijn toegestaan.');
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    throw new Error('PDF mag maximaal 10 MB zijn.');
-  }
-
-  // Get signature from backend (raw resource type)
-  const { data: sig } = await api.get('/cloudinary/pdf-signature');
-
-  const form = new FormData();
-  form.append('file', file);
-  form.append('api_key', sig.api_key);
-  form.append('timestamp', sig.timestamp);
-  form.append('signature', sig.signature);
-  form.append('folder', sig.folder);
-
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${sig.cloud_name}/raw/upload`,
-    { method: 'POST', body: form }
-  );
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`PDF upload mislukt: ${txt}`);
-  }
-  const data = await res.json();
-  return data.secure_url;
 }

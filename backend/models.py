@@ -25,7 +25,7 @@ ListingMaterial = Literal[
 
 UserStatus = Literal["pending", "validated", "rejected"]
 UserRole = Literal["user", "admin", "donateur"]
-OrgStatus = Literal["pending", "rejected", "active", "inactive"]
+OrgStatus = Literal["pending", "validated", "rejected", "active", "inactive"]
 ListingStatus = Literal[
     "beschikbaar", "herbestemd", "in_magazijn", "gearchiveerd"
 ]
@@ -83,7 +83,7 @@ class ListingBase(BaseModel):
     weight: Optional[float] = Field(None, ge=0)
     material: ListingMaterial
     photos: List[str] = Field(default_factory=list, max_length=5)
-    documents: List[str] = Field(default_factory=list, max_length=3)  # Cloudinary URLs van technische fiches (PDF)
+    technicalFiles: List[str] = Field(default_factory=list, max_length=3)
     deadline: Optional[str] = None  # ISO date string
     isRecurrent: bool = False
     dimensions: Optional[str] = None
@@ -120,7 +120,6 @@ class RegisterNewOrg(BaseModel):
     orgCategory: OrgCategory
     orgAddress: Optional[str] = None
     orgWebsite: Optional[str] = None
-    orgVisibleOnPartnerPage: bool = True
     acceptedTerms: bool
 
 
@@ -194,7 +193,6 @@ class OrgUpdate(BaseModel):
     address: Optional[str] = None
     website: Optional[str] = None
     photos: Optional[List[str]] = None
-    visibleOnPartnerPage: Optional[bool] = None
 
 
 class ListingUpdate(BaseModel):
@@ -204,7 +202,7 @@ class ListingUpdate(BaseModel):
     weight: Optional[float] = Field(None, ge=0)
     material: Optional[ListingMaterial] = None
     photos: Optional[List[str]] = None
-    documents: Optional[List[str]] = None
+    technicalFiles: Optional[List[str]] = None
     dimensions: Optional[str] = None
     transport: Optional[str] = None
     deadline: Optional[str] = None
@@ -330,4 +328,4 @@ class AdminOrgUpdate(BaseModel):
     category: Optional[str] = None
     address: Optional[str] = None
     website: Optional[str] = None
-    status: Optional[Literal["pending", "active", "inactive", "rejected"]] = None
+    status: Optional[Literal["pending", "validated", "active", "inactive", "rejected"]] = None

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
-import { uploadToCloudinary, cloudinaryThumb, uploadPdfToCloudinary } from '@/lib/cloudinary';
+import { uploadToCloudinary, uploadPdfToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 
 const MATERIALS = [
@@ -48,9 +48,10 @@ export default function ListingWizard({ editMode = false }) {
   const [loadingListing, setLoadingListing] = useState(editMode);
 
   const [data, setData] = useState({
-    photos: [], documents: [], title: '', description: '', weight: '',
+    photos: [], title: '', description: '', weight: '',
     material: 'Hout', deadline: '', isRecurrent: false,
     dimensions: '', transport: '', placeInWarehouse: false,
+    technicalFiles: [],
   });
 
   useEffect(() => {
@@ -67,7 +68,6 @@ export default function ListingWizard({ editMode = false }) {
         }
         setData({
           photos: listing.photos || [],
-          documents: listing.documents || [],
           title: listing.title || '',
           description: listing.description || '',
           weight: listing.weight?.toString() || '',
@@ -77,6 +77,7 @@ export default function ListingWizard({ editMode = false }) {
           dimensions: listing.dimensions || '',
           transport: listing.transport || '',
           placeInWarehouse: listing.placeInWarehouse || (listing.status === 'in_magazijn'),
+          technicalFiles: listing.technicalFiles || [],
         });
         setLoadingListing(false);
       })
@@ -86,8 +87,6 @@ export default function ListingWizard({ editMode = false }) {
 
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState('');
-  const [pdfUploading, setPdfUploading] = useState(false);
-  const [pdfErr, setPdfErr] = useState('');
 
   const onFilesPicked = async (e) => {
     setUploadErr('');
@@ -117,28 +116,35 @@ export default function ListingWizard({ editMode = false }) {
     setData((d) => ({ ...d, photos: d.photos.filter((_, i) => i !== idx) }));
   };
 
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [pdfErr, setPdfErr] = useState('');
+
   const onPdfPicked = async (e) => {
     setPdfErr('');
     const file = e.target.files?.[0];
     if (!file) return;
-    if (data.documents.length >= 3) {
-      setPdfErr('Maximum 3 PDF bestanden toegestaan.');
+    if (file.size > 10 * 1024 * 1024) {
+      setPdfErr('Bestand is te groot (max. 10 MB).');
       return;
     }
-    setPdfUploading(true);
+    if (data.technicalFiles.length >= 3) {
+      setPdfErr('Maximum 3 PDF bestanden.');
+      return;
+    }
+    setUploadingPdf(true);
     try {
       const url = await uploadPdfToCloudinary(file);
-      setData((d) => ({ ...d, documents: [...d.documents, url] }));
+      setData((d) => ({ ...d, technicalFiles: [...d.technicalFiles, url] }));
     } catch (err) {
       setPdfErr(err.message || 'PDF upload mislukt.');
     } finally {
-      setPdfUploading(false);
+      setUploadingPdf(false);
       e.target.value = '';
     }
   };
 
   const removePdf = (idx) => {
-    setData((d) => ({ ...d, documents: d.documents.filter((_, i) => i !== idx) }));
+    setData((d) => ({ ...d, technicalFiles: d.technicalFiles.filter((_, i) => i !== idx) }));
   };
 
   const next = () => {
@@ -185,7 +191,7 @@ export default function ListingWizard({ editMode = false }) {
         weight: hasWeight ? parsedWeight : (warehouseShortcut ? 0 : parsedWeight),
         material: hasWeight ? data.material : (warehouseShortcut ? 'Ander' : data.material),
         photos: data.photos,
-        documents: data.documents,
+        technicalFiles: data.technicalFiles,
         deadline: data.isRecurrent ? null : (data.deadline || null),
         isRecurrent: data.isRecurrent,
         dimensions: data.dimensions || null,
@@ -266,31 +272,26 @@ export default function ListingWizard({ editMode = false }) {
           </div>
           {uploadErr && <p className="text-sm text-destructive" data-testid="wizard-upload-error">{uploadErr}</p>}
 
-          {/* PDF technische fiches */}
           <div className="border-t border-border pt-6 space-y-3">
-            <p className="label-overline">Technische fiches (optioneel)</p>
+            <p className="overline">TECHNISCHE FICHES <span className="text-muted-foreground normal-case font-normal">({t('common.optional')})</span></p>
             <p className="text-sm text-foreground/75">Voeg maximaal 3 PDF bestanden toe (max. 10 MB per bestand).</p>
-            <div className="space-y-2">
-              {data.documents.map((url, i) => {
-                const filename = url.split('/').pop().split('?')[0];
+            <ul className="space-y-2">
+              {data.technicalFiles.map((url, i) => {
+                const filename = decodeURIComponent(url.split('/').pop().split('?')[0]) || `fiche-${i + 1}.pdf`;
                 return (
-                  <div key={i} className="flex items-center justify-between bg-muted rounded px-3 py-2 text-sm">
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="truncate text-primary underline underline-offset-2 max-w-xs">
-                      {decodeURIComponent(filename)}
-                    </a>
-                    <button onClick={() => removePdf(i)} className="ml-3 text-muted-foreground hover:text-destructive transition text-xs shrink-0">
-                      Verwijder
-                    </button>
-                  </div>
+                  <li key={i} className="flex items-center justify-between bg-muted px-3 py-2 text-sm">
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="industrial-link truncate max-w-xs">{filename}</a>
+                    <button onClick={() => removePdf(i)} className="text-muted-foreground hover:text-foreground ml-4 shrink-0">Verwijder</button>
+                  </li>
                 );
               })}
-              {data.documents.length < 3 && (
-                <label className="inline-flex items-center gap-2 border border-dashed border-border rounded px-4 py-2 cursor-pointer hover:border-foreground transition text-sm text-muted-foreground">
-                  <input type="file" accept="application/pdf" onChange={onPdfPicked} className="hidden" />
-                  {pdfUploading ? 'Uploaden...' : '+ PDF toevoegen'}
-                </label>
-              )}
-            </div>
+            </ul>
+            {data.technicalFiles.length < 3 && (
+              <label className="inline-flex items-center gap-2 border border-border px-4 py-2 text-sm cursor-pointer hover:border-foreground transition-colors">
+                <input type="file" accept="application/pdf" onChange={onPdfPicked} className="hidden" />
+                {uploadingPdf ? 'Uploaden…' : '+ PDF toevoegen'}
+              </label>
+            )}
             {pdfErr && <p className="text-sm text-destructive">{pdfErr}</p>}
           </div>
         </section>
@@ -483,6 +484,9 @@ export default function ListingWizard({ editMode = false }) {
             )}
             {data.dimensions && <Row label={t('listing.wizard_step_dimensions')} value={data.dimensions} />}
             {data.transport && <Row label={t('listing.wizard_step_transport')} value={data.transport} />}
+            {data.technicalFiles.length > 0 && (
+              <Row label={t('listing.technical_files')} value={`${data.technicalFiles.length} PDF${data.technicalFiles.length > 1 ? "'s" : ''}`} />
+            )}
             {isAdmin && data.placeInWarehouse && (
               <Row
                 label={t('nav.warehouse')}
