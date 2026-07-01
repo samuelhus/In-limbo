@@ -2,11 +2,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+
 COPY package*.json ./
-RUN npm ci --silent
+RUN yarn install --network-timeout 300000
 
 COPY . .
-RUN npm run build
+RUN yarn build
 
 # Productie: nginx om de build te serveren
 FROM nginx:alpine
