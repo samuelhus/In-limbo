@@ -26,7 +26,11 @@
     "terug": "Terug",
     "volgende": "Volgende →",
     "optioneel": "optioneel",
-    "geen_resultaten": "Geen resultaten."
+    "geen_resultaten": "Geen resultaten.",
+    "share": "Delen",
+    "share_copy_link": "Kopieer link",
+    "share_copied": "Link gekopieerd",
+    "share_copy_manual": "Kopieer deze link:"
 
   },
   "nav": {
@@ -205,6 +209,7 @@
     "deadline": "Deadline",
     "recurrent": "Recurrent",
     "technical_files": "Technische fiches",
+    "share_text": "Bekijk \"{{title}}\" op In Limbo",
     "offered_by": "Aangeboden door",
     "van": "van",
     "description": "Beschrijving",

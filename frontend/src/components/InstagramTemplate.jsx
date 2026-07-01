@@ -1,4 +1,5 @@
 import React from 'react';
+import { cloudinaryThumb } from '@/lib/cloudinary';
 
 const LOGO_URL = 'https://res.cloudinary.com/dbjizykvb/image/upload/v1782338137/logoil_uoqeoo.png';
 
@@ -12,7 +13,7 @@ export default function InstagramTemplate({ listing }) {
     <div style={{ width: '1080px', height: '1350px', position: 'relative', fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", overflow: 'hidden', backgroundColor: '#1A1A1A' }}>
 
       {photo && (
-        <img src={photo} alt="" crossOrigin="anonymous"
+        <img src={cloudinaryThumb(photo, 1080, 1350)} alt="" crossOrigin="anonymous"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
       )}
 

@@ -26,7 +26,11 @@
     "terug": "Retour",
     "volgende": "Suivant →",
     "optioneel": "optionnel",
-    "geen_resultaten": "Aucun résultat."
+    "geen_resultaten": "Aucun résultat.",
+    "share": "Partager",
+    "share_copy_link": "Copier le lien",
+    "share_copied": "Lien copié",
+    "share_copy_manual": "Copiez ce lien :"
   },
   "nav": {
     "catalogus": "Catalogue",
@@ -205,6 +209,7 @@
     "deadline": "Date limite",
     "recurrent": "Récurrent",
     "technical_files": "Fiches techniques",
+    "share_text": "Découvrez \"{{title}}\" sur In Limbo",
     "offered_by": "Proposé par",
     "description": "Description",
     "photos": "Photos",

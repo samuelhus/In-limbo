@@ -6,6 +6,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { cloudinaryThumb, cloudinaryPdfUrl } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 import ApplyModal from '@/components/ApplyModal';
+import ShareButton from '@/components/ShareButton';
 
 const APP_STATUS_KEYS = {
   open: 'listing.status_open',
@@ -86,6 +87,13 @@ export default function ListingDetail() {
             {item.isRecurrent && (
               <span className="overline">{t('listing.recurrent')}</span>
             )}
+            <div className="ml-auto">
+              <ShareButton
+                title={item.title}
+                text={t('listing.share_text', { title: item.title })}
+                testId="listing-share-button"
+              />
+            </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-6">{item.title}</h1>
 
