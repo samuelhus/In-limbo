@@ -548,6 +548,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
 // Delete confirmation modal
 // ---------------------------------------------------------------------------
 function DeleteConfirmModal({ busy, error, onCancel, onConfirm }) {
+  const { t } = useTranslation();
   return (
     <div
       className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fade-in"
