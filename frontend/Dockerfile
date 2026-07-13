@@ -8,6 +8,11 @@ COPY package*.json ./
 RUN yarn install --network-timeout 300000
 
 COPY . .
+
+# Relatief pad: nginx (hieronder) stuurt /api door naar de backend-container.
+ARG REACT_APP_BACKEND_URL=""
+ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
+
 RUN yarn build
 
 # Productie: nginx om de build te serveren
