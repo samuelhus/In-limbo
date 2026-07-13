@@ -4,6 +4,7 @@ import '@/index.css';
 import '@/App.css';
 
 import { AuthProvider } from '@/contexts/AuthContext';
+import TestBanner from '@/components/TestBanner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -54,6 +55,7 @@ export default function App() {
       <ScrollToTop />
       <AuthProvider>
         <div className="min-h-screen flex flex-col">
+          <TestBanner />
           <Header />
           <main className="flex-1">
             <Routes>
