@@ -26,6 +26,10 @@ SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/")
 MAILERLITE_API_KEY = os.environ.get("MAILERLITE_API_KEY", "")
 MAILERLITE_GROUP_ID = os.environ.get("MAILERLITE_GROUP_ID", "")
+# Vast e-mailadres dat altijd een kopie krijgt van contactformulier-berichten,
+# los van welke gebruikers de rol "admin" hebben. Handig tijdens de testfase
+# of als er (nog) geen admin-accounts in de database staan.
+CONTACT_FALLBACK_EMAIL = os.environ.get("CONTACT_FALLBACK_EMAIL", "info@inlimbo.brussels").strip()
 
 LOGO_URL = (
     "https://res.cloudinary.com/dbjizykvb/image/upload/v1782338137/logoil_uoqeoo.png"
@@ -182,38 +186,46 @@ async def sync_to_mailerlite(email: str) -> bool:
 async def notify_admins_contact_message(
     db, name: str, email: str, message: str,
 ) -> None:
-    """Email + in-app notify all admins about a new public contact-form submission."""
+    """Notify about a new public contact-form submission.
+
+    E-mail gaat uitsluitend naar CONTACT_FALLBACK_EMAIL (vast adres). Admins
+    krijgen nog wel een in-app notificatie in het admin-panel, maar geen
+    aparte e-mail meer — zo komt er maar één mail binnen per bericht.
+    """
+    safe_msg = (message or "").replace("\n", "<br/>")
+    in_app = f"Nieuw contactbericht van {name} ({email})"
+    email_html = render_email(
+        title="Nieuw contactbericht",
+        body_lines=[
+            f"<strong>{name}</strong> ({email}) heeft een bericht achtergelaten via /contact.",
+            f"<em>{safe_msg}</em>",
+        ],
+        cta_text="Admin panel openen →",
+        cta_url=f"{FRONTEND_URL}/admin",
+    )
+
+    if CONTACT_FALLBACK_EMAIL:
+        await send_email(
+            to_email=CONTACT_FALLBACK_EMAIL,
+            subject=f"Contactbericht: {name}",
+            html_content=email_html,
+        )
+    else:
+        logger.warning(
+            "notify_admins_contact_message: CONTACT_FALLBACK_EMAIL niet ingesteld, geen e-mail verstuurd"
+        )
+
     try:
         admins = await db.users.find(
             {"role": "admin"},
-            {"_id": 0, "id": 1, "email": 1},
+            {"_id": 0, "id": 1},
         ).to_list(None)
-        if not admins:
-            logger.warning("notify_admins_contact_message: geen admins gevonden")
-            return
-
-        safe_msg = (message or "").replace("\n", "<br/>")
-        in_app = f"Nieuw contactbericht van {name} ({email})"
-        email_html = render_email(
-            title="Nieuw contactbericht",
-            body_lines=[
-                f"<strong>{name}</strong> ({email}) heeft een bericht achtergelaten via /contact.",
-                f"<em>{safe_msg}</em>",
-            ],
-            cta_text="Admin panel openen →",
-            cta_url=f"{FRONTEND_URL}/admin",
-        )
         for admin in admins:
             await create_notification(
                 db=db,
                 user_id=admin["id"],
                 n_type="contact_message",
                 message=in_app,
-            )
-            await send_email(
-                to_email=admin.get("email"),
-                subject=f"Contactbericht: {name}",
-                html_content=email_html,
             )
     except Exception as e:
         logger.warning("notify_admins_contact_message failed: %s", e)
