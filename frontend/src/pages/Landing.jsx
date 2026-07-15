@@ -137,15 +137,20 @@ export default function Landing() {
             </div>
 
             {/* MOBILE: widget onder knoppen */}
+            {/*tijdelijk uitgeschakeld
+            
             <div className="mt-10 md:hidden">
               <MagazijnWidget align="left" />
-            </div>
+            </div>*/}
+            
           </div>
 
           {/* DESKTOP: widget rechts in hero */}
+          {/*tijdelijk uitgeschakeld
           <div className="md:col-span-5 hidden md:flex justify-end items-end">
             <MagazijnWidget align="right" />
-          </div>
+          </div>*/}
+
         </div>
       </section>
 

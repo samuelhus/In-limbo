@@ -68,7 +68,7 @@ export default function Contact() {
             <div className="text-foreground/80 text-sm leading-relaxed space-y-4">
               <div>
                 <p className="font-medium text-foreground">{t('contact.address_label')}</p>
-                <p>Fernand Demetskaai 34b<br />Anderlecht, Brussel</p>
+                <p>Fernand Demetskaai 46<br />Anderlecht, Brussel</p>
               </div>
               <div>
                 <p className="font-medium text-foreground">{t('contact.hours_label')}</p>
