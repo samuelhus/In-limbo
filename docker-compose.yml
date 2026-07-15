@@ -11,6 +11,7 @@ services:
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
       RESEND_API_KEY: ${RESEND_API_KEY}
       FRONTEND_URL: ${FRONTEND_URL}
+      SENDER_EMAIL: ${SENDER_EMAIL}
     expose:
       - "8000"
     depends_on:
