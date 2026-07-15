@@ -683,6 +683,11 @@
     "volgende": "Volgende →",
     "optioneel": "optioneel",
     "geen_resultaten": "Geen resultaten."
+  },
+
+  "testBanner": {
+    "message": "Dit is de <0>nieuwe website van In Limbo</0>, momenteel in een <1>publieke testfase</1>. Gebruik de site gerust en stuur je opmerkingen naar <2>{{email}}</2>.",
+    "close": "Sluiten"
   }
 
 

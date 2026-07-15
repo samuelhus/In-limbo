@@ -706,7 +706,11 @@
     "volgende": "Suivant →",
     "optioneel": "optionnel",
     "geen_resultaten": "Aucun résultat."
-  }
+  },
 
+  "testBanner": {
+    "message": "Ceci est le <0>nouveau site web de In Limbo</0>, actuellement en <1>phase de test publique</1>. N'hésitez pas à utiliser le site et à nous envoyer vos remarques à <2>{{email}}</2>.",
+    "close": "Fermer"
+  }
 
 }
