@@ -120,6 +120,7 @@ class RegisterNewOrg(BaseModel):
     orgCategory: OrgCategory
     orgAddress: Optional[str] = None
     orgWebsite: Optional[str] = None
+    orgVisibleOnPartnerPage: bool = True
     acceptedTerms: bool
 
 
