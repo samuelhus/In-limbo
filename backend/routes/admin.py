@@ -234,6 +234,8 @@ async def admin_update_organisation(org_id: str, body: AdminOrgUpdate, admin: di
         update["website"] = body.website
     if body.status is not None:
         update["status"] = body.status
+    if body.photos is not None:
+        update["photos"] = body.photos
     await db.organisations.update_one({"id": org_id}, {"$set": update})
     updated = await db.organisations.find_one({"id": org_id}, {"_id": 0})
     return strip_mongo(updated)

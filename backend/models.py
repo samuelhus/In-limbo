@@ -330,3 +330,4 @@ class AdminOrgUpdate(BaseModel):
     address: Optional[str] = None
     website: Optional[str] = None
     status: Optional[Literal["pending", "validated", "active", "inactive", "rejected"]] = None
+    photos: Optional[List[str]] = None

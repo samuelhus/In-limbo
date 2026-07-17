@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import { api, formatApiError } from '@/lib/api';
+import { uploadToCloudinary, cloudinaryThumb } from '@/lib/cloudinary';
 import AdminNieuws from './AdminNieuws';
 import StatusBadge from '@/components/StatusBadge';
 import { Link } from 'react-router-dom';
@@ -1142,7 +1143,39 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
     address: org.address || '',
     website: org.website || '',
     status: org.status || 'pending',
+    photos: org.photos || [],
   });
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState('');
+
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const room = 5 - form.photos.length;
+    if (files.length > room) {
+      setUploadErr(`Je kan nog maximaal ${room} foto('s) toevoegen.`);
+      return;
+    }
+    setUploading(true);
+    setUploadErr('');
+    try {
+      const urls = [];
+      for (const f of files) {
+        urls.push(await uploadToCloudinary(f));
+      }
+      setForm((f) => ({ ...f, photos: [...f.photos, ...urls] }));
+    } catch (err) {
+      setUploadErr(err.message || 'Foto upload mislukt.');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const removePhoto = (idx) => {
+    setForm((f) => ({ ...f, photos: f.photos.filter((_, i) => i !== idx) }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" data-testid="admin-org-edit-modal">
       <div className="bg-background border border-border p-8 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
@@ -1181,8 +1214,30 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
             {ORG_STATUSES.map((s) => <option key={s} value={s}>{t(`status.${s}`, { defaultValue: s })}</option>)}
           </select>
         </div>
+        <div>
+          <label className="label-overline">Foto's</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {form.photos.map((url, i) => (
+              <div key={i} className="relative">
+                <img src={cloudinaryThumb(url, 80, 80)} alt="" className="w-20 h-20 object-cover rounded" />
+                <button type="button" onClick={() => removePhoto(i)}
+                        className="absolute -top-2 -right-2 bg-destructive text-white rounded-full w-5 h-5 text-xs leading-5">
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          {form.photos.length < 5 && (
+            <label className="btn-secondary !py-1 px-3 text-xs cursor-pointer inline-block">
+              {uploading ? 'Uploaden…' : '+ Foto toevoegen'}
+              <input type="file" accept="image/*" multiple hidden
+                     onChange={handlePhotoUpload} disabled={uploading} />
+            </label>
+          )}
+          {uploadErr && <p className="text-sm text-destructive mt-1">{uploadErr}</p>}
+        </div>
         <div className="flex gap-3 pt-4">
-          <button onClick={() => onSave(org.id, form)} disabled={busy} className="btn-primary"
+          <button onClick={() => onSave(org.id, form)} disabled={busy || uploading} className="btn-primary"
                   data-testid="admin-org-edit-save">Opslaan</button>
           <button onClick={onClose} className="btn-secondary">Annuleren</button>
         </div>
