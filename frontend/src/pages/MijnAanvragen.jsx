@@ -7,6 +7,7 @@ import { cloudinaryThumb } from '@/lib/cloudinary';
 const STATUS_GROUPS = [
   { key: 'selected', labelKey: 'applications.status_selected', tone: 'border-green-500 bg-green-50' },
   { key: 'open', labelKey: 'applications.status_open', tone: 'border-foreground bg-surface' },
+  { key: 'not_selected', labelKey: 'applications.status_not_selected', tone: 'border-red-500 bg-red-50' },
   { key: 'withdrawn', labelKey: 'applications.status_withdrawn', tone: 'border-border bg-muted/50 opacity-70' },
 ];
 
