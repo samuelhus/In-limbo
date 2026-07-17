@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { CATEGORY_LABELS, CATEGORY_COLORS, formatDateNL } from './Nieuws';
 
 const HERO_BG =
@@ -75,6 +76,8 @@ function MagazijnWidget({ align = 'right' }) {
 
 export default function Landing() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const isLoggedIn = user && typeof user === 'object';
   const [news, setNews] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const timerRef = useRef(null);
@@ -128,12 +131,20 @@ export default function Landing() {
               <Link to="/catalogus" className="btn-primary" data-testid="hero-catalogus-btn">
                 {t('landing.explore_catalogus')}
               </Link>
-              <Link to="/registreer" className="btn-secondary" data-testid="hero-register-btn">
-                {t('nav.join_member')}
-              </Link>
-              <Link to="/donateur/registreer" className="btn-secondary" data-testid="hero-donateur-btn">
-                {t('nav.donate_material')}
-              </Link>
+              {isLoggedIn ? (
+                <Link to="/aanbieding/nieuw" className="btn-primary" data-testid="hero-new-listing-btn">
+                  {t('nav.new_listing')}
+                </Link>
+              ) : (
+                <>
+                  <Link to="/registreer" className="btn-secondary" data-testid="hero-register-btn">
+                    {t('nav.join_member')}
+                  </Link>
+                  <Link to="/donateur/registreer" className="btn-secondary" data-testid="hero-donateur-btn">
+                    {t('nav.donate_material')}
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* MOBILE: widget onder knoppen */}
@@ -294,21 +305,23 @@ export default function Landing() {
       )}
 
       {/* CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 border-t border-border">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight max-w-2xl">
-            {t('landing.cta_section_title')}
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            <Link to="/registreer" className="btn-primary" data-testid="cta-register-btn">
-              {t('auth.register_link')} →
-            </Link>
-            <Link to="/donateur/registreer" className="btn-secondary" data-testid="cta-donateur-btn">
-              {t('nav.donate_material')} →
-            </Link>
+      {!isLoggedIn && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 border-t border-border">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight max-w-2xl">
+              {t('landing.cta_section_title')}
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/registreer" className="btn-primary" data-testid="cta-register-btn">
+                {t('auth.register_link')} →
+              </Link>
+              <Link to="/donateur/registreer" className="btn-secondary" data-testid="cta-donateur-btn">
+                {t('nav.donate_material')} →
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
