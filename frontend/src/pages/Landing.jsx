@@ -133,7 +133,7 @@ export default function Landing() {
               </Link>
               {isLoggedIn ? (
                 <Link to="/aanbieding/nieuw" className="btn-primary" data-testid="hero-new-listing-btn">
-                  {t('nav.new_listing')}
+                  {t('nav.new_listing')} →
                 </Link>
               ) : (
                 <>
