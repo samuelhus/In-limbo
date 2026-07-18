@@ -17,18 +17,10 @@ export function formatDateNL(iso) {
   });
 }
 
-function LanguageTag({ language, t }) {
-  if (!language) return null;
-  return (
-    <span className="text-[10px] font-semibold tracking-widest border border-current px-1.5 py-0.5 rounded-sm opacity-70">
-      {language === 'fr' ? t('news.language_fr') : t('news.language_nl')}
-    </span>
-  );
-}
-
-function NieuwsCard({ post, t }) {
+function NieuwsCard({ post, t, lang }) {
   const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.nieuws;
   const label = t(`news.category_${post.category}`);
+  const title = lang === 'fr' ? (post.titleFr || post.titleNl) : (post.titleNl || post.titleFr);
   return (
     <Link
       to={`/nieuws/${post.id}`}
@@ -39,7 +31,7 @@ function NieuwsCard({ post, t }) {
         {post.photo ? (
           <img
             src={post.photo}
-            alt={post.title}
+            alt={title}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
           />
         ) : (
@@ -52,12 +44,9 @@ function NieuwsCard({ post, t }) {
         )}
       </div>
       <div className="p-5">
-        <div className="flex items-center gap-2">
-          <p className="overline" style={{ color }}>{label}</p>
-          <LanguageTag language={post.language} t={t} />
-        </div>
+        <p className="overline" style={{ color }}>{label}</p>
         <h3 className="mt-2 text-xl font-semibold tracking-tight leading-tight">
-          {post.title}
+          {title}
         </h3>
         <p className="mt-3 text-xs text-muted-foreground">
           {formatDateNL(post.createdAt)}
@@ -68,15 +57,16 @@ function NieuwsCard({ post, t }) {
 }
 
 export default function Nieuws() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     api.get('/news', { params: { postType: 'nieuws' } })
-      .then(({ data }) => setPosts(data))
+      .then(({ data }) => setPosts(data.filter((p) => p.languages?.includes(lang))))
       .catch(() => setError('Kon nieuws niet laden.'));
-  }, []);
+  }, [lang]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16" data-testid="nieuws-page">
@@ -94,7 +84,7 @@ export default function Nieuws() {
       {posts && posts.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((p) => (
-            <NieuwsCard key={p.id} post={p} t={t} />
+            <NieuwsCard key={p.id} post={p} t={t} lang={lang} />
           ))}
         </div>
       )}

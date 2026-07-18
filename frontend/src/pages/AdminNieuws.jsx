@@ -20,9 +20,7 @@ const CATEGORY_LABELS = {
 const EMPTY = {
   postType: 'nieuws',
   category: 'nieuws',
-  language: 'nl',
-  title: '',
-  content: '',
+  languages: ['nl'],
   photo: '',
   titleNl: '',
   titleFr: '',
@@ -57,9 +55,7 @@ export default function AdminNieuws() {
     setForm({
       postType: p.postType,
       category: p.category,
-      language: p.language || 'nl',
-      title: p.title || '',
-      content: p.content || '',
+      languages: p.languages && p.languages.length ? p.languages : ['nl'],
       photo: p.photo || '',
       titleNl: p.titleNl || '',
       titleFr: p.titleFr || '',
@@ -73,6 +69,14 @@ export default function AdminNieuws() {
   };
 
   const cancel = () => { setEditing(null); setForm(EMPTY); setError(''); };
+
+  const toggleLanguage = (lang) => {
+    setForm((f) => {
+      const has = f.languages.includes(lang);
+      const next = has ? f.languages.filter((l) => l !== lang) : [...f.languages, lang];
+      return { ...f, languages: next };
+    });
+  };
 
   const switchPostType = (postType) => {
     setForm({
@@ -134,14 +138,23 @@ export default function AdminNieuws() {
     try {
       let payload;
       if (form.postType === 'nieuws') {
+        if (form.languages.length === 0) {
+          throw new Error('Kies minstens één taal (NL en/of FR).');
+        }
         payload = {
           postType: 'nieuws',
           category: form.category,
-          language: form.language,
-          title: form.title.trim(),
-          content: form.content.trim(),
+          languages: form.languages,
           photo: form.photo || null,
         };
+        if (form.languages.includes('nl')) {
+          payload.titleNl = form.titleNl.trim();
+          payload.contentNl = form.contentNl.trim();
+        }
+        if (form.languages.includes('fr')) {
+          payload.titleFr = form.titleFr.trim();
+          payload.contentFr = form.contentFr.trim();
+        }
       } else {
         payload = {
           postType: 'inspiratie',
@@ -170,7 +183,7 @@ export default function AdminNieuws() {
   };
 
   const remove = async (post) => {
-    const label = post.postType === 'nieuws' ? post.title : post.titleNl;
+    const label = post.titleNl || post.titleFr;
     if (!window.confirm(`Bericht "${label}" verwijderen?`)) return;
     try {
       await api.delete(`/news/${post.id}`);
@@ -234,29 +247,30 @@ export default function AdminNieuws() {
           {form.postType === 'nieuws' ? (
             <>
               <div>
-                <label className="label-overline">Taal</label>
-                <select
-                  className="input-flat"
-                  value={form.language}
-                  onChange={(e) => setForm({ ...form, language: e.target.value })}
-                  data-testid="admin-nieuws-language"
-                >
-                  <option value="nl">Nederlands</option>
-                  <option value="fr">Français</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="label-overline">Titel</label>
-                <input
-                  type="text"
-                  className="input-flat"
-                  value={form.title}
-                  maxLength={100}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  required
-                  data-testid="admin-nieuws-title"
-                />
+                <label className="label-overline">Talen</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.languages.includes('nl')}
+                      onChange={() => toggleLanguage('nl')}
+                      data-testid="admin-nieuws-lang-nl"
+                    />
+                    Nederlands
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.languages.includes('fr')}
+                      onChange={() => toggleLanguage('fr')}
+                      data-testid="admin-nieuws-lang-fr"
+                    />
+                    Français
+                  </label>
+                </div>
+                {form.languages.length === 0 && (
+                  <p className="text-xs text-destructive mt-1">Kies minstens één taal.</p>
+                )}
               </div>
 
               <div>
@@ -286,19 +300,65 @@ export default function AdminNieuws() {
                 {uploading && <p className="text-xs text-muted-foreground mt-1">Uploaden…</p>}
               </div>
 
-              <div>
-                <label className="label-overline">Inhoud</label>
-                <textarea
-                  rows={10}
-                  className="input-flat font-normal"
-                  value={form.content}
-                  maxLength={5000}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  required
-                  data-testid="admin-nieuws-content"
-                />
-                <p className="text-xs text-muted-foreground mt-1">{form.content.length}/5000</p>
-              </div>
+              {form.languages.includes('nl') && (
+                <>
+                  <div>
+                    <label className="label-overline">Titel (NL)</label>
+                    <input
+                      type="text"
+                      className="input-flat"
+                      value={form.titleNl}
+                      maxLength={100}
+                      onChange={(e) => setForm({ ...form, titleNl: e.target.value })}
+                      required
+                      data-testid="admin-nieuws-title-nl"
+                    />
+                  </div>
+                  <div>
+                    <label className="label-overline">Inhoud (NL)</label>
+                    <textarea
+                      rows={10}
+                      className="input-flat font-normal"
+                      value={form.contentNl}
+                      maxLength={5000}
+                      onChange={(e) => setForm({ ...form, contentNl: e.target.value })}
+                      required
+                      data-testid="admin-nieuws-content-nl"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">{form.contentNl.length}/5000</p>
+                  </div>
+                </>
+              )}
+
+              {form.languages.includes('fr') && (
+                <>
+                  <div>
+                    <label className="label-overline">Titel (FR)</label>
+                    <input
+                      type="text"
+                      className="input-flat"
+                      value={form.titleFr}
+                      maxLength={100}
+                      onChange={(e) => setForm({ ...form, titleFr: e.target.value })}
+                      required
+                      data-testid="admin-nieuws-title-fr"
+                    />
+                  </div>
+                  <div>
+                    <label className="label-overline">Inhoud (FR)</label>
+                    <textarea
+                      rows={10}
+                      className="input-flat font-normal"
+                      value={form.contentFr}
+                      maxLength={5000}
+                      onChange={(e) => setForm({ ...form, contentFr: e.target.value })}
+                      required
+                      data-testid="admin-nieuws-content-fr"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">{form.contentFr.length}/5000</p>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <>
@@ -463,14 +523,18 @@ export default function AdminNieuws() {
 
       <ul className="divide-y divide-border border-y border-border">
         {posts.map((p) => {
-          const displayTitle = p.postType === 'nieuws' ? p.title : p.titleNl;
+          const displayTitle = p.titleNl || p.titleFr;
           const typeLabel = p.postType === 'nieuws' ? 'Nieuws' : 'Inspiratie';
+          const langLabel = p.postType === 'nieuws' && p.languages
+            ? p.languages.map((l) => l.toUpperCase()).join(' + ')
+            : null;
           return (
             <li key={p.id} className="py-5 grid grid-cols-1 md:grid-cols-12 gap-3 items-start" data-testid={`admin-nieuws-item-${p.id}`}>
               <div className="md:col-span-8">
                 <p className="font-medium">{displayTitle}</p>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
                   {typeLabel} · {CATEGORY_LABELS[p.category]} · {formatDateNL(p.createdAt)}
+                  {langLabel ? ` · ${langLabel}` : ''}
                 </p>
               </div>
               <div className="md:col-span-4 flex flex-wrap gap-2 md:justify-end">

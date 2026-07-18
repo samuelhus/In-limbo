@@ -5,16 +5,23 @@ import { api, formatApiError } from '@/lib/api';
 import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
 
 export default function NieuwsDetail() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     api.get(`/news/${id}`)
-      .then(({ data }) => setPost(data))
+      .then(({ data }) => {
+        if (data.postType === 'nieuws' && !data.languages?.includes(lang)) {
+          setError(t('news.not_available_in_language'));
+          return;
+        }
+        setPost(data);
+      })
       .catch((e) => setError(formatApiError(e)));
-  }, [id]);
+  }, [id, lang, t]);
 
   if (error) {
     return (
@@ -33,7 +40,8 @@ export default function NieuwsDetail() {
 
   const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.nieuws;
   const label = t(`news.category_${post.category}`);
-  const languageLabel = post.language === 'fr' ? t('news.language_fr') : t('news.language_nl');
+  const title = lang === 'fr' ? (post.titleFr || post.titleNl) : (post.titleNl || post.titleFr);
+  const content = lang === 'fr' ? (post.contentFr || post.contentNl) : (post.contentNl || post.contentFr);
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12" data-testid="nieuws-detail-page">
@@ -47,7 +55,7 @@ export default function NieuwsDetail() {
 
       {post.photo && (
         <div className="aspect-[16/9] overflow-hidden mb-10">
-          <img src={post.photo} alt={post.title} className="w-full h-full object-cover" />
+          <img src={post.photo} alt={title} className="w-full h-full object-cover" />
         </div>
       )}
 
@@ -59,21 +67,17 @@ export default function NieuwsDetail() {
         <span className="text-muted-foreground" data-testid="nieuws-detail-date">
           {formatDateNL(post.createdAt)}
         </span>
-        <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-        <span className="text-muted-foreground border border-current px-1.5 py-0.5 rounded-sm text-[10px]">
-          {languageLabel}
-        </span>
       </p>
 
       <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05] mb-10">
-        {post.title}
+        {title}
       </h1>
 
       <div
         className="prose prose-neutral max-w-none text-foreground/85 leading-relaxed whitespace-pre-wrap text-lg"
         data-testid="nieuws-detail-content"
       >
-        {post.content}
+        {content}
       </div>
     </article>
   );

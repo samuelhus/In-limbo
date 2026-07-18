@@ -12,7 +12,7 @@ from auth import get_admin_user
 router = APIRouter()
 
 FIELDS = [
-    "postType", "category", "language", "title", "content", "photo",
+    "postType", "category", "languages", "photo",
     "titleNl", "titleFr", "contentNl", "contentFr", "photos", "link",
 ]
 

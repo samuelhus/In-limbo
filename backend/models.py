@@ -229,17 +229,19 @@ class NewsPostBase(BaseModel):
     postType: PostType
     category: str
 
-    # ---- nieuws-only fields ----
-    language: Optional[PostLanguage] = None
-    title: Optional[str] = Field(None, max_length=100)
-    content: Optional[str] = Field(None, max_length=5000)
+    # ---- nieuws: gekozen taal/talen (checkbox NL en/of FR) ----
+    languages: Optional[List[PostLanguage]] = None
     photo: Optional[str] = None
 
-    # ---- inspiratie-only fields (NL+FR) ----
+    # ---- gedeeld: titel/inhoud per taal ----
+    # nieuws: enkel de gekozen taal/talen (uit 'languages') verplicht in te vullen
+    # inspiratie: altijd beide talen verplicht
     titleNl: Optional[str] = Field(None, max_length=100)
     titleFr: Optional[str] = Field(None, max_length=100)
     contentNl: Optional[str] = Field(None, max_length=5000)
     contentFr: Optional[str] = Field(None, max_length=5000)
+
+    # ---- inspiratie-only fields ----
     photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
     link: Optional[str] = None
 
@@ -248,12 +250,14 @@ class NewsPostBase(BaseModel):
         if self.postType == 'nieuws':
             if self.category not in NIEUWS_CATEGORIES:
                 raise ValueError(f"Ongeldige categorie voor nieuws: {self.category}")
-            if not self.title:
-                raise ValueError("Titel is verplicht voor nieuws")
-            if not self.content:
-                raise ValueError("Inhoud is verplicht voor nieuws")
-            if self.language not in ('nl', 'fr'):
-                raise ValueError("Taal (nl of fr) is verplicht voor nieuws")
+            if not self.languages:
+                raise ValueError("Kies minstens één taal (NL en/of FR)")
+            if set(self.languages) - {'nl', 'fr'}:
+                raise ValueError("Ongeldige taal opgegeven")
+            if 'nl' in self.languages and (not self.titleNl or not self.contentNl):
+                raise ValueError("Titel en inhoud in NL zijn verplicht wanneer NL is aangevinkt")
+            if 'fr' in self.languages and (not self.titleFr or not self.contentFr):
+                raise ValueError("Titel en inhoud in FR zijn verplicht wanneer FR is aangevinkt")
         else:
             if self.category not in INSPIRATIE_CATEGORIES:
                 raise ValueError(f"Ongeldige categorie voor inspiratie: {self.category}")
@@ -276,9 +280,7 @@ class NewsPostUpdate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     postType: Optional[PostType] = None
     category: Optional[str] = None
-    language: Optional[PostLanguage] = None
-    title: Optional[str] = Field(None, max_length=100)
-    content: Optional[str] = Field(None, max_length=5000)
+    languages: Optional[List[PostLanguage]] = None
     photo: Optional[str] = None
     titleNl: Optional[str] = Field(None, max_length=100)
     titleFr: Optional[str] = Field(None, max_length=100)
