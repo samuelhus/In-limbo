@@ -610,7 +610,7 @@ function SelectedContactBanner({ contact, title }) {
       <p className="overline text-green-900 mb-2">{title}</p>
       <p className="text-foreground text-sm mb-3 leading-relaxed">
         {t('listing.geselecteerd_contact')}
-        om een afspraak te maken.
+        
       </p>
       <p className="font-semibold text-foreground">
         {contact.firstName} {contact.lastName}
