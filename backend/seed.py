@@ -9,6 +9,13 @@ from models import OrgCategory
 
 VALID_ORG_CATEGORIES = set(typing.get_args(OrgCategory)) - {""}
 
+# Test-/demo-data (orgs, gebruikers, listings) wordt enkel geseed als deze
+# omgevingsvariabele expliciet op "true" staat. Standaard (bv. op de
+# productie-droplet) blijft dit uit, zodat testaccounts niet steeds
+# terugkeren. Op de staging/test-omgeving waar de integratietests tegen
+# draaien, zet je SEED_TEST_DATA=true in de .env.
+SEED_TEST_DATA = os.environ.get("SEED_TEST_DATA", "false").strip().lower() == "true"
+
 
 def _iso_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -62,6 +69,9 @@ async def seed(db) -> None:
             )
 
     # 2. Validated orgs --------------------------------------------------
+    if not SEED_TEST_DATA:
+        return
+
     seed_marker = await db.organisations.find_one({"_seed": True})
     if seed_marker:
         return
