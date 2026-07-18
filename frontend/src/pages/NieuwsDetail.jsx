@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
-import { CATEGORY_LABELS, CATEGORY_COLORS, formatDateNL } from './Nieuws';
+import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
 
 export default function NieuwsDetail() {
   const { t } = useTranslation();
@@ -31,7 +31,9 @@ export default function NieuwsDetail() {
     );
   }
 
-  const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.ander;
+  const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.nieuws;
+  const label = t(`news.category_${post.category}`);
+  const languageLabel = post.language === 'fr' ? t('news.language_fr') : t('news.language_nl');
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12" data-testid="nieuws-detail-page">
@@ -51,11 +53,15 @@ export default function NieuwsDetail() {
 
       <p className="flex items-center gap-3 text-xs uppercase tracking-widest mb-4">
         <span style={{ color }} data-testid="nieuws-detail-category">
-          {CATEGORY_LABELS[post.category]}
+          {label}
         </span>
         <span className="w-1 h-1 rounded-full bg-muted-foreground" />
         <span className="text-muted-foreground" data-testid="nieuws-detail-date">
           {formatDateNL(post.createdAt)}
+        </span>
+        <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+        <span className="text-muted-foreground border border-current px-1.5 py-0.5 rounded-sm text-[10px]">
+          {languageLabel}
         </span>
       </p>
 

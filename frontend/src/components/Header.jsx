@@ -31,6 +31,8 @@ export default function Header() {
   const [mobileAanbiedingenOpen, setMobileAanbiedingenOpen] = useState(false);
   const [overOnsOpen, setOverOnsOpen] = useState(false);
   const [mobileOverOnsOpen, setMobileOverOnsOpen] = useState(false);
+  const [nieuwsOpen, setNieuwsOpen] = useState(false);
+  const [mobileNieuwsOpen, setMobileNieuwsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function Header() {
   const hamburgerRef = useRef(null);
   const aanbiedingenRef = useRef(null);
   const overOnsRef = useRef(null);
+  const nieuwsRef = useRef(null);
 
   // Sluit mobiel menu bij klik buiten
   useEffect(() => {
@@ -78,6 +81,15 @@ export default function Header() {
   }, [aanbiedingenOpen]);
 
   // Sluit over ons dropdown bij klik buiten
+  useEffect(() => {
+    if (!nieuwsOpen) return;
+    const handler = (e) => {
+      if (nieuwsRef.current && !nieuwsRef.current.contains(e.target)) setNieuwsOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [nieuwsOpen]);
+
   useEffect(() => {
     if (!overOnsOpen) return;
     const onMouseDown = (e) => {
@@ -126,13 +138,41 @@ export default function Header() {
             {t('nav.catalogus')}
           </NavLink>
 
-          <NavLink
-            to="/nieuws"
-            data-testid="nav-nieuws"
-            className={({ isActive }) => `${navLink} ${isActive ? activeLink : ''}`}
-          >
-            {t('nav.news')}
-          </NavLink>
+          <div className="relative" ref={nieuwsRef}>
+            <button
+              onClick={() => setNieuwsOpen((v) => !v)}
+              className={`${navLink} flex items-center gap-1`}
+              data-testid="nav-nieuws-dropdown"
+            >
+              {t('nav.news')}
+              <ChevronDown
+                size={14}
+                className={`transition-transform duration-200 ${nieuwsOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {nieuwsOpen && (
+              <div className="absolute left-0 top-full mt-2 w-44 bg-background border border-border shadow-lg z-50">
+                <NavLink
+                  to="/nieuws"
+                  data-testid="nav-nieuws"
+                  className={({ isActive }) =>
+                    `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                  }
+                >
+                  {t('nav.news')}
+                </NavLink>
+                <NavLink
+                  to="/inspiratie"
+                  data-testid="nav-inspiratie"
+                  className={({ isActive }) =>
+                    `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
+                  }
+                >
+                  {t('nav.inspiratie')}
+                </NavLink>
+              </div>
+            )}
+          </div>
 
           {showAanbiedingen && (
             <div className="relative" ref={aanbiedingenRef}>
@@ -324,14 +364,37 @@ export default function Header() {
                 {t('nav.catalogus')}
               </NavLink>
 
-              <NavLink
-                to="/nieuws"
-                data-testid="mobile-nav-nieuws"
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
+              <button
+                onClick={() => setMobileNieuwsOpen((v) => !v)}
+                className={`${mobileItemClass} w-full text-left flex items-center justify-between`}
+                data-testid="mobile-nav-nieuws-dropdown"
               >
                 {t('nav.news')}
-              </NavLink>
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 ${mobileNieuwsOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {mobileNieuwsOpen && (
+                <>
+                  <NavLink
+                    to="/nieuws"
+                    data-testid="mobile-nav-nieuws"
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                  >
+                    → {t('nav.news')}
+                  </NavLink>
+                  <NavLink
+                    to="/inspiratie"
+                    data-testid="mobile-nav-inspiratie"
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                  >
+                    → {t('nav.inspiratie')}
+                  </NavLink>
+                </>
+              )}
 
               {showAanbiedingen && (
                 <>

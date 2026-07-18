@@ -1,0 +1,113 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { api, formatApiError } from '@/lib/api';
+import { formatDateNL } from './Nieuws';
+import { INSPIRATIE_CATEGORY_COLORS } from './Inspiratie';
+
+function pickField(post, base, lang) {
+  const primary = post[`${base}${lang === 'fr' ? 'Fr' : 'Nl'}`];
+  const fallback = post[`${base}${lang === 'fr' ? 'Nl' : 'Fr'}`];
+  return primary || fallback || '';
+}
+
+export default function InspiratieDetail() {
+  const { t, i18n } = useTranslation();
+  const { id } = useParams();
+  const [post, setPost] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.get(`/news/${id}`)
+      .then(({ data }) => setPost(data))
+      .catch((e) => setError(formatApiError(e)));
+  }, [id]);
+
+  if (error) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-24" data-testid="inspiratie-detail-error">
+        <p className="text-destructive">{error}</p>
+        <Link to="/inspiratie" className="industrial-link mt-4 inline-block">{t('inspiratie.back_to_inspiratie')}</Link>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-24 text-muted-foreground">{t('common.loading')}</div>
+    );
+  }
+
+  const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
+  const color = INSPIRATIE_CATEGORY_COLORS[post.category] || INSPIRATIE_CATEGORY_COLORS.artikel;
+  const label = t(`inspiratie.category_${post.category}`);
+  const title = pickField(post, 'title', lang);
+  const content = pickField(post, 'content', lang);
+  const gallery = post.photos && post.photos.length > 0 ? post.photos : (post.photo ? [post.photo] : []);
+
+  return (
+    <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12" data-testid="inspiratie-detail-page">
+      <Link
+        to="/inspiratie"
+        className="industrial-link text-sm mb-8 inline-block"
+        data-testid="inspiratie-detail-back"
+      >
+        {t('inspiratie.back_to_inspiratie')}
+      </Link>
+
+      {gallery.length > 0 && (
+        <div className="mb-10">
+          <div className="aspect-[16/9] overflow-hidden">
+            <img src={gallery[0]} alt={title} className="w-full h-full object-cover" />
+          </div>
+          {gallery.length > 1 && (
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+              {gallery.slice(1).map((url, i) => (
+                <div key={i} className="aspect-square overflow-hidden">
+                  <img
+                    src={url}
+                    alt={`${t('inspiratie.gallery_photo_alt')} ${i + 2}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <p className="flex items-center gap-3 text-xs uppercase tracking-widest mb-4">
+        <span style={{ color }} data-testid="inspiratie-detail-category">
+          {label}
+        </span>
+        <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+        <span className="text-muted-foreground" data-testid="inspiratie-detail-date">
+          {formatDateNL(post.createdAt)}
+        </span>
+      </p>
+
+      <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05] mb-10">
+        {title}
+      </h1>
+
+      <div
+        className="prose prose-neutral max-w-none text-foreground/85 leading-relaxed whitespace-pre-wrap text-lg"
+        data-testid="inspiratie-detail-content"
+      >
+        {content}
+      </div>
+
+      {post.category === 'documentatie' && post.link && (
+        <a
+          href={post.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-primary inline-block mt-10"
+          data-testid="inspiratie-detail-link"
+        >
+          {t('inspiratie.view_document')}
+        </a>
+      )}
+    </article>
+  );
+}

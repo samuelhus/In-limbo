@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional, List, Literal
 import uuid
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, model_validator
 
 
 # ---------- Enums ----------
@@ -211,16 +211,61 @@ class ListingUpdate(BaseModel):
     placeInWarehouse: Optional[bool] = None
 
 
-# ---------- News ----------
-NewsCategory = Literal['evenement', 'artikel', 'giveaway', 'opleidingsmoment', 'oproep', 'ander']
+# ---------- News / Inspiratie ----------
+# "nieuws" = tijdsgebonden content (1 taal + taal-tag), "inspiratie" = tijdloze content (NL+FR)
+PostType = Literal['nieuws', 'inspiratie']
+NieuwsCategory = Literal['nieuws', 'helpende_handen', 'opleiding']
+InspiratieCategory = Literal['artikel', 'partner_project', 'documentatie']
+PostLanguage = Literal['nl', 'fr']
+
+NIEUWS_CATEGORIES = {'nieuws', 'helpende_handen', 'opleiding'}
+INSPIRATIE_CATEGORIES = {'artikel', 'partner_project', 'documentatie'}
+INSPIRATIE_GALLERY_CATEGORIES = {'artikel', 'partner_project'}
+MAX_GALLERY_PHOTOS = 10
 
 
 class NewsPostBase(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
-    title: str = Field(..., max_length=100)
-    category: NewsCategory
-    content: str = Field(..., max_length=5000)
+    postType: PostType
+    category: str
+
+    # ---- nieuws-only fields ----
+    language: Optional[PostLanguage] = None
+    title: Optional[str] = Field(None, max_length=100)
+    content: Optional[str] = Field(None, max_length=5000)
     photo: Optional[str] = None
+
+    # ---- inspiratie-only fields (NL+FR) ----
+    titleNl: Optional[str] = Field(None, max_length=100)
+    titleFr: Optional[str] = Field(None, max_length=100)
+    contentNl: Optional[str] = Field(None, max_length=5000)
+    contentFr: Optional[str] = Field(None, max_length=5000)
+    photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
+    link: Optional[str] = None
+
+    @model_validator(mode='after')
+    def _validate_by_type(self):
+        if self.postType == 'nieuws':
+            if self.category not in NIEUWS_CATEGORIES:
+                raise ValueError(f"Ongeldige categorie voor nieuws: {self.category}")
+            if not self.title:
+                raise ValueError("Titel is verplicht voor nieuws")
+            if not self.content:
+                raise ValueError("Inhoud is verplicht voor nieuws")
+            if self.language not in ('nl', 'fr'):
+                raise ValueError("Taal (nl of fr) is verplicht voor nieuws")
+        else:
+            if self.category not in INSPIRATIE_CATEGORIES:
+                raise ValueError(f"Ongeldige categorie voor inspiratie: {self.category}")
+            if not self.titleNl or not self.titleFr:
+                raise ValueError("Titel in NL en FR is verplicht voor inspiratie")
+            if not self.contentNl or not self.contentFr:
+                raise ValueError("Inhoud in NL en FR is verplicht voor inspiratie")
+            if self.category == 'documentatie' and not self.link:
+                raise ValueError("Link is verplicht voor documentatie")
+            if self.photos and len(self.photos) > MAX_GALLERY_PHOTOS:
+                raise ValueError(f"Maximaal {MAX_GALLERY_PHOTOS} foto's toegelaten")
+        return self
 
 
 class NewsPostCreate(NewsPostBase):
@@ -229,10 +274,18 @@ class NewsPostCreate(NewsPostBase):
 
 class NewsPostUpdate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
+    postType: Optional[PostType] = None
+    category: Optional[str] = None
+    language: Optional[PostLanguage] = None
     title: Optional[str] = Field(None, max_length=100)
-    category: Optional[NewsCategory] = None
     content: Optional[str] = Field(None, max_length=5000)
     photo: Optional[str] = None
+    titleNl: Optional[str] = Field(None, max_length=100)
+    titleFr: Optional[str] = Field(None, max_length=100)
+    contentNl: Optional[str] = Field(None, max_length=5000)
+    contentFr: Optional[str] = Field(None, max_length=5000)
+    photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
+    link: Optional[str] = None
 
 
 class NewsPostPublic(NewsPostBase):

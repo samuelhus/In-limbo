@@ -30,6 +30,8 @@ import Partners from '@/pages/Partners';
 import Contact from '@/pages/Contact';
 import Nieuws from '@/pages/Nieuws';
 import NieuwsDetail from '@/pages/NieuwsDetail';
+import Inspiratie from '@/pages/Inspiratie';
+import InspiratieDetail from '@/pages/InspiratieDetail';
 import Checkout from '@/pages/Checkout';
 import Checkin from '@/pages/Checkin';
 import WachtwoordVergeten from '@/pages/WachtwoordVergeten';
@@ -68,6 +70,8 @@ export default function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/nieuws" element={<Nieuws />} />
               <Route path="/nieuws/:id" element={<NieuwsDetail />} />
+              <Route path="/inspiratie" element={<Inspiratie />} />
+              <Route path="/inspiratie/:id" element={<InspiratieDetail />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/wachtwoord-vergeten" element={<WachtwoordVergeten />} />
               <Route path="/wachtwoord-reset" element={<WachtwoordReset />} />

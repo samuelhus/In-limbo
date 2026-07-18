@@ -1,6 +1,7 @@
-"""Nieuwsberichten (publiek lezen, admin beheer)."""
+"""Nieuws- en Inspiratieberichten (publiek lezen, admin beheer)."""
 from __future__ import annotations
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 
@@ -10,24 +11,38 @@ from auth import get_admin_user
 
 router = APIRouter()
 
+FIELDS = [
+    "postType", "category", "language", "title", "content", "photo",
+    "titleNl", "titleFr", "contentNl", "contentFr", "photos", "link",
+]
+
 
 def _serialize_news(doc: dict) -> dict:
-    return {
+    out = {
         "id": doc["id"],
-        "title": doc["title"],
-        "category": doc["category"],
-        "content": doc["content"],
-        "photo": doc.get("photo"),
         "authorId": doc["authorId"],
         "createdAt": doc["createdAt"],
         "updatedAt": doc.get("updatedAt", doc["createdAt"]),
     }
+    for f in FIELDS:
+        out[f] = doc.get(f)
+    return out
 
 
 @router.get("/news")
-async def list_news(skip: int = 0, limit: int = 50):
+async def list_news(
+    skip: int = 0,
+    limit: int = 50,
+    postType: Optional[str] = None,
+    category: Optional[str] = None,
+):
     limit = min(limit, 100)
-    docs = await db.news.find({}).sort("createdAt", -1).skip(skip).limit(limit).to_list(limit)
+    query: dict = {}
+    if postType:
+        query["postType"] = postType
+    if category:
+        query["category"] = category
+    docs = await db.news.find(query).sort("createdAt", -1).skip(skip).limit(limit).to_list(limit)
     return [_serialize_news(d) for d in docs]
 
 
@@ -42,16 +57,12 @@ async def get_news(post_id: str):
 @router.post("/news")
 async def create_news(body: NewsPostCreate, admin: dict = Depends(get_admin_user)):
     now = now_iso()
-    doc = {
-        "id": str(uuid.uuid4()),
-        "title": body.title.strip(),
-        "category": body.category,
-        "content": body.content.strip(),
-        "photo": body.photo,
-        "authorId": admin["id"],
-        "createdAt": now,
-        "updatedAt": now,
-    }
+    doc = {"id": str(uuid.uuid4()), "authorId": admin["id"], "createdAt": now, "updatedAt": now}
+    for f in FIELDS:
+        val = getattr(body, f)
+        if isinstance(val, str):
+            val = val.strip() or None
+        doc[f] = val
     await db.news.insert_one(doc)
     return _serialize_news(doc)
 
@@ -62,14 +73,12 @@ async def update_news(post_id: str, body: NewsPostUpdate, admin: dict = Depends(
     if not doc:
         raise HTTPException(404, "Bericht niet gevonden")
     update: dict = {"updatedAt": now_iso()}
-    if body.title is not None:
-        update["title"] = body.title.strip()
-    if body.category is not None:
-        update["category"] = body.category
-    if body.content is not None:
-        update["content"] = body.content.strip()
-    if body.photo is not None:
-        update["photo"] = body.photo or None
+    for f in FIELDS:
+        val = getattr(body, f)
+        if val is not None:
+            if isinstance(val, str):
+                val = val.strip() or None
+            update[f] = val
     await db.news.update_one({"id": post_id}, {"$set": update})
     updated = await db.news.find_one({"id": post_id})
     return _serialize_news(updated)

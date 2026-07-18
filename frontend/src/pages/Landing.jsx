@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { CATEGORY_LABELS, CATEGORY_COLORS, formatDateNL } from './Nieuws';
+import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
+import { INSPIRATIE_CATEGORY_COLORS } from './Inspiratie';
 
 const HERO_BG =
   'https://res.cloudinary.com/dbjizykvb/image/upload/v1780092187/in-limbo/482df555-c97b-4374-b3b0-ee0302eea5c7/n0elipswg2etu9mmbx4j.jpg';
@@ -75,37 +76,20 @@ function MagazijnWidget({ align = 'right' }) {
 }
 
 export default function Landing() {
-  const { t } = useTranslation();
-  const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const isLoggedIn = user && typeof user === 'object';
-  const [news, setNews] = useState([]);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const timerRef = useRef(null);
+  const [landingPosts, setLandingPosts] = useState([]);
 
   useEffect(() => {
-    api.get('/news')
-      .then(({ data }) => setNews(data.slice(0, 5)))
+    Promise.all([
+      api.get('/news', { params: { postType: 'nieuws', limit: 2 } }),
+      api.get('/news', { params: { postType: 'inspiratie', category: 'partner_project', limit: 1 } }),
+    ])
+      .then(([nieuwsRes, partnerRes]) => {
+        setLandingPosts([...nieuwsRes.data, ...partnerRes.data]);
+      })
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (news.length === 0) return;
-    timerRef.current = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % news.length);
-    }, 5000);
-    return () => clearInterval(timerRef.current);
-  }, [news.length]);
-
-  const goTo = (index) => {
-    clearInterval(timerRef.current);
-    setActiveSlide(index);
-    timerRef.current = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % news.length);
-    }, 5000);
-  };
-
-  const prevSlide = () => goTo((activeSlide - 1 + news.length) % news.length);
-  const nextSlide = () => goTo((activeSlide + 1) % news.length);
 
   return (
     <div className="min-h-[calc(100vh-4rem)]" data-testid="landing-page">
@@ -199,107 +183,77 @@ export default function Landing() {
       </section>
       */}
 
-      {/* NIEUWS */}
-      {news.length > 0 && (
+      {/* NIEUWS & INSPIRATIE */}
+      {landingPosts.length > 0 && (
         <section
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16 border-t border-border"
           data-testid="landing-news-section"
         >
           <div className="flex flex-wrap items-end justify-between gap-3 mb-10">
             <p className="overline">{t('news.title')}</p>
-            <Link
-              to="/nieuws"
-              className="industrial-link text-sm text-foreground"
-              data-testid="landing-news-all-link"
-            >
-              {t('landing.news_view_all')}
-            </Link>
+            <div className="flex gap-4">
+              <Link
+                to="/nieuws"
+                className="industrial-link text-sm text-foreground"
+                data-testid="landing-news-all-link"
+              >
+                {t('landing.news_view_all')}
+              </Link>
+              <Link
+                to="/inspiratie"
+                className="industrial-link text-sm text-foreground"
+                data-testid="landing-inspiratie-all-link"
+              >
+                {t('landing.inspiratie_view_all')}
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-1">
-            {news.length > 0 && (() => {
-              const p = news[activeSlide];
-              const color = CATEGORY_COLORS[p.category] || CATEGORY_COLORS.ander;
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {landingPosts.map((p) => {
+              const isInspiratie = p.postType === 'inspiratie';
+              const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
+              const title = isInspiratie ? (p[`title${lang === 'fr' ? 'Fr' : 'Nl'}`] || p.titleNl || p.titleFr) : p.title;
+              const color = isInspiratie
+                ? (INSPIRATIE_CATEGORY_COLORS[p.category] || INSPIRATIE_CATEGORY_COLORS.artikel)
+                : (CATEGORY_COLORS[p.category] || CATEGORY_COLORS.nieuws);
+              const label = isInspiratie ? t(`inspiratie.category_${p.category}`) : t(`news.category_${p.category}`);
+              const cover = p.photo || (p.photos && p.photos[0]);
+              const href = isInspiratie ? `/inspiratie/${p.id}` : `/nieuws/${p.id}`;
               return (
-                <div className="relative overflow-hidden" data-testid="landing-news-slider">
-                  <Link
-                    to={`/nieuws/${p.id}`}
-                    className="block relative aspect-[16/7] overflow-hidden group"
-                    data-testid={`landing-news-slide-${p.id}`}
-                  >
-                    {p.photo ? (
+                <Link
+                  key={p.id}
+                  to={href}
+                  data-testid={`landing-post-${p.id}`}
+                  className="group block border border-border hover:border-foreground transition-colors bg-surface"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    {cover ? (
                       <img
-                        src={p.photo}
-                        alt={p.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                        src={cover}
+                        alt={title}
+                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full" style={{ backgroundColor: color }} />
+                      <div
+                        className="w-full h-full flex items-center justify-center text-white text-3xl font-bold tracking-tight"
+                        style={{ backgroundColor: color }}
+                      >
+                        {label}
+                      </div>
                     )}
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-                    <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span
-                          className="text-xs font-medium uppercase tracking-widest px-2 py-0.5"
-                          style={{ backgroundColor: color, color: '#fff' }}
-                        >
-                          {CATEGORY_LABELS[p.category]}
-                        </span>
-                        <span className="text-xs text-white/60">
-                          {formatDateNL(p.createdAt)}
-                        </span>
-                      </div>
-                      <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-tight mb-3 max-w-2xl">
-                        {p.title}
-                      </h3>
-                      {p.content && (
-                        <p className="text-sm text-white/75 leading-relaxed max-w-xl line-clamp-2">
-                          {p.content.replace(/<[^>]+>/g, '').slice(0, 160)}
-                          {p.content.length > 160 ? '…' : ''}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-
-                  {news.length > 1 && (
-                    <>
-                      <button
-                        onClick={(e) => { e.preventDefault(); prevSlide(); }}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-10 h-10 flex items-center justify-center transition-colors"
-                        aria-label="Vorige"
-                        data-testid="slider-prev"
-                      >
-                        ←
-                      </button>
-
-                      <button
-                        onClick={(e) => { e.preventDefault(); nextSlide(); }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-10 h-10 flex items-center justify-center transition-colors"
-                        aria-label="Volgende"
-                        data-testid="slider-next"
-                      >
-                        →
-                      </button>
-
-                      <div className="absolute bottom-4 right-6 flex gap-2">
-                        {news.map((_, i) => (
-                          <button
-                            key={i}
-                            onClick={(e) => { e.preventDefault(); goTo(i); }}
-                            className={`h-2 transition-all ${
-                              i === activeSlide ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/70 w-2'
-                            }`}
-                            aria-label={`Slide ${i + 1}`}
-                            data-testid={`slider-dot-${i}`}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
+                  </div>
+                  <div className="p-5">
+                    <p className="overline" style={{ color }}>{label}</p>
+                    <h3 className="mt-2 text-xl font-semibold tracking-tight leading-tight">
+                      {title}
+                    </h3>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      {formatDateNL(p.createdAt)}
+                    </p>
+                  </div>
+                </Link>
               );
-            })()}
+            })}
           </div>
         </section>
       )}

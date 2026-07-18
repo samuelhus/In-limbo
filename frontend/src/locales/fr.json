@@ -35,6 +35,7 @@
   "nav": {
     "catalogus": "Catalogue",
     "news": "Actualités",
+    "inspiratie": "Inspiration",
     "about": "À propos",
     "my_listings": "Mes offres",
     "my_applications": "Mes demandes",
@@ -172,8 +173,6 @@
     "donateur_create_account_btn": "Créer le compte",
     "donateur_already_account": "Vous avez déjà un compte ?",
     "newsletter_checkbox": "Je m'inscris à la newsletter d'In Limbo."
-
-
   },
   "catalogus": {
     "title": "Catalogue",
@@ -196,7 +195,6 @@
     "search_fallback": "Voici toutes les offres disponibles :",
     "search_results_for": "Résultats pour"
   },
-
   "listing": {
     "status_beschikbaar": "Disponible",
     "status_herbestemd": "Redistribué",
@@ -216,7 +214,7 @@
     "apply_btn": "Demander →",
     "status_open": "Ouvert",
     "status_not_selected": "Non sélectionné",
-    "geen_foto": "pas de photo",
+    "geen_foto": "Aucune photo disponible",
     "materiaal": "Matériaux",
     "gewicht": "Poids",
     "afmetingen": "Dimensions",
@@ -224,21 +222,21 @@
     "aangeboden_door": "Proposé par",
     "van": "de",
     "geen_partner": " ",
-    "eigen_org_fout": "Vous ne pouvez pas faire de demande pour les offres de votre propre organisation.",
-    "niet_geselecteerd_herbestemd": "Votre demande n'a pas été retenue. Le donateur a redistribué cette offre.",
-    "reeds_herbestemd": "Cette offre a déjà été redistribuée.",
-    "niet_geselecteerd": "Votre demande n'a pas été retenue.",
-    "jij_bent_gekozen": "Vous avez été sélectionné(e) !",
-    "geselecteerd_contact": "Vous êtes sélectionné(e) comme bénéficiaire. Voici les coordonnées du donateur.",
+    "eigen_org_fout": "Vous ne pouvez pas postuler à une annonce de votre propre organisation.",
+    "niet_geselecteerd_herbestemd": "Cette annonce a été redistribuée à un autre destinataire.",
+    "reeds_herbestemd": "Cette annonce est déjà redistribuée.",
+    "niet_geselecteerd": "Vous n'avez pas été sélectionné pour cette annonce.",
+    "jij_bent_gekozen": "Vous avez été choisi !",
+    "geselecteerd_contact": "Contactez l'organisation",
     "markeer_herbestemd": "Marquer comme redistribué",
     "herbestemming_ongedaan": "Annuler la redistribution",
-    "confirm_intrekken": "Retirer la demande ?",
-    "confirm_selecteer": "Sélectionner {{name}} comme bénéficiaire ? L'offre sera immédiatement marquée comme redistribuée et les autres demandes ouvertes seront rejetées.",
+    "confirm_intrekken": "Êtes-vous sûr de vouloir retirer votre demande ?",
+    "confirm_selecteer": "Êtes-vous sûr de vouloir sélectionner {{name}} comme destinataire ?",
     "confirm_herbestemmen": "Marquer comme redistribué sans sélectionner quelqu'un ? Les autres demandes ouvertes seront rejetées.",
-    "confirm_herbestemming_ongedaan": "Annuler la redistribution ? L'offre redeviendra disponible et les demandes seront réouvertes.",
+    "confirm_herbestemming_ongedaan": "Annuler la redistribution ? La demande de ce destinataire et toutes les demandes précédemment refusées seront remises à \"ouvert\".",
     "confirm_verwijderen": "Êtes-vous sûr de vouloir supprimer cette offre ? Cette action est irréversible.",
     "definitief_verwijderen": "Supprimer définitivement",
-    "verwijderen_bezig": "Suppression…",
+    "verwijderen_bezig": "Suppression en cours…",
     "geen_aanvragen": "Aucune demande reçue pour l'instant.",
     "deze_aanvrager": "ce demandeur",
     "withdraw_btn": "Retirer la demande",
@@ -303,18 +301,6 @@
     "deadline_expired": "Date limite expirée",
     "view_btn": "Voir",
     "view_details": "Détails →",
-    "geen_foto": "Aucune photo disponible",
-    "jij_bent_gekozen": "Vous avez été choisi !",
-    "eigen_org_fout": "Vous ne pouvez pas postuler à une annonce de votre propre organisation.",
-    "niet_geselecteerd_herbestemd": "Cette annonce a été redistribuée à un autre destinataire.",
-    "reeds_herbestemd": "Cette annonce est déjà redistribuée.",
-    "confirm_intrekken": "Êtes-vous sûr de vouloir retirer votre demande ?",
-    "niet_geselecteerd": "Vous n'avez pas été sélectionné pour cette annonce.",
-    "confirm_selecteer": "Êtes-vous sûr de vouloir sélectionner {{name}} comme destinataire ?",
-    "confirm_herbestemming_ongedaan": "Annuler la redistribution ? La demande de ce destinataire et toutes les demandes précédemment refusées seront remises à \"ouvert\".",
-    "verwijderen_bezig": "Suppression en cours…",
-    "definitief_verwijderen": "Supprimer définitivement",
-    "geselecteerd_contact": "Contactez l'organisation",
     "requestvalidated": "Votre demande a été soumise.",
     "not_found": "Offre introuvable.",
     "limited_view": "Aperçu limité",
@@ -353,8 +339,6 @@
     "posted_on": "Publié le {{date}}",
     "application_count_one": "{{count}} demande",
     "application_count_other": "{{count}} demandes"
-
-
   },
   "applications": {
     "title": "Mes demandes",
@@ -399,7 +383,6 @@
     "pref_saved": "Enregistré",
     "update_success": "Modifications enregistrées."
   },
-  
   "organisation": {
     "title": "Mon organisation",
     "description": "Description",
@@ -422,7 +405,6 @@
     "remove_photo": "Supprimer",
     "saving": "Enregistrement…",
     "update_success": "Organisation mise à jour."
-
   },
   "notifications": {
     "title": "Notifications",
@@ -455,11 +437,9 @@
     "hero_tagline": "Matériaux en mouvement",
     "hero_title": "Le réemploi dans le secteur socio-culturel bruxellois.",
     "hero_subtitle": "In Limbo est une plateforme qui connecte les organisations socio-culturelles bruxelloises pour échanger des matériaux. Des surplus, décors, bois de construction, textiles, électro au lieu de les jeter.",
-    
     "het_idee": "Le concept",
     "p1": "Les théâtres construisent des décors. Les ateliers créent des installations. Le travail social rénove des salles. Ce qui reste finit dans des conteneurs.",
     "p2": "Nous élevons ces matériaux dans les limbes— une salle d'attente entre deux destinations — et lui laissons le temps de circuler vers ceux qui peuvent l'utiliser.",
-    
     "cta_section_title": "Prêt·e à remettre du matériel en circulation ?",
     "cta_section_subtitle": "Inscrivez votre organisation ou faites un don en tant que particulier.",
     "explore_catalogus": "Découvrir le catalogue →",
@@ -467,6 +447,7 @@
     "donate": "Faire un don de matériel",
     "news_title": "Actualités",
     "news_view_all": "Toutes les actualités →",
+    "inspiratie_view_all": "Toute l'inspiration →",
     "how_it_works": "Comment ça marche ?",
     "magazijn_open": "Nous sommes ouverts",
     "magazijn_open_until": "Ouvert aujourd'hui jusqu'à 17:00",
@@ -490,9 +471,11 @@
     "read_more": "Lire la suite →",
     "back_to_news": "← Retour aux actualités",
     "published_on": "Publié le",
-    "category_news": "Actualité",
-    "category_event": "Événement",
-    "category_update": "Mise à jour"
+    "category_nieuws": "Actualité",
+    "category_helpende_handen": "Coup de main",
+    "category_opleiding": "Formation",
+    "language_nl": "NL",
+    "language_fr": "FR"
   },
   "checkin": {
     "title": "Entrée entrepôt",
@@ -542,7 +525,6 @@
     "total": "Total",
     "in_progress": "En cours…"
   },
-
   "overons": {
     "wie_zijn_we": "Qui sommes nous",
     "wat_is_title": "Qu'est-ce que In Limbo ?",
@@ -587,25 +569,24 @@
     "cta_partner": "Devenez partenaire →",
     "cta_catalogus": "Voir le catalogue",
     "faq_items": [
-  {
-    "question": "Quels types de matériaux acceptez-vous ?",
-    "answer": "Nous acceptons les matériaux en bon état et adaptés à la réutilisation : bois, métal, meubles, chaises, panneaux, portes, tubes fluorescents, peinture, gouttières, plexiglas, câbles, lampes et autres matériaux de construction. Pour les grandes quantités, nous examinons ensemble si In Limbo peut organiser la collecte."
+      {
+        "question": "Quels types de matériaux acceptez-vous ?",
+        "answer": "Nous acceptons les matériaux en bon état et adaptés à la réutilisation : bois, métal, meubles, chaises, panneaux, portes, tubes fluorescents, peinture, gouttières, plexiglas, câbles, lampes et autres matériaux de construction. Pour les grandes quantités, nous examinons ensemble si In Limbo peut organiser la collecte."
+      },
+      {
+        "question": "Puis-je vendre sur la plateforme ?",
+        "answer": "Non. In Limbo n'est pas une plateforme de vente. Tous les matériaux sont proposés et transmis gratuitement. Nous demandons uniquement une contribution libre pour les matériaux que vous récupérez dans notre entrepôt. La plateforme est exclusivement destinée au don et à la réutilisation, pas au commerce."
+      },
+      {
+        "question": "Est-ce que tout est gratuit ?",
+        "answer": "Les matériaux sur la plateforme sont proposés gratuitement par les partenaires et les donateurs. Dans l'entrepôt physique, nous demandons une contribution libre — vous payez ce que vous pouvez et ce qui vous semble juste. L'adhésion en tant qu'organisation partenaire est gratuite. Les dons pour le fonctionnement sont les bienvenus via IBAN BE76 7350 3121 5695 (communication : IN LIMBO)."
+      },
+      {
+        "question": "Qu'est-ce que vous n'acceptez pas ?",
+        "answer": "Nous n'acceptons pas la nourriture, les vêtements ni les matériaux en mauvais état. Les matériaux inadaptés à la réutilisation ou présentant un risque pour la sécurité ne sont pas non plus acceptés. Vous doutez que votre matériel soit éligible ? Contactez-nous d'abord avant de le déposer au dépôt."
+      }
+    ]
   },
-  {
-    "question": "Puis-je vendre sur la plateforme ?",
-    "answer": "Non. In Limbo n'est pas une plateforme de vente. Tous les matériaux sont proposés et transmis gratuitement. Nous demandons uniquement une contribution libre pour les matériaux que vous récupérez dans notre entrepôt. La plateforme est exclusivement destinée au don et à la réutilisation, pas au commerce."
-  },
-  {
-    "question": "Est-ce que tout est gratuit ?",
-    "answer": "Les matériaux sur la plateforme sont proposés gratuitement par les partenaires et les donateurs. Dans l'entrepôt physique, nous demandons une contribution libre — vous payez ce que vous pouvez et ce qui vous semble juste. L'adhésion en tant qu'organisation partenaire est gratuite. Les dons pour le fonctionnement sont les bienvenus via IBAN BE76 7350 3121 5695 (communication : IN LIMBO)."
-  },
-  {
-    "question": "Qu'est-ce que vous n'acceptez pas ?",
-    "answer": "Nous n'acceptons pas la nourriture, les vêtements ni les matériaux en mauvais état. Les matériaux inadaptés à la réutilisation ou présentant un risque pour la sécurité ne sont pas non plus acceptés. Vous doutez que votre matériel soit éligible ? Contactez-nous d'abord avant de le déposer au dépôt."
-  }
-]
-  },
-
   "footer": {
     "tagline": "Une plateforme extracteur de potentiel. In Limbo connecte les organisations socio-culturelles qui ont du matériel en surplus avec celles qui peuvent encore l'utiliser.",
     "rights": "© 2026 In Limbo · Bruxelles",
@@ -616,18 +597,16 @@
     "terms": "Conditions",
     "material_in_transit": "Material in transit"
   },
-
-"status": {
-  "beschikbaar": "Disponible",
-  "herbestemd": "Redistribué",
-  "in_magazijn": "En magasin",
-  "gearchiveerd": "Archivé",
-  "pending": "En attente",
+  "status": {
+    "beschikbaar": "Disponible",
+    "herbestemd": "Redistribué",
+    "in_magazijn": "En magasin",
+    "gearchiveerd": "Archivé",
+    "pending": "En attente",
     "active": "Actif",
     "inactive": "Inactif",
     "rejected": "Refusé"
-},
-
+  },
   "voorwaarden": {
     "overline": "Juridique",
     "title": "Conditions générales",
@@ -661,8 +640,7 @@
     "v8_body": "Nous vous demandons de jouer le jeu honnêtement et de ne pas contourner la plateforme.",
     "footer": "Dernière mise à jour : juin 2025 · In Limbo, Bruxelles"
   },
-
-"register": {
+  "register": {
     "terms_title": "Conditions",
     "terms_intro": "In Limbo est une plateforme pour les organisations socioculturelles à Bruxelles. En vous inscrivant, vous acceptez que :",
     "terms_1": "Votre organisation est active dans le secteur socioculturel.",
@@ -700,17 +678,27 @@
     "already_account": "Vous avez déjà un compte ?",
     "login_link": "Se connecter"
   },
-
   "algemeen": {
     "terug": "Retour",
     "volgende": "Suivant →",
     "optioneel": "optionnel",
     "geen_resultaten": "Aucun résultat."
   },
-
   "testBanner": {
     "message": "Ceci est le <0>nouveau site web de In Limbo</0>, actuellement en <1>phase de test publique</1>. N'hésitez pas à utiliser le site et à nous envoyer vos remarques à <2>{{email}}</2>.",
     "close": "Fermer"
+  },
+  "inspiratie": {
+    "title": "Inspiration",
+    "subtitle": "Articles, projets de partenaires et documentation sur le réemploi.",
+    "empty": "Pas encore de contenu d'inspiration publié.",
+    "read_more": "Lire la suite →",
+    "back_to_inspiratie": "← Retour à l'inspiration",
+    "published_on": "Publié le",
+    "category_artikel": "Article",
+    "category_partner_project": "Projet de partenaire",
+    "category_documentatie": "Documentation",
+    "view_document": "Voir le document →",
+    "gallery_photo_alt": "Photo"
   }
-
 }

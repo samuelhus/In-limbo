@@ -31,11 +31,11 @@
     "share_copy_link": "Kopieer link",
     "share_copied": "Link gekopieerd",
     "share_copy_manual": "Kopieer deze link:"
-
   },
   "nav": {
     "catalogus": "Catalogus",
     "news": "Nieuws",
+    "inspiratie": "Inspiratie",
     "about": "Over ons",
     "my_listings": "Mijn aanbiedingen",
     "my_applications": "Mijn aanvragen",
@@ -173,8 +173,6 @@
     "donateur_create_account_btn": "Account aanmaken",
     "donateur_already_account": "Al een account?",
     "newsletter_checkbox": "Ik schrijf me in op de nieuwsbrief van In Limbo."
-
-
   },
   "catalogus": {
     "title": "Catalogus",
@@ -329,10 +327,7 @@
     "posted_on": "Geplaatst op {{date}}",
     "application_count_one": "{{count}} aanvraag",
     "application_count_other": "{{count}} aanvragen"
-    
-
   },
-
   "applications": {
     "title": "Mijn aanvragen",
     "empty": "Je hebt nog geen aanvragen ingediend.",
@@ -375,7 +370,6 @@
     "username_public_hint": "Deze naam is publiek zichtbaar bij je aanbiedingen.",
     "pref_saved": "Opgeslagen",
     "update_success": "Wijzigingen opgeslagen."
-
   },
   "organisation": {
     "title": "Mijn organisatie",
@@ -399,7 +393,6 @@
     "remove_photo": "Verwijder",
     "saving": "Opslaan…",
     "update_success": "Organisatie bijgewerkt."
-
   },
   "notifications": {
     "title": "Notificaties",
@@ -432,11 +425,9 @@
     "hero_tagline": "Materiaal in beweging",
     "hero_title": "Hergebruik in de brusselse socio-culturele sector.",
     "hero_subtitle": "In Limbo is een marktplaats die Brusselse socio-culturele organisaties verbindt om overschotmateriaal door te geven — decor, bouwhout, textiel, electro — in plaats van weg te gooien.",
-    
     "het_idee": "Het idee",
     "p1": "Theaters bouwen decor. Ateliers maken installaties. Sociaal werk verbouwt zalen. Wat overblijft, belandt in containers.",
     "p2": "We zetten dat materiaal letterlijk in limbo — een wachtkamer tussen twee bestemmingen — en geven het tijd om door te stromen naar wie het kan gebruiken.",
-    
     "cta_section_title": "Klaar om materiaal in beweging te zetten?",
     "cta_section_subtitle": "Registreer je organisatie of doe een gift als particulier.",
     "explore_catalogus": "Ontdek de catalogus →",
@@ -444,6 +435,7 @@
     "donate": "Doneer materiaal",
     "news_title": "Nieuws",
     "news_view_all": "Alle nieuwsberichten →",
+    "inspiratie_view_all": "Alle inspiratie →",
     "how_it_works": "Hoe werkt het?",
     "magazijn_open": "We zijn open",
     "magazijn_open_until": "Vandaag open tot 17:00",
@@ -467,9 +459,11 @@
     "read_more": "Lees meer →",
     "back_to_news": "← Terug naar nieuws",
     "published_on": "Gepubliceerd op",
-    "category_news": "Nieuws",
-    "category_event": "Evenement",
-    "category_update": "Update"
+    "category_nieuws": "Nieuws",
+    "category_helpende_handen": "Helpende handen",
+    "category_opleiding": "Opleiding",
+    "language_nl": "NL",
+    "language_fr": "FR"
   },
   "checkin": {
     "title": "Magazijn checkin",
@@ -506,7 +500,8 @@
     "confirm_btn": "Bevestig checkout ✓",
     "success_title": "Checkout geregistreerd!",
     "success_body": "{{org}} heeft {{kg}} kg materiaal meegenomen uit het magazijn.",
-    "restart_btn": "Nieuwe checkout starten","type_org_name": "Typ de naam van je organisatie…",
+    "restart_btn": "Nieuwe checkout starten",
+    "type_org_name": "Typ de naam van je organisatie…",
     "no_results": "Geen resultaten gevonden.",
     "material_label": "Materiaal",
     "weight_label": "Gewicht",
@@ -562,25 +557,24 @@
     "cta_partner": "Word partner →",
     "cta_catalogus": "Bekijk de catalogus",
     "faq_items": [
-  {
-    "question": "Wat voor materialen nemen jullie aan?",
-    "answer": "We aanvaarden materialen in goede staat..."
+      {
+        "question": "Wat voor materialen nemen jullie aan?",
+        "answer": "We aanvaarden materialen in goede staat..."
+      },
+      {
+        "question": "Mag ik op het platform verkopen?",
+        "answer": "Nee. In Limbo is geen verkoopplatform..."
+      },
+      {
+        "question": "Is alles gratis?",
+        "answer": "Materialen op het platform worden gratis aangeboden..."
+      },
+      {
+        "question": "Wat aanvaarden jullie niet?",
+        "answer": "We aanvaarden geen voedsel, kledij..."
+      }
+    ]
   },
-  {
-    "question": "Mag ik op het platform verkopen?",
-    "answer": "Nee. In Limbo is geen verkoopplatform..."
-  },
-  {
-    "question": "Is alles gratis?",
-    "answer": "Materialen op het platform worden gratis aangeboden..."
-  },
-  {
-    "question": "Wat aanvaarden jullie niet?",
-    "answer": "We aanvaarden geen voedsel, kledij..."
-  }
-]
-},
-
   "footer": {
     "tagline": "Een platform voor materiaal in transit. In Limbo verbindt socio-culturele organisaties die materiaal teveel hebben met diegenen die het nog kunnen gebruiken.",
     "rights": "© 2026 In Limbo · Brussel",
@@ -590,8 +584,7 @@
     "socials": "Socials",
     "terms": "Voorwaarden",
     "material_in_transit": "Materiaal in beweging"
-},
-
+  },
   "status": {
     "beschikbaar": "Beschikbaar",
     "herbestemd": "Herbestemd",
@@ -601,9 +594,7 @@
     "active": "Actief",
     "inactive": "Inactief",
     "rejected": "Afgewezen"
-    
-},
-
+  },
   "voorwaarden": {
     "overline": "Juridisch",
     "title": "Algemene voorwaarden",
@@ -637,9 +628,7 @@
     "v8_body": "We vragen je het spel eerlijk te spelen en het platform niet te omzeilen.",
     "footer": "Laatst bijgewerkt: juni 2025 · In Limbo, Brussel"
   },
-
-
-   "register": {
+  "register": {
     "terms_title": "Voorwaarden",
     "terms_intro": "In Limbo is een platform voor socio-culturele organisaties in Brussel. Door je te registreren ga je akkoord dat:",
     "terms_1": "Je organisatie actief is binnen de socio-culturele sector.",
@@ -677,19 +666,27 @@
     "already_account": "Al een account?",
     "login_link": "Inloggen"
   },
-
- "algemeen": {
+  "algemeen": {
     "terug": "Terug",
     "volgende": "Volgende →",
     "optioneel": "optioneel",
     "geen_resultaten": "Geen resultaten."
   },
-
   "testBanner": {
     "message": "Dit is de <0>nieuwe website van In Limbo</0>, momenteel in een <1>publieke testfase</1>. Gebruik de site gerust en stuur je opmerkingen naar <2>{{email}}</2>.",
     "close": "Sluiten"
+  },
+  "inspiratie": {
+    "title": "Inspiratie",
+    "subtitle": "Artikels, partnerprojecten en documentatie rond hergebruik.",
+    "empty": "Nog geen inspiratie gepubliceerd.",
+    "read_more": "Lees meer →",
+    "back_to_inspiratie": "← Terug naar inspiratie",
+    "published_on": "Gepubliceerd op",
+    "category_artikel": "Artikel",
+    "category_partner_project": "Project van partner",
+    "category_documentatie": "Documentatie",
+    "view_document": "Bekijk document →",
+    "gallery_photo_alt": "Foto"
   }
-
-
-
 }

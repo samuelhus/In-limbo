@@ -3,22 +3,10 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
-export const CATEGORY_LABELS = {
-  evenement: 'Evenement',
-  artikel: 'Artikel',
-  giveaway: 'Giveaway',
-  opleidingsmoment: 'Opleidingsmoment',
-  oproep: 'Oproep voor hulp',
-  ander: 'Ander',
-};
-
 export const CATEGORY_COLORS = {
-  evenement: '#FBBF24',
-  artikel: '#60A5FA',
-  giveaway: '#34D399',
-  opleidingsmoment: '#A78BFA',
-  oproep: '#F87171',
-  ander: '#9CA3AF',
+  nieuws: '#FBBF24',
+  helpende_handen: '#F87171',
+  opleiding: '#A78BFA',
 };
 
 export function formatDateNL(iso) {
@@ -29,8 +17,18 @@ export function formatDateNL(iso) {
   });
 }
 
-function NieuwsCard({ post }) {
-  const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.ander;
+function LanguageTag({ language, t }) {
+  if (!language) return null;
+  return (
+    <span className="text-[10px] font-semibold tracking-widest border border-current px-1.5 py-0.5 rounded-sm opacity-70">
+      {language === 'fr' ? t('news.language_fr') : t('news.language_nl')}
+    </span>
+  );
+}
+
+function NieuwsCard({ post, t }) {
+  const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.nieuws;
+  const label = t(`news.category_${post.category}`);
   return (
     <Link
       to={`/nieuws/${post.id}`}
@@ -49,14 +47,15 @@ function NieuwsCard({ post }) {
             className="w-full h-full flex items-center justify-center text-white text-3xl font-bold tracking-tight"
             style={{ backgroundColor: color }}
           >
-            {CATEGORY_LABELS[post.category]}
+            {label}
           </div>
         )}
       </div>
       <div className="p-5">
-        <p className="overline" style={{ color }}>
-          {CATEGORY_LABELS[post.category]}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="overline" style={{ color }}>{label}</p>
+          <LanguageTag language={post.language} t={t} />
+        </div>
         <h3 className="mt-2 text-xl font-semibold tracking-tight leading-tight">
           {post.title}
         </h3>
@@ -74,7 +73,7 @@ export default function Nieuws() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/news')
+    api.get('/news', { params: { postType: 'nieuws' } })
       .then(({ data }) => setPosts(data))
       .catch(() => setError('Kon nieuws niet laden.'));
   }, []);
@@ -95,7 +94,7 @@ export default function Nieuws() {
       {posts && posts.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((p) => (
-            <NieuwsCard key={p.id} post={p} />
+            <NieuwsCard key={p.id} post={p} t={t} />
           ))}
         </div>
       )}
