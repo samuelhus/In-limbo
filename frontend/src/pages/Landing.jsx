@@ -76,8 +76,9 @@ function MagazijnWidget({ align = 'right' }) {
 }
 
 export default function Landing() {
-  const { t, i18n } = useTranslation();
-  const isLoggedIn = user && typeof user === 'object';
+const { t, i18n } = useTranslation();
+const { user } = useAuth();
+const isLoggedIn = user && typeof user === 'object';
   const [landingPosts, setLandingPosts] = useState([]);
 
   useEffect(() => {
