@@ -94,6 +94,11 @@ export default function MijnAanbiedingen() {
                       <p className="font-medium truncate">{it.title}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {t('listing.posted_on', { date: formatDate(it.createdAt) })}
+                        {it.postedByName && (
+                          <span data-testid={`mijn-aanbiedingen-posted-by-${it.id}`}>
+                            {' · '}{t('listing.posted_by', { name: it.postedByName })}
+                          </span>
+                        )}
                       </p>
                     </div>
                     {showCount && it.openApplicationCount > 0 && (

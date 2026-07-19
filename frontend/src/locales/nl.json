@@ -325,6 +325,7 @@
     "material_ander": "Ander",
     "empty_subtitle": "Heb je materiaal dat je wil doorgeven? Plaats je eerste aanbieding en help het in transit te brengen.",
     "posted_on": "Geplaatst op {{date}}",
+    "posted_by": "door {{name}}",
     "application_count_one": "{{count}} aanvraag",
     "application_count_other": "{{count}} aanvragen"
   },

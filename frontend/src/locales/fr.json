@@ -337,6 +337,7 @@
     "material_ander": "Autre",
     "empty_subtitle": "Vous avez du matériel à transmettre ? Publiez votre première offre et aidez-le à trouver une nouvelle vie.",
     "posted_on": "Publié le {{date}}",
+    "posted_by": "par {{name}}",
     "application_count_one": "{{count}} demande",
     "application_count_other": "{{count}} demandes"
   },

@@ -85,12 +85,27 @@ async def _enrich_listings(items: list[dict]) -> list[dict]:
     return items
 
 
+def _can_manage_listing(user: dict, listing: dict) -> bool:
+    """True als user deze listing mag bewerken/verwijderen: de aanbieder zelf,
+    een admin, of een ander lid van dezelfde organisatie (donateurs — die geen
+    organisationId hebben — vallen hier niet onder)."""
+    if user.get("role") == "admin":
+        return True
+    if user["id"] == listing["userId"]:
+        return True
+    user_org = user.get("organisationId")
+    listing_org = listing.get("organisationId")
+    if user_org and listing_org and user_org == listing_org:
+        return True
+    return False
+
+
 async def _require_listing_owner_or_admin(listing_id: str, user: dict) -> dict:
     listing = await db.listings.find_one({"id": listing_id})
     if not listing:
         raise HTTPException(404, "Aanbieding niet gevonden")
-    if user["id"] != listing["userId"] and user.get("role") != "admin":
-        raise HTTPException(403, "Alleen de aanbieder kan deze actie uitvoeren")
+    if not _can_manage_listing(user, listing):
+        raise HTTPException(403, "Alleen de aanbieder of een lid van dezelfde organisatie kan deze actie uitvoeren")
     listing.pop("_id", None)
     return listing
 
@@ -185,8 +200,13 @@ async def listings_by_user(user_id: str, admin: dict = Depends(get_admin_user)):
 
 @router.get("/listings/mine")
 async def my_listings(user: dict = Depends(get_donateur_or_validated_user)):
-    """Return all listings owned by the authenticated user, with open application counts."""
-    cursor = db.listings.find({"userId": user["id"]}).sort("createdAt", -1)
+    """Return alle listings die deze gebruiker mag beheren: de eigen listings,
+    plus (indien lid van een organisatie) de listings van organisatiegenoten —
+    zij kunnen elkaars aanbiedingen aanpassen. Donateurs (geen organisationId)
+    zien enkel hun eigen listings."""
+    org_id = user.get("organisationId")
+    query = {"$or": [{"userId": user["id"]}, {"organisationId": org_id}]} if org_id else {"userId": user["id"]}
+    cursor = db.listings.find(query).sort("createdAt", -1)
     items = []
     async for lst in cursor:
         items.append(strip_mongo(lst))
@@ -202,8 +222,17 @@ async def my_listings(user: dict = Depends(get_donateur_or_validated_user)):
     async for row in db.applications.aggregate(pipeline):
         counts[row["_id"]] = row["n"]
 
+    # Naam van de plaatser meesturen (enkel relevant zodra ook organisatiegenoten
+    # hun listings zien) — één batch-query i.p.v. per item.
+    poster_ids = {it["userId"] for it in items if it["userId"] != user["id"]}
+    names: dict[str, str] = {}
+    if poster_ids:
+        async for u in db.users.find({"id": {"$in": list(poster_ids)}}, {"_id": 0, "id": 1, "firstName": 1, "lastName": 1}):
+            names[u["id"]] = f"{u.get('firstName', '')} {u.get('lastName', '')}".strip()
+
     for it in items:
         it["openApplicationCount"] = counts.get(it["id"], 0)
+        it["postedByName"] = None if it["userId"] == user["id"] else names.get(it["userId"])
         if it.get("photos"):
             it["photos"] = [it["photos"][0]]
     return items
@@ -326,7 +355,7 @@ async def update_listing(
     if not listing:
         raise HTTPException(404, "Aanbieding niet gevonden")
 
-    if listing["userId"] != user["id"] and user.get("role") != "admin":
+    if not _can_manage_listing(user, listing):
         raise HTTPException(403, "Geen toegang")
 
     editable_statuses = {"beschikbaar", "gearchiveerd"}
