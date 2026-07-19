@@ -342,9 +342,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
-  const isEditable =
-    ['beschikbaar', 'gearchiveerd'].includes(listing.status) ||
-    (isAdmin && listing.status === 'in_magazijn');
+  const isEditable = listing.status !== 'herbestemd';
 
   const loadApps = useCallback(async () => {
     try {
