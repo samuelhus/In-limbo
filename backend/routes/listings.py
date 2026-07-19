@@ -267,7 +267,10 @@ async def get_listing(listing_id: str, request: Request):
                 view.pop(k, None)
 
         if viewer:
-            is_owner = viewer["id"] == listing["userId"]
+            is_owner = viewer["id"] == listing["userId"] or (
+                listing.get("organisationId") is not None
+                and viewer.get("organisationId") == listing.get("organisationId")
+            )
             view["isOwner"] = is_owner
 
             my_app = await db.applications.find_one(
