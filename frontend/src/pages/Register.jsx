@@ -55,7 +55,7 @@ export default function Register() {
     let cancel = false;
     const timer = setTimeout(async () => {
       try {
-        const { data } = await api.get('/organisations', { params: { q: orgQuery } });
+        const { data } = await api.get('/organisations/search', { params: { q: orgQuery } });
         if (!cancel) setOrgResults(data);
       } catch {/* ignore */}
     }, 250);
