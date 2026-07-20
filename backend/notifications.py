@@ -312,10 +312,18 @@ async def notify_admins_new_registration(
                 n_type="new_registration",
                 message=message,
             )
+
+        # E-mail gaat enkel naar het vaste admin-adres, niet naar elke admin
+        # afzonderlijk (in-app notificaties hierboven gaan wel naar alle admins).
+        if CONTACT_FALLBACK_EMAIL:
             await send_email(
-                to_email=admin.get("email"),
+                to_email=CONTACT_FALLBACK_EMAIL,
                 subject=f"Nieuwe registratie: {full_name} ({org_name})",
                 html_content=email_html,
+            )
+        else:
+            logger.warning(
+                "notify_admins_new_registration: CONTACT_FALLBACK_EMAIL niet ingesteld, geen e-mail verstuurd"
             )
 
         await notify_ntfy(
