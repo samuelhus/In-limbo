@@ -70,6 +70,12 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
     return JSONResponse(status_code=429, content={"detail": msg})
 
 
+@api.get("/health")
+async def health() -> dict:
+    """Publieke, ongeauthenticeerde health-check voor uptime-monitoring (bv. cron + ntfy)."""
+    return {"status": "ok"}
+
+
 # --------------------------------------------------------------------------
 # Startup / shutdown
 # --------------------------------------------------------------------------

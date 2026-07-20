@@ -33,6 +33,16 @@ services:
     expose:
       - "27017"
 
+  ntfy:
+    image: binwiederhier/ntfy
+    command:
+      - serve
+    restart: unless-stopped
+    volumes:
+      - ntfy_cache:/var/cache/ntfy
+    expose:
+      - "80"
+
   caddy:
     image: caddy:2
     restart: unless-stopped
@@ -45,8 +55,10 @@ services:
       - caddy_config:/config
     depends_on:
       - frontend
+      - ntfy
 
 volumes:
   mongo_data:
   caddy_data:
   caddy_config:
+  ntfy_cache:

@@ -17,7 +17,7 @@ from auth import (
     set_auth_cookie, clear_auth_cookie, get_current_user,
 )
 from notifications import (
-    notify_admins_new_registration, send_email, render_email, FRONTEND_URL,
+    notify_admins_new_registration, notify_ntfy, send_email, render_email, FRONTEND_URL,
 )
 
 router = APIRouter()
@@ -201,6 +201,13 @@ async def register_donateur(request: Request, body: RegisterDonateur = Body(...)
     })
     token = create_access_token(user_id, email, "donateur")
     set_auth_cookie(response, token)
+    asyncio.create_task(notify_ntfy(
+        title="Nieuwe donateur",
+        message=f"Nieuwe donateur geregistreerd: {body.username} ({email}).",
+        priority="low",
+        tags=["gift"],
+        click_url=f"{FRONTEND_URL}/admin",
+    ))
     return {"ok": True, "userId": user_id, "status": "validated"}
 
 

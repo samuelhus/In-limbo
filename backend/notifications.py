@@ -31,6 +31,13 @@ MAILERLITE_GROUP_ID = os.environ.get("MAILERLITE_GROUP_ID", "")
 # of als er (nog) geen admin-accounts in de database staan.
 CONTACT_FALLBACK_EMAIL = os.environ.get("CONTACT_FALLBACK_EMAIL", "info@inlimbo.brussels").strip()
 
+# ntfy push-notificaties (self-hosted, zie docker-compose.yml). NTFY_URL wijst
+# naar de publieke ntfy-server (bv. https://ntfy.inlimbo.brussels), NTFY_TOPIC
+# is een lange, moeilijk te raden topic-naam (het topic is publiek leesbaar,
+# de topic-naam zelf is de enige bescherming).
+NTFY_URL = os.environ.get("NTFY_URL", "").rstrip("/")
+NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
+
 LOGO_URL = (
     "https://res.cloudinary.com/dbjizykvb/image/upload/v1782338137/logoil_uoqeoo.png"
 )
@@ -125,6 +132,36 @@ async def send_email(to_email: str, subject: str, html_content: str) -> None:
         await asyncio.to_thread(resend.Emails.send, params)
     except Exception as e:
         logger.warning("Resend email failed (%s → %s): %s", subject, to_email, e)
+
+
+async def notify_ntfy(
+    title: str,
+    message: str,
+    priority: str = "default",
+    tags: Optional[list[str]] = None,
+    click_url: Optional[str] = None,
+) -> None:
+    """Stuur een ntfy push-notificatie. Fails soft (nooit een fout doorgeven aan de caller).
+
+    priority: "min" | "low" | "default" | "high" | "urgent"
+    tags: ntfy-emoji-tags, bv. ["warning"], ["tada"], ["rotating_light"]
+    """
+    if not NTFY_URL or not NTFY_TOPIC:
+        return
+    try:
+        headers = {"Title": title, "Priority": priority}
+        if tags:
+            headers["Tags"] = ",".join(tags)
+        if click_url:
+            headers["Click"] = click_url
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(
+                f"{NTFY_URL}/{NTFY_TOPIC}",
+                content=message.encode("utf-8"),
+                headers=headers,
+            )
+    except Exception as e:
+        logger.warning("ntfy notification failed (%s): %s", title, e)
 
 
 async def maybe_send_email(
@@ -280,5 +317,13 @@ async def notify_admins_new_registration(
                 subject=f"Nieuwe registratie: {full_name} ({org_name})",
                 html_content=email_html,
             )
+
+        await notify_ntfy(
+            title="Nieuwe registratie",
+            message=message,
+            priority="default",
+            tags=["bust_in_silhouette"],
+            click_url=admin_url,
+        )
     except Exception as e:
         logger.warning("notify_admins_new_registration failed: %s", e)
