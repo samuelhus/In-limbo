@@ -12,6 +12,8 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY}
       FRONTEND_URL: ${FRONTEND_URL}
       SENDER_EMAIL: ${SENDER_EMAIL}
+      NTFY_URL: ${NTFY_URL}
+      NTFY_TOPIC: ${NTFY_TOPIC}
     expose:
       - "8000"
     depends_on:
