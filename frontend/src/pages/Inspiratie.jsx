@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
@@ -9,6 +9,8 @@ export const INSPIRATIE_CATEGORY_COLORS = {
   partner_project: '#34D399',
   documentatie: '#9CA3AF',
 };
+
+const INSPIRATIE_CATEGORIES = ['artikel', 'partner_project', 'documentatie'];
 
 function pickField(post, base, lang) {
   const primary = post[`${base}${lang === 'fr' ? 'Fr' : 'Nl'}`];
@@ -58,10 +60,40 @@ function InspiratieCard({ post, t, i18n }) {
   );
 }
 
+function CategoryFilter({ active, setActive, t }) {
+  const options = [{ v: null, k: 'inspiratie.filter_all' }, ...INSPIRATIE_CATEGORIES.map((c) => ({ v: c, k: `inspiratie.category_${c}` }))];
+
+  return (
+    <div className="flex flex-wrap gap-2 mb-10" data-testid="inspiratie-category-filter">
+      {options.map((opt) => {
+        const isActive = active === opt.v;
+        const color = opt.v ? INSPIRATIE_CATEGORY_COLORS[opt.v] : undefined;
+        return (
+          <button
+            key={opt.v || 'all'}
+            type="button"
+            onClick={() => setActive(opt.v)}
+            data-testid={`inspiratie-filter-${opt.v || 'all'}`}
+            className={`px-4 py-2 text-sm tracking-wide border transition-colors ${
+              isActive
+                ? 'border-foreground bg-foreground text-background'
+                : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
+            }`}
+            style={isActive && color ? { backgroundColor: color, borderColor: color } : undefined}
+          >
+            {t(opt.k)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Inspiratie() {
   const { t, i18n } = useTranslation();
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState('');
+  const [activeCategory, setActiveCategory] = useState(null);
 
   useEffect(() => {
     api.get('/news', { params: { postType: 'inspiratie' } })
@@ -69,22 +101,39 @@ export default function Inspiratie() {
       .catch(() => setError('Kon inspiratie niet laden.'));
   }, []);
 
+  const filteredPosts = useMemo(() => {
+    if (!posts) return posts;
+    if (!activeCategory) return posts;
+    return posts.filter((p) => p.category === activeCategory);
+  }, [posts, activeCategory]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16" data-testid="inspiratie-page">
       <p className="overline mb-4">{t('inspiratie.subtitle')}</p>
-      <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-12">{t('inspiratie.title')}</h1>
+      <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-8">{t('inspiratie.title')}</h1>
 
       {error && <p className="text-destructive">{error}</p>}
       {posts === null && !error && <p className="text-muted-foreground">{t('common.loading')}</p>}
+
+      {posts && posts.length > 0 && (
+        <CategoryFilter active={activeCategory} setActive={setActiveCategory} t={t} />
+      )}
+
       {posts && posts.length === 0 && (
         <p className="text-muted-foreground" data-testid="inspiratie-empty">
           {t('inspiratie.empty')}
         </p>
       )}
 
-      {posts && posts.length > 0 && (
+      {filteredPosts && filteredPosts.length === 0 && posts && posts.length > 0 && (
+        <p className="text-muted-foreground" data-testid="inspiratie-filter-empty">
+          {t('inspiratie.empty')}
+        </p>
+      )}
+
+      {filteredPosts && filteredPosts.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((p) => (
+          {filteredPosts.map((p) => (
             <InspiratieCard key={p.id} post={p} t={t} i18n={i18n} />
           ))}
         </div>
