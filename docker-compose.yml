@@ -39,6 +39,8 @@ services:
     image: binwiederhier/ntfy
     command:
       - serve
+      - --base-url=https://ntfy.inlimbo.brussels
+      - --upstream-base-url=https://ntfy.sh
     restart: unless-stopped
     volumes:
       - ntfy_cache:/var/cache/ntfy
