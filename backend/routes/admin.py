@@ -2,7 +2,7 @@
 from __future__ import annotations
 import calendar
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Body
 
 from deps import db, now_iso, strip_mongo
 from models import AdminDecision, AdminUserUpdate, AdminOrgUpdate
@@ -515,3 +515,82 @@ async def get_stats(
         "transfers_count": transfers_count,
         "checkins_count": checkins_count,
     }
+
+
+# --------------------------------------------------------------------------
+# Transactie-historiek: aanbiedingen die via het platform toegewezen zijn
+# (listing.selectedApplicantId is gezet — blijft staan ook na archivering,
+# wordt enkel teruggezet naar None bij een expliciete reset naar "beschikbaar").
+# --------------------------------------------------------------------------
+
+@router.get("/admin/transactions")
+async def admin_transactions(
+    organisation_id: str | None = Query(None, description="Filter op zender- of ontvangerorganisatie"),
+    photo_received: str | None = Query(None, description="'yes' of 'no'"),
+    admin: dict = Depends(get_admin_user),
+):
+    listings = []
+    async for lst in db.listings.find({"selectedApplicantId": {"$ne": None}}).sort("updatedAt", -1):
+        listings.append(strip_mongo(lst))
+
+    app_ids = [lst["selectedApplicantId"] for lst in listings]
+    apps_map = {}
+    if app_ids:
+        async for a in db.applications.find({"id": {"$in": app_ids}}):
+            apps_map[a["id"]] = a
+
+    org_ids = set()
+    for lst in listings:
+        if lst.get("organisationId"):
+            org_ids.add(lst["organisationId"])
+        app = apps_map.get(lst["selectedApplicantId"])
+        if app and app.get("applicantOrganisationId"):
+            org_ids.add(app["applicantOrganisationId"])
+    orgs_map = {}
+    if org_ids:
+        async for o in db.organisations.find({"id": {"$in": list(org_ids)}}):
+            orgs_map[o["id"]] = o.get("name")
+
+    results = []
+    for lst in listings:
+        app = apps_map.get(lst["selectedApplicantId"])
+        sender_org_id = lst.get("organisationId")
+        receiver_org_id = app.get("applicantOrganisationId") if app else None
+        photo_received_flag = bool(lst.get("photoReceived", False))
+
+        if organisation_id and organisation_id not in (sender_org_id, receiver_org_id):
+            continue
+        if photo_received == "yes" and not photo_received_flag:
+            continue
+        if photo_received == "no" and photo_received_flag:
+            continue
+
+        results.append({
+            "listingId": lst["id"],
+            "listingTitle": lst.get("title", ""),
+            "listingStatus": lst.get("status"),
+            "senderOrganisationId": sender_org_id,
+            "senderOrganisationName": orgs_map.get(sender_org_id),
+            "receiverOrganisationId": receiver_org_id,
+            "receiverOrganisationName": orgs_map.get(receiver_org_id),
+            "assignedAt": (app.get("updatedAt") if app else lst.get("updatedAt")),
+            "photoReceived": photo_received_flag,
+        })
+
+    return {"items": results, "total": len(results)}
+
+
+@router.patch("/admin/transactions/{listing_id}/photo-received")
+async def admin_set_photo_received(
+    listing_id: str,
+    body: dict = Body(...),
+    admin: dict = Depends(get_admin_user),
+):
+    received = bool(body.get("received"))
+    result = await db.listings.update_one(
+        {"id": listing_id},
+        {"$set": {"photoReceived": received}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "Aanbieding niet gevonden")
+    return {"ok": True, "photoReceived": received}
