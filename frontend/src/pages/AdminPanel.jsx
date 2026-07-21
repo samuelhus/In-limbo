@@ -1013,9 +1013,11 @@ function AdminTransacties() {
   const [orgOptions, setOrgOptions] = useState([]);
   const [filterOrg, setFilterOrg] = useState('');
   const [filterPhoto, setFilterPhoto] = useState('');
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [busyId, setBusyId] = useState(null);
+  const LIMIT = 100;
 
   useEffect(() => {
     api.get('/admin/organisations')
@@ -1028,7 +1030,7 @@ function AdminTransacties() {
 
   const load = useCallback(() => {
     setLoading(true);
-    const params = {};
+    const params = { skip: page * LIMIT, limit: LIMIT };
     if (filterOrg) params.organisation_id = filterOrg;
     if (filterPhoto) params.photo_received = filterPhoto;
     api.get('/admin/transactions', { params })
@@ -1039,9 +1041,10 @@ function AdminTransacties() {
       })
       .catch((e) => setErr(formatApiError(e)))
       .finally(() => setLoading(false));
-  }, [filterOrg, filterPhoto]);
+  }, [filterOrg, filterPhoto, page]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(0); }, [filterOrg, filterPhoto]);
 
   const togglePhotoReceived = async (listingId, current) => {
     setBusyId(listingId);
@@ -1146,6 +1149,30 @@ function AdminTransacties() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {total > LIMIT && (
+        <div className="flex items-center justify-between mt-6" data-testid="admin-transacties-pagination">
+          <button
+            className="btn-secondary !py-1.5 px-3 text-xs"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            data-testid="admin-transacties-prev"
+          >
+            ← Vorige
+          </button>
+          <span className="text-sm text-muted-foreground">
+            Pagina {page + 1} van {Math.ceil(total / LIMIT)}
+          </span>
+          <button
+            className="btn-secondary !py-1.5 px-3 text-xs"
+            onClick={() => setPage((p) => (((p + 1) * LIMIT < total) ? p + 1 : p))}
+            disabled={(page + 1) * LIMIT >= total}
+            data-testid="admin-transacties-next"
+          >
+            Volgende →
+          </button>
         </div>
       )}
     </div>

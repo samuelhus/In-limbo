@@ -527,6 +527,8 @@ async def get_stats(
 async def admin_transactions(
     organisation_id: str | None = Query(None, description="Filter op zender- of ontvangerorganisatie"),
     photo_received: str | None = Query(None, description="'yes' of 'no'"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=200),
     admin: dict = Depends(get_admin_user),
 ):
     listings = []
@@ -577,7 +579,9 @@ async def admin_transactions(
             "photoReceived": photo_received_flag,
         })
 
-    return {"items": results, "total": len(results)}
+    total = len(results)
+    page_items = results[skip:skip + limit]
+    return {"items": page_items, "total": total}
 
 
 @router.patch("/admin/transactions/{listing_id}/photo-received")
