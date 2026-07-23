@@ -332,6 +332,24 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 4: Deadline (+ admin magazijn-toggle) */}
       {step === 4 && (
         <section className="space-y-4" data-testid="wizard-step-deadline">
+          {!data.isRecurrent && !(isAdmin && data.placeInWarehouse) && (
+            <div>
+              <label className="label-overline">{t('listing.wizard_deadline_label')}</label>
+              <input
+                type="date"
+                className="input-flat"
+                data-testid="wizard-deadline-input"
+                value={data.deadline}
+                min={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setData({ ...data, deadline: e.target.value })}
+              />
+              {isDonateur && (
+                <p className="text-xs text-muted-foreground mt-2" data-testid="wizard-donateur-recurrent-hint">
+                  {t('listing.wizard_donateur_recurrent_hint')}
+                </p>
+              )}
+            </div>
+          )}
           {!isDonateur && (
             <label className="flex items-center gap-3 cursor-pointer mb-2">
               <input
@@ -352,24 +370,6 @@ export default function ListingWizard({ editMode = false }) {
             <p className="text-xs text-muted-foreground mb-4 -mt-1" data-testid="wizard-recurrent-explainer">
               {t('listing.wizard_recurrent_explainer')}
             </p>
-          )}
-          {!data.isRecurrent && !(isAdmin && data.placeInWarehouse) && (
-            <div>
-              <label className="label-overline">{t('listing.wizard_deadline_label')}</label>
-              <input
-                type="date"
-                className="input-flat"
-                data-testid="wizard-deadline-input"
-                value={data.deadline}
-                min={new Date().toISOString().slice(0, 10)}
-                onChange={(e) => setData({ ...data, deadline: e.target.value })}
-              />
-              {isDonateur && (
-                <p className="text-xs text-muted-foreground mt-2" data-testid="wizard-donateur-recurrent-hint">
-                  {t('listing.wizard_donateur_recurrent_hint')}
-                </p>
-              )}
-            </div>
           )}
           {data.isRecurrent && !isDonateur && (
             <p className="text-sm text-foreground/75 leading-relaxed border-l-2 border-border pl-4">

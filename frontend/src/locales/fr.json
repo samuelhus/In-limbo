@@ -317,7 +317,7 @@
     "wizard_upload_max": "Maximum 5 photos par annonce. {{count}} photo(s) ignorée(s).",
     "wizard_upload_failed": "L'envoi a échoué",
     "wizard_recurrent_checkbox": "Il s'agit d'une offre récurrente (pas d'échéance)",
-    "wizard_recurrent_explainer": "Choisissez cette option pour du matériel dont vous disposez régulièrement, comme des palettes, des surplus de production, des poutres de chantier, etc. Plutôt que de créer une nouvelle offre à chaque fois, vous invitez ainsi les autres utilisateurs à vous contacter spontanément pour savoir si quelque chose est disponible à ce moment-là.",
+    "wizard_recurrent_explainer": "Choisissez cette option pour du matériel dont vous disposez régulièrement, comme des palettes, des surplus de production, des poutres de chantier, etc. Plutôt que de créer une nouvelle offre à chaque fois, vous invitez ainsi les autres utilisateurs à vous contacter spontanément pour savoir si quelque chose est disponible à ce moment-là. Vos coordonnées sont visibles par les partenaires.",
     "wizard_donateur_recurrent_hint": "Les offres récurrentes sont réservées aux partenaires In Limbo.",
     "wizard_recurrent_email_hint": "Pour les offres récurrentes, votre adresse e-mail sera visible pour les autres utilisateurs validés sur la page de détail, afin qu'ils puissent vous contacter directement.",
     "wizard_warehouse_hint_prefix": "L'annonce sera immédiatement marquée comme",
