@@ -48,6 +48,20 @@ export default function Register() {
   const [orgQuery, setOrgQuery] = useState('');
   const [orgResults, setOrgResults] = useState([]);
   const [selectedOrgId, setSelectedOrgId] = useState(null);
+  const [similarOrgs, setSimilarOrgs] = useState([]);
+
+  useEffect(() => {
+    if (path !== 'new') return;
+    if (org.orgName.trim().length < 3) { setSimilarOrgs([]); return; }
+    let cancel = false;
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await api.get('/organisations/check-similar', { params: { name: org.orgName.trim() } });
+        if (!cancel) setSimilarOrgs(data.matches || []);
+      } catch {/* ignore, dit is enkel een hulpvaardige waarschuwing */}
+    }, 400);
+    return () => { cancel = true; clearTimeout(timer); };
+  }, [org.orgName, path]);
 
   useEffect(() => {
     if (path !== 'existing') return;
@@ -234,6 +248,18 @@ export default function Register() {
             <label className="label-overline">{t('register.org_name')}</label>
             <input className="input-flat" data-testid="register-org-name" value={org.orgName}
               onChange={(e) => setOrg({...org, orgName: e.target.value})} />
+            {similarOrgs.length > 0 && (
+              <div data-testid="register-org-similar-warning"
+                   className="mt-2 text-sm bg-amber-50 border border-amber-300 text-amber-900 px-3 py-2 rounded">
+                <p className="font-medium">Opgelet: deze organisatie lijkt al te bestaan.</p>
+                <ul className="mt-1 list-disc list-inside">
+                  {similarOrgs.map((m) => <li key={m.id}>{m.name}</li>)}
+                </ul>
+                <p className="mt-1 text-xs text-amber-800">
+                  Werkt je organisatie al met In Limbo? Ga dan terug en kies "bestaande organisatie" in plaats van een nieuw account aan te maken.
+                </p>
+              </div>
+            )}
           </div>
           <div>
             <label className="label-overline">{t('register.org_description')}</label>

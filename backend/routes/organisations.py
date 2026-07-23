@@ -1,7 +1,10 @@
 """Organisations: public list/search/get + member/admin update + jaarverslag PDF."""
 from __future__ import annotations
 import io
+import re
+import unicodedata
 from datetime import datetime
+from difflib import SequenceMatcher
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import StreamingResponse
@@ -98,6 +101,45 @@ async def list_organisations(
     async for o in cursor:
         out.append(strip_mongo(o))
     return out
+
+
+def _normalize_org_name(name: str) -> str:
+    """Lowercase, strip accents/punctuation and common legal-form words, collapse whitespace."""
+    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    name = name.lower()
+    name = re.sub(r"\b(vzw|asbl|bv|nv|de|het|la|le|les)\b", " ", name)
+    name = re.sub(r"[^a-z0-9 ]", " ", name)
+    name = re.sub(r"\s+", " ", name).strip()
+    return name
+
+
+@router.get("/organisations/check-similar")
+async def check_similar_organisations(name: str = Query(..., min_length=2)):
+    """Fuzzy-check of er al een (gelijkaardig genaamde) organisatie bestaat.
+    Gebruikt bij registratie om te voorkomen dat dezelfde organisatie per ongeluk
+    twee keer wordt geregistreerd onder een licht andere naam/schrijfwijze."""
+    target = _normalize_org_name(name)
+    if not target:
+        return {"matches": []}
+
+    docs = await db.organisations.find(
+        {}, {"_id": 0, "id": 1, "name": 1, "status": 1},
+    ).to_list(2000)
+
+    matches = []
+    for doc in docs:
+        candidate = _normalize_org_name(doc.get("name", ""))
+        if not candidate:
+            continue
+        ratio = SequenceMatcher(None, target, candidate).ratio()
+        # Ook flaggen als de ene naam volledig in de andere zit (bv. "Kringwinkel" vs "De Kringwinkel Gent")
+        if target in candidate or candidate in target:
+            ratio = max(ratio, 0.85)
+        if ratio >= 0.72:
+            matches.append({"id": doc["id"], "name": doc["name"], "similarity": round(ratio, 2)})
+
+    matches.sort(key=lambda m: m["similarity"], reverse=True)
+    return {"matches": matches[:5]}
 
 
 @router.get("/organisations/search")
