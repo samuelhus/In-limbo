@@ -172,7 +172,7 @@ export default function ListingDetail() {
                   <p className="text-base">
                     {t('listing.offered_by')} <span className="font-medium">{item.offererFirstName}</span> {t('listing.van')}{' '}
                     <Link
-                      to={`/organisaties/${item.organisation.id}`}
+                      to={`/organisaties/${item.organisation.slug || item.organisation.id}`}
                       className="industrial-link font-medium"
                       data-testid="listing-org-link"
                     >
@@ -496,7 +496,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
                   {a.applicant.firstName} {a.applicant.lastName}
                   {' · '}
                   <Link
-                    to={`/organisaties/${a.applicant.organisationId}`}
+                    to={`/organisaties/${a.applicant.organisationSlug || a.applicant.organisationId}`}
                     className="industrial-link text-foreground/85"
                   >
                     {a.applicant.organisationName}

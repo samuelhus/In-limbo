@@ -238,8 +238,8 @@ class NewsPostBase(BaseModel):
     # inspiratie: altijd beide talen verplicht
     titleNl: Optional[str] = Field(None, max_length=100)
     titleFr: Optional[str] = Field(None, max_length=100)
-    contentNl: Optional[str] = Field(None, max_length=20000)
-    contentFr: Optional[str] = Field(None, max_length=20000)
+    contentNl: Optional[str] = Field(None, max_length=5000)
+    contentFr: Optional[str] = Field(None, max_length=5000)
 
     # ---- inspiratie-only fields ----
     photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
@@ -284,8 +284,8 @@ class NewsPostUpdate(BaseModel):
     photo: Optional[str] = None
     titleNl: Optional[str] = Field(None, max_length=100)
     titleFr: Optional[str] = Field(None, max_length=100)
-    contentNl: Optional[str] = Field(None, max_length=20000)
-    contentFr: Optional[str] = Field(None, max_length=20000)
+    contentNl: Optional[str] = Field(None, max_length=5000)
+    contentFr: Optional[str] = Field(None, max_length=5000)
     photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
     link: Optional[str] = None
 
@@ -386,3 +386,4 @@ class AdminOrgUpdate(BaseModel):
     website: Optional[str] = None
     status: Optional[Literal["pending", "validated", "active", "inactive", "rejected"]] = None
     photos: Optional[List[str]] = None
+    slug: Optional[str] = None

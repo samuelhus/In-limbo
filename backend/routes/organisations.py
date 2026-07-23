@@ -155,7 +155,7 @@ async def search_organisations(q: str = Query(..., min_length=2), includeInactiv
 
 @router.get("/organisations/{org_id}")
 async def get_organisation(org_id: str):
-    org = await db.organisations.find_one({"id": org_id})
+    org = await db.organisations.find_one({"$or": [{"id": org_id}, {"slug": org_id}]})
     if not org:
         raise HTTPException(404, "Organisatie niet gevonden")
     if org["status"] not in ("active", "inactive"):

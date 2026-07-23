@@ -81,7 +81,7 @@ function ListingTile({ item, isValidated, isAdmin }) {
   const goToOrg = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    navigate(`/organisaties/${item.organisation.id}`);
+    navigate(`/organisaties/${item.organisation.slug || item.organisation.id}`);
   };
 
   return (

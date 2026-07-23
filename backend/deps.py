@@ -1,7 +1,9 @@
 """Gedeelde dependencies en helpers voor de In Limbo backend."""
 from __future__ import annotations
 import os
+import re
 import logging
+import unicodedata
 from datetime import datetime, timezone
 
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -24,6 +26,30 @@ def strip_mongo(d: dict) -> dict:
     d.pop("passwordHash", None)
     d.pop("searchKeywords", None)  # server-only field, never expose
     return d
+
+
+def slugify(text: str) -> str:
+    """Zet een naam om in een URL-vriendelijke slug, bv. 'De Kringwinkel Gent!' -> 'de-kringwinkel-gent'."""
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9]+", "-", text).strip("-")
+    return text or "organisatie"
+
+
+async def generate_unique_org_slug(db, name: str, org_id: str | None = None) -> str:
+    """Genereert een unieke slug voor een organisatie. Bij een naamsbotsing wordt -2, -3, ... toegevoegd."""
+    base = slugify(name)
+    slug = base
+    counter = 2
+    while True:
+        query = {"slug": slug}
+        if org_id:
+            query["id"] = {"$ne": org_id}
+        existing = await db.organisations.find_one(query, {"_id": 0, "id": 1})
+        if not existing:
+            return slug
+        slug = f"{base}-{counter}"
+        counter += 1
 
 
 DEFAULT_EMAIL_PREFS = {

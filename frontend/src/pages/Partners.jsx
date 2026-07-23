@@ -43,7 +43,7 @@ export default function Partners() {
               {catOrgs.map((org) => (
                 <Link
                   key={org.id}
-                  to={`/organisaties/${org.id}`}
+                  to={`/organisaties/${org.slug || org.id}`}
                   data-testid={`partner-link-${org.id}`}
                   className="border border-border px-4 py-3 text-sm hover:bg-muted transition-colors"
                 >

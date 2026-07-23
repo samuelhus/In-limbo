@@ -171,6 +171,7 @@ async def list_listing_applications(listing_id: str, user: dict = Depends(get_do
                 "firstName": u.get("firstName"),
                 "lastName": u.get("lastName"),
                 "organisationId": o.get("id"),
+                "organisationSlug": o.get("slug"),
                 "organisationName": o.get("name"),
                 "organisationDescription": o.get("description"),
             },

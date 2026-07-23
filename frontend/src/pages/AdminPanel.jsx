@@ -11,7 +11,6 @@ const SECTIONS = [
   { key: 'validatie', label: 'Validatie' },
   { key: 'gebruikers', label: 'Gebruikers' },
   { key: 'organisaties', label: 'Organisaties' },
-  { key: 'transacties', label: 'Transacties' },
   { key: 'nieuws', label: 'Nieuws' },
   { key: 'statistieken', label: 'Statistieken' },
   { key: 'meldingen', label: 'Meldingen' },
@@ -22,7 +21,6 @@ const SECTION_TITLES = {
   validatie: 'Wachtrij',
   gebruikers: 'Gebruikers',
   organisaties: 'Organisaties',
-  transacties: 'Transacties',
   nieuws: 'Nieuws',
   statistieken: 'Statistieken',
   meldingen: 'Meldingen',
@@ -299,8 +297,6 @@ export default function AdminPanel() {
         {section === 'gebruikers' && <AdminGebruikers />}
 
         {section === 'organisaties' && <AdminOrganisaties />}
-
-        {section === 'transacties' && <AdminTransacties />}
 
         {section === 'nieuws' && <AdminNieuws />}
 
@@ -720,7 +716,7 @@ function AdminGebruikers() {
             </div>
             <div className="md:col-span-3 text-sm text-muted-foreground">
               {u.organisationId && u.organisationName
-                ? <Link to={`/organisaties/${u.organisationId}`} className="hover:underline">{u.organisationName}</Link>
+                ? <Link to={`/organisaties/${u.organisationSlug || u.organisationId}`} className="hover:underline">{u.organisationName}</Link>
                 : (u.role === 'donateur' ? 'Donateur' : '—')
               }
             </div>
@@ -958,7 +954,7 @@ function AdminOrganisaties() {
                data-testid={`admin-org-row-${org.id}`}>
             <div className="md:col-span-5">
               <Link
-                to={`/organisaties/${org.id}`}
+                to={`/organisaties/${org.slug || org.id}`}
                 className="font-medium hover:underline"
                 data-testid={`admin-org-name-link-${org.id}`}
               >
@@ -1002,178 +998,6 @@ function AdminOrganisaties() {
       )}
       {statsOrg && (
         <AdminOrgStatsModal org={statsOrg} onClose={() => setStatsOrg(null)} />
-      )}
-    </div>
-  );
-}
-
-function AdminTransacties() {
-  const [items, setItems] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [orgOptions, setOrgOptions] = useState([]);
-  const [filterOrg, setFilterOrg] = useState('');
-  const [filterPhoto, setFilterPhoto] = useState('');
-  const [page, setPage] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState('');
-  const [busyId, setBusyId] = useState(null);
-  const LIMIT = 100;
-
-  useEffect(() => {
-    api.get('/admin/organisations')
-      .then(({ data }) => {
-        const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name, 'nl'));
-        setOrgOptions(sorted);
-      })
-      .catch(() => {});
-  }, []);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    const params = { skip: page * LIMIT, limit: LIMIT };
-    if (filterOrg) params.organisation_id = filterOrg;
-    if (filterPhoto) params.photo_received = filterPhoto;
-    api.get('/admin/transactions', { params })
-      .then(({ data }) => {
-        setItems(data.items);
-        setTotal(data.total);
-        setErr('');
-      })
-      .catch((e) => setErr(formatApiError(e)))
-      .finally(() => setLoading(false));
-  }, [filterOrg, filterPhoto, page]);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { setPage(0); }, [filterOrg, filterPhoto]);
-
-  const togglePhotoReceived = async (listingId, current) => {
-    setBusyId(listingId);
-    // Optimistic update
-    setItems((prev) => prev.map((it) => (
-      it.listingId === listingId ? { ...it, photoReceived: !current } : it
-    )));
-    try {
-      await api.patch(`/admin/transactions/${listingId}/photo-received`, { received: !current });
-    } catch (e) {
-      alert(formatApiError(e));
-      // Revert on failure
-      setItems((prev) => prev.map((it) => (
-        it.listingId === listingId ? { ...it, photoReceived: current } : it
-      )));
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  return (
-    <div data-testid="admin-transacties-section">
-      <div className="flex flex-wrap gap-3 mb-6 items-end">
-        <select
-          className="input-flat"
-          value={filterOrg}
-          onChange={(e) => setFilterOrg(e.target.value)}
-          data-testid="admin-transacties-filter-org"
-        >
-          <option value="">Alle organisaties</option>
-          {orgOptions.map((org) => (
-            <option key={org.id} value={org.id}>{org.name}</option>
-          ))}
-        </select>
-        <select
-          className="input-flat"
-          value={filterPhoto}
-          onChange={(e) => setFilterPhoto(e.target.value)}
-          data-testid="admin-transacties-filter-photo"
-        >
-          <option value="">Foto ontvangen: alle</option>
-          <option value="yes">Foto ontvangen: ja</option>
-          <option value="no">Foto ontvangen: nee</option>
-        </select>
-        {(filterOrg || filterPhoto) && (
-          <button
-            className="text-xs text-muted-foreground hover:underline"
-            onClick={() => { setFilterOrg(''); setFilterPhoto(''); }}
-          >
-            ✕ Filters wissen
-          </button>
-        )}
-        <span className="text-sm text-muted-foreground self-center">{total} transactie(s)</span>
-      </div>
-
-      {err && <p className="text-destructive mb-6" data-testid="admin-transacties-error">{err}</p>}
-      {loading && <p className="text-muted-foreground">Laden…</p>}
-
-      {!loading && items.length === 0 && (
-        <p className="text-muted-foreground" data-testid="admin-transacties-empty">
-          Geen transacties gevonden.
-        </p>
-      )}
-
-      {!loading && items.length > 0 && (
-        <div className="divide-y divide-border border-y border-border">
-          {items.map((tx) => (
-            <div
-              key={tx.listingId}
-              className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
-              data-testid={`admin-transactie-row-${tx.listingId}`}
-            >
-              <div className="md:col-span-4">
-                <Link
-                  to={`/aanbieding/${tx.listingId}`}
-                  className="font-medium hover:underline"
-                  data-testid={`admin-transactie-link-${tx.listingId}`}
-                >
-                  {tx.listingTitle || '(zonder titel)'}
-                </Link>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {tx.assignedAt ? new Date(tx.assignedAt).toLocaleDateString('nl-BE') : ''}
-                  {tx.listingStatus ? ` · ${tx.listingStatus}` : ''}
-                </p>
-              </div>
-              <div className="md:col-span-6 flex items-center gap-2 text-sm">
-                <span className="font-medium">{tx.senderOrganisationName || '—'}</span>
-                <span className="text-muted-foreground">→</span>
-                <span className="font-medium">{tx.receiverOrganisationName || '—'}</span>
-              </div>
-              <div className="md:col-span-2 flex md:justify-end">
-                <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={tx.photoReceived}
-                    disabled={busyId === tx.listingId}
-                    onChange={() => togglePhotoReceived(tx.listingId, tx.photoReceived)}
-                    data-testid={`admin-transactie-photo-checkbox-${tx.listingId}`}
-                  />
-                  Foto ontvangen
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {total > LIMIT && (
-        <div className="flex items-center justify-between mt-6" data-testid="admin-transacties-pagination">
-          <button
-            className="btn-secondary !py-1.5 px-3 text-xs"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-            data-testid="admin-transacties-prev"
-          >
-            ← Vorige
-          </button>
-          <span className="text-sm text-muted-foreground">
-            Pagina {page + 1} van {Math.ceil(total / LIMIT)}
-          </span>
-          <button
-            className="btn-secondary !py-1.5 px-3 text-xs"
-            onClick={() => setPage((p) => (((p + 1) * LIMIT < total) ? p + 1 : p))}
-            disabled={(page + 1) * LIMIT >= total}
-            data-testid="admin-transacties-next"
-          >
-            Volgende →
-          </button>
-        </div>
       )}
     </div>
   );
@@ -1320,6 +1144,7 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
     website: org.website || '',
     status: org.status || 'pending',
     photos: org.photos || [],
+    slug: org.slug || '',
   });
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState('');
@@ -1360,6 +1185,15 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
           <label className="label-overline">Naam</label>
           <input className="input-flat w-full" value={form.name}
                  onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        </div>
+        <div>
+          <label className="label-overline">Profiel-URL (slug)</label>
+          <input className="input-flat w-full" value={form.slug}
+                 placeholder="wordt automatisch aangevuld indien leeg"
+                 onChange={(e) => setForm({ ...form, slug: e.target.value })} />
+          <p className="text-xs text-muted-foreground mt-1">
+            inlimbo.brussels/organisaties/<span className="font-mono">{form.slug || '...'}</span>
+          </p>
         </div>
         <div>
           <label className="label-overline">Beschrijving</label>

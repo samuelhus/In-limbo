@@ -81,7 +81,7 @@ async def _enrich_listings(items: list[dict]) -> list[dict]:
             it["offererFirstName"] = owner.get("firstName")
             org = orgs_map.get(it.get("organisationId"))
             if org:
-                it["organisation"] = {"id": org["id"], "name": org["name"]}
+                it["organisation"] = {"id": org["id"], "name": org["name"], "slug": org.get("slug")}
     return items
 
 
@@ -259,6 +259,7 @@ async def get_listing(listing_id: str, request: Request):
                     view["organisation"] = {
                         "id": org["id"],
                         "name": org["name"],
+                        "slug": org.get("slug"),
                     }
                 if listing.get("isRecurrent"):
                     view["offererEmail"] = owner["email"]
