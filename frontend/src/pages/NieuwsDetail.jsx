@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
+import { sanitizeRichText, legacyContentToHtml } from '@/lib/richtext';
 
 export default function NieuwsDetail() {
   const { t, i18n } = useTranslation();
@@ -74,11 +75,10 @@ export default function NieuwsDetail() {
       </h1>
 
       <div
-        className="prose prose-neutral max-w-none text-foreground/85 leading-relaxed whitespace-pre-wrap text-lg"
+        className="richtext-content max-w-none text-foreground/85 leading-relaxed text-lg"
         data-testid="nieuws-detail-content"
-      >
-        {content}
-      </div>
+        dangerouslySetInnerHTML={{ __html: sanitizeRichText(legacyContentToHtml(content)) }}
+      />
     </article>
   );
 }

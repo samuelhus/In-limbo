@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api, formatApiError } from '@/lib/api';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { formatDateNL } from './Nieuws';
+import RichTextEditor from '@/components/RichTextEditor';
+import { stripHtml } from '@/lib/richtext';
 
 const NIEUWS_CATEGORIES = ['nieuws', 'helpende_handen', 'opleiding'];
 const INSPIRATIE_CATEGORIES = ['artikel', 'partner_project', 'documentatie'];
@@ -141,6 +143,12 @@ export default function AdminNieuws() {
         if (form.languages.length === 0) {
           throw new Error('Kies minstens één taal (NL en/of FR).');
         }
+        if (form.languages.includes('nl') && !stripHtml(form.contentNl)) {
+          throw new Error('Inhoud (NL) mag niet leeg zijn.');
+        }
+        if (form.languages.includes('fr') && !stripHtml(form.contentFr)) {
+          throw new Error('Inhoud (FR) mag niet leeg zijn.');
+        }
         payload = {
           postType: 'nieuws',
           category: form.category,
@@ -156,6 +164,12 @@ export default function AdminNieuws() {
           payload.contentFr = form.contentFr.trim();
         }
       } else {
+        if (!stripHtml(form.contentNl)) {
+          throw new Error('Inhoud (NL) mag niet leeg zijn.');
+        }
+        if (!stripHtml(form.contentFr)) {
+          throw new Error('Inhoud (FR) mag niet leeg zijn.');
+        }
         payload = {
           postType: 'inspiratie',
           category: form.category,
@@ -316,16 +330,12 @@ export default function AdminNieuws() {
                   </div>
                   <div>
                     <label className="label-overline">Inhoud (NL)</label>
-                    <textarea
-                      rows={10}
-                      className="input-flat font-normal"
+                    <RichTextEditor
                       value={form.contentNl}
+                      onChange={(html) => setForm({ ...form, contentNl: html })}
                       maxLength={5000}
-                      onChange={(e) => setForm({ ...form, contentNl: e.target.value })}
-                      required
-                      data-testid="admin-nieuws-content-nl"
+                      testId="admin-nieuws-content-nl"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">{form.contentNl.length}/5000</p>
                   </div>
                 </>
               )}
@@ -346,16 +356,12 @@ export default function AdminNieuws() {
                   </div>
                   <div>
                     <label className="label-overline">Inhoud (FR)</label>
-                    <textarea
-                      rows={10}
-                      className="input-flat font-normal"
+                    <RichTextEditor
                       value={form.contentFr}
+                      onChange={(html) => setForm({ ...form, contentFr: html })}
                       maxLength={5000}
-                      onChange={(e) => setForm({ ...form, contentFr: e.target.value })}
-                      required
-                      data-testid="admin-nieuws-content-fr"
+                      testId="admin-nieuws-content-fr"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">{form.contentFr.length}/5000</p>
                   </div>
                 </>
               )}
@@ -470,32 +476,24 @@ export default function AdminNieuws() {
                 <label className="label-overline">
                   {form.category === 'documentatie' ? 'Beschrijving (NL)' : 'Inhoud (NL)'}
                 </label>
-                <textarea
-                  rows={8}
-                  className="input-flat font-normal"
+                <RichTextEditor
                   value={form.contentNl}
+                  onChange={(html) => setForm({ ...form, contentNl: html })}
                   maxLength={5000}
-                  onChange={(e) => setForm({ ...form, contentNl: e.target.value })}
-                  required
-                  data-testid="admin-inspiratie-content-nl"
+                  testId="admin-inspiratie-content-nl"
                 />
-                <p className="text-xs text-muted-foreground mt-1">{form.contentNl.length}/5000</p>
               </div>
 
               <div>
                 <label className="label-overline">
                   {form.category === 'documentatie' ? 'Beschrijving (FR)' : 'Inhoud (FR)'}
                 </label>
-                <textarea
-                  rows={8}
-                  className="input-flat font-normal"
+                <RichTextEditor
                   value={form.contentFr}
+                  onChange={(html) => setForm({ ...form, contentFr: html })}
                   maxLength={5000}
-                  onChange={(e) => setForm({ ...form, contentFr: e.target.value })}
-                  required
-                  data-testid="admin-inspiratie-content-fr"
+                  testId="admin-inspiratie-content-fr"
                 />
-                <p className="text-xs text-muted-foreground mt-1">{form.contentFr.length}/5000</p>
               </div>
             </>
           )}

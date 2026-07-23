@@ -5,6 +5,7 @@ import { api, formatApiError } from '@/lib/api';
 import { formatDateNL } from './Nieuws';
 import { INSPIRATIE_CATEGORY_COLORS } from './Inspiratie';
 import Lightbox from '@/components/Lightbox';
+import { sanitizeRichText, legacyContentToHtml } from '@/lib/richtext';
 
 function pickField(post, base, lang) {
   const primary = post[`${base}${lang === 'fr' ? 'Fr' : 'Nl'}`];
@@ -117,11 +118,10 @@ export default function InspiratieDetail() {
       </h1>
 
       <div
-        className="prose prose-neutral max-w-none text-foreground/85 leading-relaxed whitespace-pre-wrap text-lg"
+        className="richtext-content max-w-none text-foreground/85 leading-relaxed text-lg"
         data-testid="inspiratie-detail-content"
-      >
-        {content}
-      </div>
+        dangerouslySetInnerHTML={{ __html: sanitizeRichText(legacyContentToHtml(content)) }}
+      />
 
       {post.category === 'documentatie' && post.link && (
         <a

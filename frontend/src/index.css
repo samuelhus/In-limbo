@@ -100,4 +100,55 @@
     font-family: 'Archivo', system-ui, sans-serif;
     @apply block text-xs uppercase tracking-[0.18em] font-semibold text-foreground mb-2;
   }
+
+  /* Rich text editor (posts/inspiratie) — editable area */
+  .richtext-content-editable {
+    min-height: 180px;
+  }
+  .richtext-content-editable .ProseMirror {
+    outline: none;
+    min-height: 160px;
+  }
+  .richtext-content-editable p {
+    margin-bottom: 0.75em;
+  }
+  .richtext-content-editable ul,
+  .richtext-content-editable ol {
+    margin: 0.5em 0 0.75em 1.25em;
+  }
+  .richtext-content-editable ul {
+    list-style: disc;
+  }
+  .richtext-content-editable ol {
+    list-style: decimal;
+  }
+  .richtext-content-editable a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  /* Rich text display (published post content) */
+  .richtext-content p {
+    margin-bottom: 1em;
+  }
+  .richtext-content ul,
+  .richtext-content ol {
+    margin: 0.75em 0 1em 1.5em;
+  }
+  .richtext-content ul {
+    list-style: disc;
+  }
+  .richtext-content ol {
+    list-style: decimal;
+  }
+  .richtext-content a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .richtext-content a:hover {
+    opacity: 0.75;
+  }
+  .richtext-content strong {
+    font-weight: 700;
+  }
 }
