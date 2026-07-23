@@ -305,6 +305,7 @@
     "wizard_upload_max": "Maximaal 5 foto's per aanbieding. {{count}} foto('s) overgeslagen.",
     "wizard_upload_failed": "Upload mislukt",
     "wizard_recurrent_checkbox": "Dit is een terugkerende aanbieding (geen deadline)",
+    "wizard_recurrent_explainer": "Kies dit voor materiaal dat je regelmatig beschikbaar hebt, zoals paletten, productieoverschotten, werfbalken, enzovoort. In plaats van telkens een nieuwe aanbieding te plaatsen, nodig je hiermee andere gebruikers uit om spontaan te vragen of er op dat moment iets beschikbaar is.",
     "wizard_donateur_recurrent_hint": "Recurrente aanbiedingen zijn voorbehouden aan In Limbo-partners.",
     "wizard_recurrent_email_hint": "Bij recurrente aanbiedingen wordt jouw e-mailadres zichtbaar voor andere gevalideerde gebruikers op de detailpagina, zodat ze rechtstreeks contact kunnen opnemen.",
     "wizard_warehouse_hint_prefix": "Aanbieding wordt onmiddellijk gemarkeerd als",
@@ -689,11 +690,6 @@
     "category_partner_project": "Project van partner",
     "category_documentatie": "Documentatie",
     "view_document": "Bekijk document →",
-    "gallery_photo_alt": "Foto",
-    "filter_all": "Alle",
-    "gallery_close": "Sluiten",
-    "gallery_prev": "Vorige foto",
-    "gallery_next": "Volgende foto",
-    "gallery_counter": "{{current}} / {{total}}"
+    "gallery_photo_alt": "Foto"
   }
 }

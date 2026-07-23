@@ -348,6 +348,11 @@ export default function ListingWizard({ editMode = false }) {
               <span className="text-sm">{t('listing.wizard_recurrent_checkbox')}</span>
             </label>
           )}
+          {!isDonateur && (
+            <p className="text-xs text-muted-foreground mb-4 -mt-1" data-testid="wizard-recurrent-explainer">
+              {t('listing.wizard_recurrent_explainer')}
+            </p>
+          )}
           {!data.isRecurrent && !(isAdmin && data.placeInWarehouse) && (
             <div>
               <label className="label-overline">{t('listing.wizard_deadline_label')}</label>
