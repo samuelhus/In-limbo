@@ -36,6 +36,7 @@ from routes.checkout import router as checkout_router
 from routes.checkin import router as checkin_router
 from routes.admin import router as admin_router
 from routes.contact import router as contact_router
+from routes.impact import router as impact_router
 
 
 cloudinary.config(
@@ -157,6 +158,7 @@ api.include_router(checkout_router)
 api.include_router(checkin_router)
 api.include_router(admin_router)
 api.include_router(contact_router)
+api.include_router(impact_router)
 
 app.include_router(api)
 

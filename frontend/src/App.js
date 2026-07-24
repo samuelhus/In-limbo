@@ -32,6 +32,7 @@ import Nieuws from '@/pages/Nieuws';
 import NieuwsDetail from '@/pages/NieuwsDetail';
 import Inspiratie from '@/pages/Inspiratie';
 import InspiratieDetail from '@/pages/InspiratieDetail';
+import ImpactMethodologie from '@/pages/ImpactMethodologie';
 import Checkout from '@/pages/Checkout';
 import Checkin from '@/pages/Checkin';
 import WachtwoordVergeten from '@/pages/WachtwoordVergeten';
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="/nieuws/:id" element={<NieuwsDetail />} />
               <Route path="/inspiratie" element={<Inspiratie />} />
               <Route path="/inspiratie/:id" element={<InspiratieDetail />} />
+              <Route path="/impact-methodologie" element={<ImpactMethodologie />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/wachtwoord-vergeten" element={<WachtwoordVergeten />} />
               <Route path="/wachtwoord-reset" element={<WachtwoordReset />} />
