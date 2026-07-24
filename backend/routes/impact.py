@@ -2,6 +2,8 @@
 niet hier — deze route-file bevat enkel de data-ophaling + wiring."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, Query
 
 from deps import db
@@ -31,6 +33,32 @@ async def platform_impact():
 
     return {
         **combined,
+        "methodology": "/impact-methodologie",
+    }
+
+
+@router.get("/impact/platform/ytd")
+async def platform_impact_ytd():
+    """Zelfde als /impact/platform, maar enkel sinds 1 januari van het huidige
+    kalenderjaar (year-to-date) — voor de 'vandaag sinds begin van het jaar'
+    live-blok op de verantwoordingspagina."""
+    year = datetime.now(timezone.utc).year
+    date_filter = {"$gte": f"{year}-01-01"}
+
+    transfers = await db.platform_transfers.find(
+        {"createdAt": date_filter}, {"_id": 0, "material": 1, "weightKg": 1},
+    ).to_list(100_000)
+    checkouts = await db.checkouts.find(
+        {"createdAt": date_filter}, {"_id": 0, "items": 1},
+    ).to_list(100_000)
+
+    transfers_summary = impact_calc.summarize_flat(transfers)
+    checkouts_summary = impact_calc.summarize_nested(checkouts)
+    combined = impact_calc.combine(transfers_summary, checkouts_summary)
+
+    return {
+        **combined,
+        "year": year,
         "methodology": "/impact-methodologie",
     }
 

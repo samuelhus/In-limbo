@@ -163,7 +163,7 @@ export default function ImpactMethodologie() {
   const [live, setLive] = useState(null);
 
   useEffect(() => {
-    api.get('/impact/platform').then(({ data }) => setLive(data)).catch(() => {});
+    api.get('/impact/platform/ytd').then(({ data }) => setLive(data)).catch(() => {});
   }, []);
 
   return (
@@ -186,7 +186,7 @@ export default function ImpactMethodologie() {
           className="bg-[#ADEBB3] border border-border p-6 mb-12"
           data-testid="impact-live-numbers"
         >
-          <p className="overline mb-2">Vandaag, live vanaf het platform</p>
+          <p className="overline mb-2">Vandaag sinds het begin van het jaar</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-3xl font-bold tracking-tight">{live.totalWeightKg.toLocaleString('nl-BE')} kg</p>
