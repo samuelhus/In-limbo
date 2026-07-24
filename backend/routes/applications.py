@@ -248,8 +248,9 @@ async def select_applicant(
     return {"ok": True}
 
 
-async def _reset_listing_to_available(listing_id: str) -> None:
-    """Reset herbestemde listing back to beschikbaar + reopen selected/not_selected applications."""
+async def _reset_listing_to_available(listing_id: str, target_status: str = "beschikbaar") -> None:
+    """Reset herbestemde listing terug (naar beschikbaar, of naar in_magazijn als het
+    oorspronkelijk een magazijn-item was) + heropen selected/not_selected aanvragen."""
     now = now_iso()
     await db.applications.update_many(
         {"listingId": listing_id, "status": {"$in": ["selected", "not_selected"]}},
@@ -257,7 +258,7 @@ async def _reset_listing_to_available(listing_id: str) -> None:
     )
     await db.listings.update_one(
         {"id": listing_id},
-        {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
+        {"$set": {"status": target_status, "selectedApplicantId": None, "updatedAt": now}},
     )
 
 
@@ -267,7 +268,8 @@ async def unrehome(listing_id: str, user: dict = Depends(get_donateur_or_validat
     if listing["status"] != "herbestemd":
         raise HTTPException(400, "Deze aanbieding is niet herbestemd")
     selected_id = listing.get("selectedApplicantId")
-    await _reset_listing_to_available(listing_id)
+    target_status = "in_magazijn" if listing.get("placeInWarehouse") else "beschikbaar"
+    await _reset_listing_to_available(listing_id, target_status)
     if selected_id:
         app_doc = await db.applications.find_one({"id": selected_id})
         if app_doc:
@@ -293,9 +295,14 @@ async def unselect_applicant(listing_id: str, user: dict = Depends(get_donateur_
 
 @router.post("/listings/{listing_id}/mark-rehomed")
 async def mark_rehomed(listing_id: str, user: dict = Depends(get_donateur_or_validated_user)):
-    """Aanbieder herbestemt zonder iemand te selecteren (materiaal buiten platform weggegeven)."""
+    """Aanbieder herbestemt zonder iemand te selecteren (materiaal buiten platform weggegeven).
+    Admins mogen dit ook doen vanuit status 'in_magazijn' — bv. wanneer het fysieke object
+    aan de magazijn-checkout is opgehaald: de listing blijft zichtbaar maar toont als herbestemd."""
     listing = await _require_listing_owner_or_admin(listing_id, user)
-    if listing["status"] != "beschikbaar":
+    allowed_statuses = {"beschikbaar"}
+    if user.get("role") == "admin":
+        allowed_statuses.add("in_magazijn")
+    if listing["status"] not in allowed_statuses:
         raise HTTPException(400, "Aanbieding kan niet naar herbestemd gezet worden vanuit deze status")
     now = now_iso()
     await db.applications.update_many(

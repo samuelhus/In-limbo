@@ -400,7 +400,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
       <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
         <p className="overline">{t('listing.applications')} · {visibleApps.length}</p>
         <div className="flex flex-wrap gap-2">
-          {listing.status === 'beschikbaar' && (
+          {(listing.status === 'beschikbaar' || (isAdmin && listing.status === 'in_magazijn')) && (
             <button
               onClick={() => {
                 if (!window.confirm(t('listing.rehome_confirm'))) return;
