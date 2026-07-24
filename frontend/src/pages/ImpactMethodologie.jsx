@@ -243,7 +243,24 @@ export default function ImpactMethodologie() {
           </li>
           <li>
             De cijfers zijn gebaseerd op <strong>internationale bronnen</strong> (voornamelijk VK
-            en algemene literatuur), niet op Belgische/Brusselse LCA-data zoals TOTEM of B-EPD. We
+            en algemene literatuur), niet op Belgische/Brusselse LCA-data zoals{' '}
+            <a
+              href="https://www.totem-building.be"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="industrial-link"
+            >
+              TOTEM
+            </a>{' '}
+            (Tool to Optimise the Total Environmental impact of Materials, de officiële tool van
+            de 3 Belgische gewesten) of B-EPD. TOTEM is weliswaar gratis en publiek toegankelijk,
+            maar is opgebouwd als een <strong>interactieve rekentool voor volledige
+            bouwelementen</strong> (bv. "1m² buitenmuur, specifieke opbouw"), niet als een
+            eenvoudige tabel met één CO2-factor per generieke materiaalcategorie zoals hierboven.
+            Er bestaat geen publieke API of downloadbare dataset om dit rechtstreeks te
+            raadplegen of automatisch te vergelijken met onze cijfers. We kunnen dus niet met
+            zekerheid bevestigen dat onze categorieën exact overeenkomen met TOTEM-waarden — de
+            onderliggende methodes (beide op LCA gebaseerd) liggen wel in dezelfde grootorde. We
             onderzoeken of we deze cijfers op termijn kunnen aanvullen of vervangen met Belgische
             bronnen voor de bouwgerelateerde categorieën.
           </li>
