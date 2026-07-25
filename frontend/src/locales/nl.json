@@ -345,6 +345,7 @@
     "subtitle": "Beheer je gegevens en voorkeuren.",
     "personal_info": "Persoonlijke gegevens",
     "email_label": "E-mailadres",
+    "language_label": "Taalvoorkeur",
     "change_password": "Wachtwoord wijzigen",
     "current_password": "Huidig wachtwoord",
     "new_password": "Nieuw wachtwoord (laat leeg om niet te wijzigen)",

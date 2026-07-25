@@ -357,6 +357,7 @@
     "subtitle": "Gérez vos données et préférences.",
     "personal_info": "Informations personnelles",
     "email_label": "Adresse e-mail",
+    "language_label": "Langue préférée",
     "change_password": "Modifier le mot de passe",
     "current_password": "Mot de passe actuel",
     "new_password": "Nouveau mot de passe (laisser vide pour ne pas changer)",

@@ -723,6 +723,13 @@ function AdminGebruikers() {
             <div className="md:col-span-2 flex gap-2 items-center">
               <StatusBadge status={u.status} />
               <span className="text-xs text-muted-foreground">{u.role}</span>
+              <span
+                className="text-xs font-semibold px-1.5 py-0.5 border border-border text-muted-foreground"
+                title="Taalvoorkeur"
+                data-testid={`admin-user-lang-${u.id}`}
+              >
+                {(u.preferredLanguage || 'nl').toUpperCase()}
+              </span>
             </div>
             <div className="md:col-span-2 flex gap-2 justify-end">
               <button onClick={() => setEditing(u)} className="btn-secondary !py-1 px-3 text-xs"
@@ -779,6 +786,7 @@ function AdminUserEditModal({ user, onSave, onClose, busy }) {
     phone: user.phone || '',
     role: user.role || 'user',
     status: user.status || 'pending',
+    preferredLanguage: user.preferredLanguage || 'nl',
   });
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" data-testid="admin-user-edit-modal">
@@ -829,6 +837,15 @@ function AdminUserEditModal({ user, onSave, onClose, busy }) {
               {USER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
+        </div>
+        <div>
+          <label className="label-overline">Taalvoorkeur</label>
+          <select className="input-flat w-full" value={form.preferredLanguage}
+                  onChange={(e) => setForm({ ...form, preferredLanguage: e.target.value })}
+                  data-testid="admin-user-edit-language">
+            <option value="nl">Nederlands</option>
+            <option value="fr">Français</option>
+          </select>
         </div>
         <div className="flex gap-3 pt-4">
           <button onClick={() => onSave(user.id, form)} disabled={busy} className="btn-primary"

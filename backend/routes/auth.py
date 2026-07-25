@@ -114,6 +114,7 @@ async def register_new_org(request: Request, body: RegisterNewOrg = Body(...), r
         "organisationId": org_id,
         "dateLastLogin": None,
         "createdAt": now,
+        "preferredLanguage": body.preferredLanguage,
     })
 
     token = create_access_token(user_id, email, "user")
@@ -159,6 +160,7 @@ async def register_existing_org(request: Request, body: RegisterExistingOrg = Bo
         "organisationId": body.organisationId,
         "dateLastLogin": None,
         "createdAt": now,
+        "preferredLanguage": body.preferredLanguage,
     })
 
     token = create_access_token(user_id, email, "user")
@@ -200,6 +202,7 @@ async def register_donateur(request: Request, body: RegisterDonateur = Body(...)
         "organisationId": None,
         "dateLastLogin": None,
         "createdAt": now,
+        "preferredLanguage": body.preferredLanguage,
     })
     token = create_access_token(user_id, email, "donateur")
     set_auth_cookie(response, token)

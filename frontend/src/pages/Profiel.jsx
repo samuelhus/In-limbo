@@ -13,7 +13,7 @@ const EMAIL_PREF_LABELS = [
 
 export default function Profiel() {
   const { user, refresh } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isDonateur = user.role === 'donateur';
 
   const [form, setForm] = useState({
@@ -23,6 +23,7 @@ export default function Profiel() {
     email: user.email || '',
     phone: user.phone || '',
     password: '',
+    preferredLanguage: user.preferredLanguage || 'nl',
   });
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -113,6 +114,9 @@ export default function Profiel() {
       }
       await api.patch('/users/me', payload);
       await refresh();
+      if (payload.preferredLanguage) {
+        i18n.changeLanguage(payload.preferredLanguage);
+      }
       setMsg(t('profile.update_success'));
       setForm((f) => ({ ...f, password: '' }));
     } catch (e) {
@@ -162,6 +166,18 @@ export default function Profiel() {
         <div>
           <label className="label-overline">{t('profile.email_label')}</label>
           <input type="email" className="input-flat" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} data-testid="profiel-email" />
+        </div>
+        <div>
+          <label className="label-overline">{t('profile.language_label')}</label>
+          <select
+            className="input-flat"
+            value={form.preferredLanguage}
+            onChange={(e) => setForm({ ...form, preferredLanguage: e.target.value })}
+            data-testid="profiel-language"
+          >
+            <option value="nl">Nederlands</option>
+            <option value="fr">Français</option>
+          </select>
         </div>
         <div>
           <label className="label-overline">{t('profile.new_password')}</label>

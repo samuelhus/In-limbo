@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { api, formatApiError } from '@/lib/api';
+import i18n from '@/i18n';
 
 const AuthContext = createContext(null);
+
+// Bepaalt de taal onzichtbaar op basis van de huidige paginataal (geen apart
+// formulierveld nodig) — gebruikt bij elke registratie om preferredLanguage
+// automatisch mee te sturen.
+const currentPageLanguage = () => (i18n.language?.startsWith('fr') ? 'fr' : 'nl');
 
 export function AuthProvider({ children }) {
   // null = checking, false = anonymous, object = logged in
@@ -41,7 +47,7 @@ export function AuthProvider({ children }) {
 
   const registerNewOrg = async (payload) => {
     try {
-      await api.post('/auth/register/new-org', payload);
+      await api.post('/auth/register/new-org', { ...payload, preferredLanguage: currentPageLanguage() });
       await refresh();
       return { ok: true };
     } catch (e) {
@@ -51,7 +57,7 @@ export function AuthProvider({ children }) {
 
   const registerExistingOrg = async (payload) => {
     try {
-      await api.post('/auth/register/existing-org', payload);
+      await api.post('/auth/register/existing-org', { ...payload, preferredLanguage: currentPageLanguage() });
       await refresh();
       return { ok: true };
     } catch (e) {
@@ -61,7 +67,7 @@ export function AuthProvider({ children }) {
 
   const registerDonateur = async (payload) => {
     try {
-      await api.post('/auth/register/donateur', payload);
+      await api.post('/auth/register/donateur', { ...payload, preferredLanguage: currentPageLanguage() });
       await refresh();
       return { ok: true };
     } catch (e) {

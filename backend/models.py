@@ -50,6 +50,7 @@ class UserPublic(UserBase):
     rejectionReason: Optional[str] = None
     organisationId: Optional[str] = None
     username: Optional[str] = None
+    preferredLanguage: Literal["nl", "fr"] = "nl"
     dateLastLogin: Optional[str] = None
     createdAt: str
 
@@ -122,6 +123,7 @@ class RegisterNewOrg(BaseModel):
     orgWebsite: Optional[str] = None
     orgVisibleOnPartnerPage: bool = True
     acceptedTerms: bool
+    preferredLanguage: Literal["nl", "fr"] = "nl"
 
 
 class RegisterExistingOrg(BaseModel):
@@ -134,6 +136,7 @@ class RegisterExistingOrg(BaseModel):
     phone: Optional[str] = None
     organisationId: str
     acceptedTerms: bool
+    preferredLanguage: Literal["nl", "fr"] = "nl"
 
 
 class LoginRequest(BaseModel):
@@ -158,6 +161,7 @@ class RegisterDonateur(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
     acceptedTerms: bool
+    preferredLanguage: Literal["nl", "fr"] = "nl"
 
 
 class AdminDecision(BaseModel):
@@ -185,6 +189,7 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = None
     password: Optional[str] = Field(None, min_length=8)
     username: Optional[str] = None
+    preferredLanguage: Optional[Literal["nl", "fr"]] = None
 
 
 class OrgUpdate(BaseModel):
@@ -358,6 +363,7 @@ class AdminUserUpdate(BaseModel):
     phone: Optional[str] = None
     role: Optional[Literal["user", "admin", "donateur"]] = None
     status: Optional[Literal["pending", "validated", "rejected"]] = None
+    preferredLanguage: Optional[Literal["nl", "fr"]] = None
 
 
 # ---------- Contact / Newsletter ----------
