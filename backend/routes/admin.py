@@ -150,7 +150,7 @@ async def admin_update_user(user_id: str, body: AdminUserUpdate, admin: dict = D
         update["firstName"] = body.firstName
     if body.lastName is not None:
         update["lastName"] = body.lastName
-    if body.username is not None:
+    if body.username:
         update["username"] = body.username
     if body.email is not None:
         clash = await db.users.find_one({"email": body.email.lower(), "id": {"$ne": user_id}})
@@ -163,6 +163,8 @@ async def admin_update_user(user_id: str, body: AdminUserUpdate, admin: dict = D
         update["role"] = body.role
     if body.status is not None:
         update["status"] = body.status
+    if body.preferredLanguage is not None:
+        update["preferredLanguage"] = body.preferredLanguage
     await db.users.update_one({"id": user_id}, {"$set": update})
     updated = await db.users.find_one({"id": user_id}, {"_id": 0, "passwordHash": 0})
     return strip_mongo(updated)
