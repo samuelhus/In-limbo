@@ -7,7 +7,7 @@ import { stripHtml } from '@/lib/richtext';
 
 const NIEUWS_CATEGORIES = ['nieuws', 'helpende_handen', 'opleiding'];
 const INSPIRATIE_CATEGORIES = ['artikel', 'partner_project', 'documentatie'];
-const GALLERY_CATEGORIES = ['artikel', 'partner_project'];
+const GALLERY_CATEGORIES = ['artikel', 'partner_project', 'documentatie'];
 const MAX_GALLERY = 10;
 
 const CATEGORY_LABELS = {
@@ -180,9 +180,9 @@ export default function AdminNieuws() {
         };
         if (GALLERY_CATEGORIES.includes(form.category)) {
           payload.photos = form.photos;
-        } else if (form.category === 'documentatie') {
-          payload.photo = form.photo || null;
-          payload.link = form.link.trim();
+        }
+        if (form.category === 'documentatie') {
+          payload.link = form.link.trim() || null;
         }
       }
       if (editing === 'new') await api.post('/news', payload);
@@ -430,46 +430,22 @@ export default function AdminNieuws() {
               )}
 
               {form.category === 'documentatie' && (
-                <>
-                  <div>
-                    <label className="label-overline">Foto <span className="text-muted-foreground normal-case">(optioneel)</span></label>
-                    {form.photo ? (
-                      <div className="flex items-start gap-3">
-                        <img src={form.photo} alt="" className="w-32 h-32 object-cover border border-border" />
-                        <button
-                          type="button"
-                          onClick={() => setForm({ ...form, photo: '' })}
-                          className="btn-secondary !py-1 text-xs"
-                        >
-                          Verwijder
-                        </button>
-                      </div>
-                    ) : (
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        disabled={uploading}
-                        data-testid="admin-inspiratie-photo-input"
-                        className="text-sm"
-                      />
-                    )}
-                    {uploading && <p className="text-xs text-muted-foreground mt-1">Uploaden…</p>}
-                  </div>
-
-                  <div>
-                    <label className="label-overline">Link naar document</label>
-                    <input
-                      type="url"
-                      className="input-flat"
-                      placeholder="https://drive.google.com/…"
-                      value={form.link}
-                      onChange={(e) => setForm({ ...form, link: e.target.value })}
-                      required
-                      data-testid="admin-inspiratie-link"
-                    />
-                  </div>
-                </>
+                <div>
+                  <label className="label-overline">
+                    Link naar document <span className="text-muted-foreground normal-case">(optioneel)</span>
+                  </label>
+                  <input
+                    type="url"
+                    className="input-flat"
+                    placeholder="https://drive.google.com/…"
+                    value={form.link}
+                    onChange={(e) => setForm({ ...form, link: e.target.value })}
+                    data-testid="admin-inspiratie-link"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Optioneel — enkel nodig voor een extern document (bv. PDF). Video, audio en afbeeldingen kan je hieronder rechtstreeks in de tekst invoegen.
+                  </p>
+                </div>
               )}
 
               <div>

@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import { formatDateNL } from './Nieuws';
 import { INSPIRATIE_CATEGORY_COLORS } from './Inspiratie';
 import Lightbox from '@/components/Lightbox';
-import { sanitizeRichText, legacyContentToHtml } from '@/lib/richtext';
+import { sanitizeRichText, legacyContentToHtml, hydrateRichTextEmbeds } from '@/lib/richtext';
 
 function pickField(post, base, lang) {
   const primary = post[`${base}${lang === 'fr' ? 'Fr' : 'Nl'}`];
@@ -19,12 +19,20 @@ export default function InspiratieDetail() {
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const contentRef = useRef(null);
 
   useEffect(() => {
     api.get(`/news/${id}`)
       .then(({ data }) => setPost(data))
       .catch((e) => setError(formatApiError(e)));
   }, [id]);
+
+  const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
+  const content = post ? pickField(post, 'content', lang) : '';
+
+  useEffect(() => {
+    hydrateRichTextEmbeds(contentRef.current);
+  }, [content]);
 
   if (error) {
     return (
@@ -41,11 +49,9 @@ export default function InspiratieDetail() {
     );
   }
 
-  const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
   const color = INSPIRATIE_CATEGORY_COLORS[post.category] || INSPIRATIE_CATEGORY_COLORS.artikel;
   const label = t(`inspiratie.category_${post.category}`);
   const title = pickField(post, 'title', lang);
-  const content = pickField(post, 'content', lang);
   const gallery = post.photos && post.photos.length > 0 ? post.photos : (post.photo ? [post.photo] : []);
 
   return (
@@ -118,6 +124,7 @@ export default function InspiratieDetail() {
       </h1>
 
       <div
+        ref={contentRef}
         className="richtext-content max-w-none text-foreground/85 leading-relaxed text-lg"
         data-testid="inspiratie-detail-content"
         dangerouslySetInnerHTML={{ __html: sanitizeRichText(legacyContentToHtml(content)) }}

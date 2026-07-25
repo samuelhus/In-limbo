@@ -151,4 +151,38 @@
   .richtext-content strong {
     font-weight: 700;
   }
+
+  /* Video/audio embed placeholders — shown in the editor (static label) */
+  .richtext-embed-placeholder {
+    @apply my-3 px-3 py-2.5 border border-dashed border-border bg-surface text-sm text-muted-foreground;
+  }
+  .richtext-embed-label {
+    @apply select-none;
+  }
+
+  /* Published page — hydrated video embed (responsive 16:9 iframe) */
+  .richtext-content .richtext-embed-video {
+    @apply my-6 border-none bg-transparent p-0;
+  }
+  .richtext-video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+  }
+  .richtext-video-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  /* Published page — hydrated audio embed */
+  .richtext-content .richtext-embed-audio {
+    @apply my-6 border-none bg-transparent p-0;
+  }
+  .richtext-audio-player {
+    width: 100%;
+  }
 }

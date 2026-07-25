@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
-import { legacyContentToHtml } from '@/lib/richtext';
+import { legacyContentToHtml, parseVideoUrl, isSafeAudioUrl } from '@/lib/richtext';
+import { VideoEmbed, AudioEmbed } from '@/lib/richtextEmbeds';
 
 function ToolbarButton({ onClick, active, disabled, label, children }) {
   return (
@@ -41,6 +42,8 @@ export default function RichTextEditor({ value, onChange, maxLength = 5000, test
         autolink: true,
         HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
       }),
+      VideoEmbed,
+      AudioEmbed,
     ],
     content: legacyContentToHtml(value),
     onUpdate: ({ editor: ed }) => {
@@ -76,6 +79,27 @@ export default function RichTextEditor({ value, onChange, maxLength = 5000, test
       return;
     }
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  };
+
+  const insertVideo = () => {
+    const url = window.prompt('YouTube- of Vimeo-link:', 'https://');
+    if (!url) return;
+    const parsed = parseVideoUrl(url);
+    if (!parsed) {
+      alert('Kon geen geldige YouTube- of Vimeo-link herkennen in deze URL.');
+      return;
+    }
+    editor.chain().focus().insertContent({ type: 'videoEmbed', attrs: parsed }).run();
+  };
+
+  const insertAudio = () => {
+    const url = window.prompt('Link naar audiobestand (mp3):', 'https://');
+    if (!url) return;
+    if (!isSafeAudioUrl(url)) {
+      alert('Ongeldige link — de audio-URL moet met http:// of https:// beginnen.');
+      return;
+    }
+    editor.chain().focus().insertContent({ type: 'audioEmbed', attrs: { src: url.trim() } }).run();
   };
 
   return (
@@ -115,6 +139,18 @@ export default function RichTextEditor({ value, onChange, maxLength = 5000, test
           onClick={setLink}
         >
           🔗 Link
+        </ToolbarButton>
+        <ToolbarButton
+          label="Video invoegen (YouTube/Vimeo)"
+          onClick={insertVideo}
+        >
+          🎬 Video
+        </ToolbarButton>
+        <ToolbarButton
+          label="Audio invoegen (mp3-link)"
+          onClick={insertAudio}
+        >
+          🔊 Audio
         </ToolbarButton>
         <ToolbarButton
           label="Ongedaan maken"

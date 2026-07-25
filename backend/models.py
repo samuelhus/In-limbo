@@ -225,7 +225,7 @@ PostLanguage = Literal['nl', 'fr']
 
 NIEUWS_CATEGORIES = {'nieuws', 'helpende_handen', 'opleiding'}
 INSPIRATIE_CATEGORIES = {'artikel', 'partner_project', 'documentatie'}
-INSPIRATIE_GALLERY_CATEGORIES = {'artikel', 'partner_project'}
+INSPIRATIE_GALLERY_CATEGORIES = {'artikel', 'partner_project', 'documentatie'}
 MAX_GALLERY_PHOTOS = 10
 
 
@@ -243,8 +243,8 @@ class NewsPostBase(BaseModel):
     # inspiratie: altijd beide talen verplicht
     titleNl: Optional[str] = Field(None, max_length=100)
     titleFr: Optional[str] = Field(None, max_length=100)
-    contentNl: Optional[str] = Field(None, max_length=5000)
-    contentFr: Optional[str] = Field(None, max_length=5000)
+    contentNl: Optional[str] = Field(None, max_length=20000)
+    contentFr: Optional[str] = Field(None, max_length=20000)
 
     # ---- inspiratie-only fields ----
     photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
@@ -270,8 +270,6 @@ class NewsPostBase(BaseModel):
                 raise ValueError("Titel in NL en FR is verplicht voor inspiratie")
             if not self.contentNl or not self.contentFr:
                 raise ValueError("Inhoud in NL en FR is verplicht voor inspiratie")
-            if self.category == 'documentatie' and not self.link:
-                raise ValueError("Link is verplicht voor documentatie")
             if self.photos and len(self.photos) > MAX_GALLERY_PHOTOS:
                 raise ValueError(f"Maximaal {MAX_GALLERY_PHOTOS} foto's toegelaten")
         return self
@@ -289,8 +287,8 @@ class NewsPostUpdate(BaseModel):
     photo: Optional[str] = None
     titleNl: Optional[str] = Field(None, max_length=100)
     titleFr: Optional[str] = Field(None, max_length=100)
-    contentNl: Optional[str] = Field(None, max_length=5000)
-    contentFr: Optional[str] = Field(None, max_length=5000)
+    contentNl: Optional[str] = Field(None, max_length=20000)
+    contentFr: Optional[str] = Field(None, max_length=20000)
     photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
     link: Optional[str] = None
 

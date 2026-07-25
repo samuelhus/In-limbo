@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
-import { sanitizeRichText, legacyContentToHtml } from '@/lib/richtext';
+import { sanitizeRichText, legacyContentToHtml, hydrateRichTextEmbeds } from '@/lib/richtext';
 
 export default function NieuwsDetail() {
   const { t, i18n } = useTranslation();
@@ -11,6 +11,7 @@ export default function NieuwsDetail() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
+  const contentRef = useRef(null);
 
   useEffect(() => {
     api.get(`/news/${id}`)
@@ -23,6 +24,14 @@ export default function NieuwsDetail() {
       })
       .catch((e) => setError(formatApiError(e)));
   }, [id, lang, t]);
+
+  const content = post
+    ? (lang === 'fr' ? (post.contentFr || post.contentNl) : (post.contentNl || post.contentFr))
+    : '';
+
+  useEffect(() => {
+    hydrateRichTextEmbeds(contentRef.current);
+  }, [content]);
 
   if (error) {
     return (
@@ -42,7 +51,6 @@ export default function NieuwsDetail() {
   const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.nieuws;
   const label = t(`news.category_${post.category}`);
   const title = lang === 'fr' ? (post.titleFr || post.titleNl) : (post.titleNl || post.titleFr);
-  const content = lang === 'fr' ? (post.contentFr || post.contentNl) : (post.contentNl || post.contentFr);
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12" data-testid="nieuws-detail-page">
@@ -75,6 +83,7 @@ export default function NieuwsDetail() {
       </h1>
 
       <div
+        ref={contentRef}
         className="richtext-content max-w-none text-foreground/85 leading-relaxed text-lg"
         data-testid="nieuws-detail-content"
         dangerouslySetInnerHTML={{ __html: sanitizeRichText(legacyContentToHtml(content)) }}
