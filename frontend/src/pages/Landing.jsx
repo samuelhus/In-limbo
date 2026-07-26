@@ -80,6 +80,7 @@ const { t, i18n } = useTranslation();
 const { user } = useAuth();
 const isLoggedIn = user && typeof user === 'object';
   const [landingPosts, setLandingPosts] = useState([]);
+  const [impact, setImpact] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -89,6 +90,10 @@ const isLoggedIn = user && typeof user === 'object';
       .then(([nieuwsRes, partnerRes]) => {
         setLandingPosts([...nieuwsRes.data, ...partnerRes.data]);
       })
+      .catch(() => {});
+
+    api.get('/impact/platform')
+      .then(({ data }) => setImpact(data))
       .catch(() => {});
   }, []);
 
@@ -165,7 +170,45 @@ const isLoggedIn = user && typeof user === 'object';
         </div>
       </section>
 
-      {/* THREE STEPS */}
+      {/* IMPACT WIDGET */}
+      {impact && (impact.totalWeightKg > 0 || impact.totalCo2Kg > 0) && (
+        <section
+          className="border-t border-border bg-[#ADEBB3]"
+          data-testid="landing-impact-widget"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16">
+            <p className="overline mb-2">Sinds de lancering van deze website — augustus 2026</p>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-10">
+              Onze impact tot nu toe
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-6">
+              <div data-testid="landing-impact-weight">
+                <p className="text-5xl sm:text-6xl font-bold tracking-tight tabular-nums">
+                  {impact.totalWeightKg.toLocaleString('nl-BE')}
+                </p>
+                <p className="mt-2 text-sm uppercase tracking-widest text-foreground/70">
+                  kg materiaal hergebruikt
+                </p>
+              </div>
+              <div data-testid="landing-impact-co2">
+                <p className="text-5xl sm:text-6xl font-bold tracking-tight tabular-nums">
+                  {impact.totalCo2Kg.toLocaleString('nl-BE')}
+                </p>
+                <p className="mt-2 text-sm uppercase tracking-widest text-foreground/70">
+                  kg CO2-equivalent bespaard
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/impact-methodologie"
+              className="industrial-link text-sm"
+              data-testid="landing-impact-methodology-link"
+            >
+              Hoe berekenen we dit? →
+            </Link>
+          </div>
+        </section>
+      )}
       {/*
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12 border-t border-border">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
