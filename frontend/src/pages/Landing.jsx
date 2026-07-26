@@ -84,11 +84,23 @@ const isLoggedIn = user && typeof user === 'object';
 
   useEffect(() => {
     Promise.all([
-      api.get('/news', { params: { postType: 'nieuws', limit: 2 } }),
+      api.get('/news', { params: { postType: 'nieuws', limit: 1 } }),
       api.get('/news', { params: { postType: 'inspiratie', category: 'partner_project', limit: 1 } }),
+      api.get('/news', { params: { postType: 'inspiratie', category: 'artikel', limit: 1 } }),
+      api.get('/news', { params: { postType: 'inspiratie', category: 'documentatie', limit: 1 } }),
     ])
-      .then(([nieuwsRes, partnerRes]) => {
-        setLandingPosts([...nieuwsRes.data, ...partnerRes.data]);
+      .then(([nieuwsRes, partnerRes, artikelRes, documentatieRes]) => {
+        // "Laatste inspiratiepost die geen partnerproject is" = de recentste
+        // van artikel/documentatie samen (dat zijn de enige 2 overige categorieën).
+        const nonPartnerCandidates = [...artikelRes.data, ...documentatieRes.data];
+        const latestNonPartner = nonPartnerCandidates.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        )[0];
+        setLandingPosts([
+          ...nieuwsRes.data,
+          ...partnerRes.data,
+          ...(latestNonPartner ? [latestNonPartner] : []),
+        ]);
       })
       .catch(() => {});
 
