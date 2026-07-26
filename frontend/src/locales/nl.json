@@ -691,6 +691,11 @@
     "category_partner_project": "Project van partner",
     "category_documentatie": "Documentatie",
     "view_document": "Bekijk document →",
-    "gallery_photo_alt": "Foto"
+    "gallery_photo_alt": "Foto",
+    "filter_all": "Alle",
+    "gallery_close": "Sluiten",
+    "gallery_prev": "Vorige foto",
+    "gallery_next": "Volgende foto",
+    "gallery_counter": "{{current}} / {{total}}"
   }
 }
