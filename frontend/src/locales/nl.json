@@ -213,6 +213,8 @@
     "description": "Beschrijving",
     "photos": "Foto's",
     "apply_btn": "Aanvragen →",
+    "status_open": "In behandeling",
+    "status_not_selected": "Niet geselecteerd",
     "withdraw_btn": "Aanvraag intrekken",
     "edit_btn": "Bewerken",
     "delete_btn": "Verwijderen",
