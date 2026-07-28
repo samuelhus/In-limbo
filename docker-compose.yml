@@ -14,13 +14,20 @@ services:
       SENDER_EMAIL: ${SENDER_EMAIL}
       NTFY_URL: ${NTFY_URL}
       NTFY_TOPIC: ${NTFY_TOPIC}
+      SENTRY_DSN: ${SENTRY_DSN}
+      ENVIRONMENT: ${ENVIRONMENT}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
     expose:
       - "8000"
     depends_on:
       - mongo
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_SENTRY_DSN: ${REACT_APP_SENTRY_DSN}
+        REACT_APP_ENVIRONMENT: ${ENVIRONMENT}
     restart: unless-stopped
     expose:
       - "80"

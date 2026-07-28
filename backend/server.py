@@ -8,6 +8,18 @@ load_dotenv(ROOT_DIR / ".env")
 
 import os
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
+
+sentry_sdk.init(
+    dsn=os.environ.get("SENTRY_DSN"),
+    environment=os.environ.get("ENVIRONMENT", "development"),
+    integrations=[StarletteIntegration(), FastApiIntegration()],
+    traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.2")),
+    send_default_pii=False,
+)
+
 import cloudinary
 from fastapi import FastAPI, APIRouter, Request
 from fastapi.responses import JSONResponse
