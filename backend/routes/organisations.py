@@ -294,10 +294,15 @@ def _draw_co2_highlight(c: rl_canvas.Canvas, y: float, t: dict, co2_kg: float) -
     link_label = f"{t['co2_methodology_link']} →"
     c.setFont("Helvetica-Oblique", 8)
     link_x = A4_W - MARGIN_X - 5 * mm - c.stringWidth(link_label, "Helvetica-Oblique", 8)
-    c.drawString(link_x, band_y + 6 * mm, link_label)
+    c.drawString(link_x, band_y + 9 * mm, link_label)
+
+    methodology_url = f"{FRONTEND_URL}/impact-methodologie"
+    url_display = methodology_url.replace("https://", "").replace("http://", "")
+    c.setFont("Helvetica-Oblique", 7)
+    url_x = A4_W - MARGIN_X - 5 * mm - c.stringWidth(url_display, "Helvetica-Oblique", 7)
+    c.drawString(url_x, band_y + 4 * mm, url_display)
 
     # Whole band is clickable, links to the public methodology page.
-    methodology_url = f"{FRONTEND_URL}/impact-methodologie"
     c.linkURL(methodology_url, (MARGIN_X, band_y, MARGIN_X + band_w, band_y + band_h), relative=0)
 
     return band_y - 8 * mm
