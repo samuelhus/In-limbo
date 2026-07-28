@@ -43,3 +43,6 @@ apscheduler==3.10.4
 # Utils
 python-dotenv==1.2.2
 anyio==4.13.0
+
+# Error tracking
+sentry-sdk[fastapi]==2.66.1
