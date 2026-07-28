@@ -17,6 +17,7 @@ from reportlab.pdfgen import canvas as rl_canvas
 from deps import db, now_iso, strip_mongo
 from models import OrgUpdate
 from auth import get_validated_user
+from notifications import FRONTEND_URL
 import impact as impact_calc
 
 router = APIRouter()
@@ -46,6 +47,7 @@ TRANSLATIONS = {
         "no_description": "—",
         "page": "Pagina",
         "co2_saved": "CO2-equivalent bespaard",
+        "co2_methodology_link": "Hoe berekenen we dit?",
     },
     "fr": {
         "title": "Rapport annuel",
@@ -70,6 +72,7 @@ TRANSLATIONS = {
         "no_description": "—",
         "page": "Page",
         "co2_saved": "CO2-équivalent économisé",
+        "co2_methodology_link": "Comment calculons-nous cela ?",
     },
 }
 
@@ -200,7 +203,7 @@ def _draw_footer(c: rl_canvas.Canvas, page_num: int, total_pages: int, t: dict, 
     c.line(MARGIN_X, FOOTER_Y + 5, A4_W - MARGIN_X, FOOTER_Y + 5)
     c.setFont("Helvetica", 7)
     c.setFillColor(MUTED)
-    c.drawString(MARGIN_X, FOOTER_Y, "In Limbo · Brussel · info@inlimbo.be")
+    c.drawString(MARGIN_X, FOOTER_Y, "In Limbo · Brussel · info@inlimbo.brussels")
     today = datetime.now().strftime("%d/%m/%Y")
     middle = f"{t['generated']} {today} · {t['title']} {year}"
     c.drawCentredString(A4_W / 2, FOOTER_Y, middle)
@@ -275,16 +278,28 @@ def _draw_summary_grid(c: rl_canvas.Canvas, y: float, t: dict, stats: dict) -> f
 
 
 def _draw_co2_highlight(c: rl_canvas.Canvas, y: float, t: dict, co2_kg: float) -> float:
-    """Highlighted single-line CO2 figure, mint background band. Returns new y-cursor."""
+    """Highlighted single-line CO2 figure, mint background band, clickable
+    link to the methodology page. Returns new y-cursor."""
     band_h = 16 * mm
     band_y = y - band_h
+    band_w = A4_W - 2 * MARGIN_X
     c.setFillColor(MINT)
-    c.rect(MARGIN_X, band_y, A4_W - 2 * MARGIN_X, band_h, stroke=0, fill=1)
+    c.rect(MARGIN_X, band_y, band_w, band_h, stroke=0, fill=1)
     c.setFillColor(BLACK)
     c.setFont("Helvetica-Bold", 16)
     c.drawString(MARGIN_X + 5 * mm, band_y + 5 * mm, f"{co2_kg:.1f} kg")
     c.setFont("Helvetica", 9)
     c.drawString(MARGIN_X + 35 * mm, band_y + 6 * mm, t["co2_saved"].upper())
+
+    link_label = f"{t['co2_methodology_link']} →"
+    c.setFont("Helvetica-Oblique", 8)
+    link_x = A4_W - MARGIN_X - 5 * mm - c.stringWidth(link_label, "Helvetica-Oblique", 8)
+    c.drawString(link_x, band_y + 6 * mm, link_label)
+
+    # Whole band is clickable, links to the public methodology page.
+    methodology_url = f"{FRONTEND_URL}/impact-methodologie"
+    c.linkURL(methodology_url, (MARGIN_X, band_y, MARGIN_X + band_w, band_y + band_h), relative=0)
+
     return band_y - 8 * mm
 
 
