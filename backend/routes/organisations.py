@@ -17,6 +17,7 @@ from reportlab.pdfgen import canvas as rl_canvas
 from deps import db, now_iso, strip_mongo
 from models import OrgUpdate
 from auth import get_validated_user
+import impact as impact_calc
 
 router = APIRouter()
 
@@ -44,6 +45,7 @@ TRANSLATIONS = {
         "generated": "Gegenereerd op",
         "no_description": "—",
         "page": "Pagina",
+        "co2_saved": "CO2-equivalent bespaard",
     },
     "fr": {
         "title": "Rapport annuel",
@@ -67,6 +69,7 @@ TRANSLATIONS = {
         "generated": "Généré le",
         "no_description": "—",
         "page": "Page",
+        "co2_saved": "CO2-équivalent économisé",
     },
 }
 
@@ -202,13 +205,6 @@ def _draw_footer(c: rl_canvas.Canvas, page_num: int, total_pages: int, t: dict, 
     middle = f"{t['generated']} {today} · {t['title']} {year}"
     c.drawCentredString(A4_W / 2, FOOTER_Y, middle)
     c.drawRightString(A4_W - MARGIN_X, FOOTER_Y, f"{t['page']} {page_num} / {total_pages}")
-    # Toelichting bij de gebruikte CO2-berekeningsmethodologie (impact.py) —
-    # zie frontend/src/pages/ImpactMethodologie.jsx voor de volledige uitleg.
-    c.setFont("Helvetica", 6)
-    c.drawCentredString(
-        A4_W / 2, FOOTER_Y - 4 * mm,
-        "Methodologie van de CO2-berekeningen: inlimbo.brussels/impact-methodologie",
-    )
     c.setFillColor(BLACK)
 
 
@@ -276,6 +272,20 @@ def _draw_summary_grid(c: rl_canvas.Canvas, y: float, t: dict, stats: dict) -> f
         c.setFillColor(BLACK)
 
     return y - 2 * cell_h - 8 * mm
+
+
+def _draw_co2_highlight(c: rl_canvas.Canvas, y: float, t: dict, co2_kg: float) -> float:
+    """Highlighted single-line CO2 figure, mint background band. Returns new y-cursor."""
+    band_h = 16 * mm
+    band_y = y - band_h
+    c.setFillColor(MINT)
+    c.rect(MARGIN_X, band_y, A4_W - 2 * MARGIN_X, band_h, stroke=0, fill=1)
+    c.setFillColor(BLACK)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(MARGIN_X + 5 * mm, band_y + 5 * mm, f"{co2_kg:.1f} kg")
+    c.setFont("Helvetica", 9)
+    c.drawString(MARGIN_X + 35 * mm, band_y + 6 * mm, t["co2_saved"].upper())
+    return band_y - 8 * mm
 
 
 def _draw_checkin_detail(
@@ -427,6 +437,53 @@ def _draw_transfer_detail(
     return page_num, y - 4 * mm
 
 
+@router.get("/organisations/{org_id}/stats/impact")
+async def public_organisation_impact(org_id: str, year: int | None = Query(None)):
+    """Publieke impact-cijfers voor een organisatie (geen login nodig) — voor
+    de impact-widget op de organisatiepagina. Zonder `year` = alle tijden;
+    met `year` = enkel dat kalenderjaar (herbruikbaar voor toekomstige
+    per-jaar weergave).
+
+    Telt platform_transfers (gegeven + ontvangen) + checkins + checkouts,
+    zelfde opbouw als het jaarverslag en /organisations/me/stats/impact.
+    """
+    org = await db.organisations.find_one({"$or": [{"id": org_id}, {"slug": org_id}]})
+    if not org or org.get("status") not in ("active", "inactive"):
+        raise HTTPException(404, "Organisatie niet gevonden")
+    resolved_org_id = org["id"]
+
+    date_filter = None
+    if year is not None:
+        date_filter = {"$gte": f"{year}-01-01", "$lt": f"{year + 1}-01-01"}
+
+    transfer_query = {
+        "$or": [
+            {"senderOrganisationId": resolved_org_id},
+            {"offererOrganisationId": resolved_org_id},
+            {"receiverOrganisationId": resolved_org_id},
+        ],
+    }
+    checkin_query = {"organisationId": resolved_org_id}
+    checkout_query = {"organisationId": resolved_org_id}
+    if date_filter:
+        transfer_query["createdAt"] = date_filter
+        checkin_query["createdAt"] = date_filter
+        checkout_query["createdAt"] = date_filter
+
+    transfers = await db.platform_transfers.find(
+        transfer_query, {"_id": 0, "material": 1, "weightKg": 1},
+    ).to_list(10_000)
+    checkins = await db.checkins.find(checkin_query, {"_id": 0, "items": 1}).to_list(10_000)
+    checkouts = await db.checkouts.find(checkout_query, {"_id": 0, "items": 1}).to_list(10_000)
+
+    combined = impact_calc.combine(
+        impact_calc.summarize_flat(transfers),
+        impact_calc.summarize_nested(checkins),
+        impact_calc.summarize_nested(checkouts),
+    )
+    return {**combined, "year": year, "methodology": "/impact-methodologie"}
+
+
 @router.get("/organisations/me/stats/available-years")
 async def org_available_years(user: dict = Depends(get_validated_user)):
     """Years for which the current user's organisation has any activity."""
@@ -519,6 +576,13 @@ async def download_org_stats_report(
         "checkout_count": len(checkouts),
     }
 
+    impact_combined = impact_calc.combine(
+        impact_calc.summarize_flat(platform_given + platform_received),
+        impact_calc.summarize_nested(checkins),
+        impact_calc.summarize_nested(checkouts),
+    )
+    stats["co2_kg"] = impact_combined["totalCo2Kg"]
+
     # ----- PDF generation -----
     # Build content first, count pages, then re-render to get correct "x / Y"
     def build(target_pages: int) -> bytes:
@@ -527,6 +591,7 @@ async def download_org_stats_report(
         page_num = 1
         y = _draw_header(c, t, year, org["name"])
         y = _draw_summary_grid(c, y, t, stats)
+        y = _draw_co2_highlight(c, y, t, stats["co2_kg"])
         total_holder = [target_pages]
         if checkins:
             page_num, y = _draw_checkin_detail(c, y, t, year, org["name"],
