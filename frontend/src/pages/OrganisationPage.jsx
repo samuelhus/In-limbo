@@ -10,10 +10,12 @@ export default function OrganisationPage() {
   const { id } = useParams();
   const [org, setOrg] = useState(null);
   const [listings, setListings] = useState([]);
+  const [impact, setImpact] = useState(null);
 
   useEffect(() => {
     api.get(`/organisations/${id}`).then(({ data }) => setOrg(data)).catch(() => setOrg(false));
     api.get(`/organisations/${id}/listings`).then(({ data }) => setListings(data)).catch(() => {});
+    api.get(`/organisations/${id}/stats/impact`).then(({ data }) => setImpact(data)).catch(() => {});
   }, [id]);
 
   if (org === null) return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground">{t('common.loading')}</div>;
@@ -57,6 +59,36 @@ export default function OrganisationPage() {
           
         </aside>
       </div>
+
+      {impact && (impact.totalWeightKg > 0 || impact.totalCo2Kg > 0) && (
+        <section
+          className="mt-16 -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 py-12 bg-[#ADEBB3]"
+          data-testid="org-impact-widget"
+        >
+          <p className="overline mb-2">{t('organisation.impact_title')}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-4">
+            <div data-testid="org-impact-weight">
+              <p className="text-4xl sm:text-5xl font-bold tracking-tight tabular-nums">
+                {impact.totalWeightKg.toLocaleString('nl-BE')}
+              </p>
+              <p className="mt-2 text-xs uppercase tracking-widest text-foreground/70">
+                {t('organisation.impact_weight_label')}
+              </p>
+            </div>
+            <div data-testid="org-impact-co2">
+              <p className="text-4xl sm:text-5xl font-bold tracking-tight tabular-nums">
+                {impact.totalCo2Kg.toLocaleString('nl-BE')}
+              </p>
+              <p className="mt-2 text-xs uppercase tracking-widest text-foreground/70">
+                {t('organisation.impact_co2_label')}
+              </p>
+            </div>
+          </div>
+          <Link to="/impact-methodologie" className="industrial-link text-sm" data-testid="org-impact-methodology-link">
+            {t('organisation.impact_methodology_link')}
+          </Link>
+        </section>
+      )}
 
       {active.length > 0 && (
         <section className="mt-20 border-t border-border pt-10">
