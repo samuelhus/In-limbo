@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /registreer
+Disallow: /donateur/registreer
+Disallow: /wachtwoord-vergeten
+Disallow: /wachtwoord-reset
+Disallow: /checkout
+Disallow: /checkin
+Disallow: /notificaties
+Disallow: /profiel
+Disallow: /mijn-organisatie
+Disallow: /mijn-aanvragen
+Disallow: /mijn-aanbiedingen
+Disallow: /admin
+
+Sitemap: https://www.inlimbo.brussels/sitemap.xml

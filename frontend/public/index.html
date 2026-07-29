@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#000000" />
-        <meta name="description" content="In Limbo — een marktplaats voor materiaal in transit. Brussel." />
+        <meta name="description" content="In Limbo verbindt donateurs en organisaties in Brussel voor het hergebruik van materialen. Doneer eenvoudig of vind gerecupereerde materialen voor jouw project. Link naar catalogus" />
         <link rel="icon" type="image/png" href="%PUBLIC_URL%/favicon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,7 +22,24 @@
         work correctly both with client-side routing and a non-root public URL.
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
-        <title>in—limbo · Material in transit</title>
+        <title>in—limbo · Hergebruik in Brussel</title>
+        <link rel="canonical" href="https://www.inlimbo.brussels/" />
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "In Limbo",
+          "alternateName": "in—limbo",
+          "url": "https://www.inlimbo.brussels/",
+          "logo": "https://www.inlimbo.brussels/favicon.png",
+          "description": "In Limbo verbindt donateurs en organisaties in Brussel voor het hergebruik van materialen.",
+          "areaServed": {
+            "@type": "City",
+            "name": "Brussels"
+          },
+          "sameAs": []
+        }
+        </script>
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
       
     </head>
