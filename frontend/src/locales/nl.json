@@ -576,7 +576,7 @@
     "faq_items": [
       {
         "question": "Wat voor materialen nemen jullie aan?",
-        "answer": "We aanvaarden materialen in goede staat..."
+        "answer": "We aanvaarden materialen in goede staat."
       },
       {
         "question": "Mag ik op het platform verkopen?",
@@ -584,15 +584,15 @@
       },
       {
         "question": "Is alles gratis?",
-        "answer": "Materialen op het platform worden gratis aangeboden..."
+        "answer": "Materialen op het platform worden gratis aangeboden. Onderling kan worden afgesproken wie de transport kosten voor zich neemt of dat dit verdeeld wordt."
       },
       {
         "question": "Wat aanvaarden jullie niet?",
-        "answer": "We aanvaarden geen voedsel, kledij..."
+        "answer": "We aanvaarden geen voedsel, kledij en materialen waarop een gevarendriehoek staat"
       },
       {
         "question": "Hoe kan ik als student gebruik maken van In Limbo?",
-        "answer": "Een school moet ingeschreven worden door een leerkracht die referentie wil zijn voor die school. Vanaf dat de school is ingeschreven, mag je als student langskomen in het magazijn om je te voorzien van materialen. Je hebt geen directe toegang tot het webplatform. Je kan altijd via je referentie-leerkracht een aanvraag doen."
+        "answer": "Een school moet eerst worden ingeschreven door een leerkracht die als referentiepersoon voor de school optreedt. Zodra de school is ingeschreven, kan je als student terecht in het magazijn om materialen af te halen. Als student heb je geen rechtstreekse toegang tot het webplatform. Wil je materialen aanvragen? Dan kan je daarvoor altijd terecht bij je referentie-leerkracht, die de aanvraag voor jou indient."
       }
     ]
   },
