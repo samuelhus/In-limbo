@@ -534,7 +534,7 @@
     "wie_zijn_we": "Wie zijn we",
     "wat_is_title": "Wat is In Limbo?",
     "p1": "In Limbo is een platform voor gedeeld gebruik en hergebruik van materiaal voor socio-culturele organisaties en tijdelijke invullingen in Brussel. Via ons online platform en ons magazijn verbinden we donateurs met organisaties die materialen nieuw leven willen geven.",
-    "p2": "We redden waardevolle materialen van de vuilnisbelt en stimuleren wederzijdse hulp binnen de sector. Niet-gebruikte materialen gaan naar verenigingen met minder middelen. Het is een samenwerking tussen Toestand, Zinneke, De Munt en Rotor DC, met steun van Leefmilieu Brussel.",
+    "p2": "We redden waardevolle materialen van de vuilnisbelt en stimuleren wederzijdse hulp binnen de sector. Niet-gebruikte materialen gaan naar verenigingen met minder middelen. Het is een samenwerking tussen Toestand, Zinneke, De Munt en Rotor DC, dat wordt beheerd door Toestand VZW.",
     "partnersteller": "Partners sinds 2018",
     "tonmateriaal": "Materiaal per jaar gered",
     "opening": "Elke woensdag 10–17u",
@@ -589,6 +589,10 @@
       {
         "question": "Wat aanvaarden jullie niet?",
         "answer": "We aanvaarden geen voedsel, kledij..."
+      },
+      {
+        "question": "Hoe kan ik als student gebruik maken van In Limbo?",
+        "answer": "Een school moet ingeschreven worden door een leerkracht die referentie wil zijn voor die school. Vanaf dat de school is ingeschreven, mag je als student langskomen in het magazijn om je te voorzien van materialen. Je hebt geen directe toegang tot het webplatform. Je kan altijd via je referentie-leerkracht een aanvraag doen."
       }
     ]
   },

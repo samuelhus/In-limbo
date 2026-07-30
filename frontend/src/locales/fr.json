@@ -544,7 +544,7 @@
     "wie_zijn_we": "Qui sommes nous",
     "wat_is_title": "Qu'est-ce que In Limbo ?",
     "p1": "In Limbo est une plateforme dédiée au partage et à la réutilisation de matériel destinée aux organisations socioculturelles et aux initiatives temporaires à Bruxelles. Grâce à notre plateforme en ligne et à notre entrepôt, nous mettons en relation des donateurs avec des organisations qui souhaitent donner une nouvelle vie à du matériel.",
-    "p2": "Nous sauvons des matériaux précieux de la décharge et encourageons l'entraide au sein du secteur. Les matériaux inutilisés sont remis à des associations disposant de moins de moyens. Il s'agit d'une collaboration entre Toestand, Zinneke, La Monnaie et Rotor DC, avec le soutien de Bruxelles Environnement.",
+    "p2": "Nous sauvons des matériaux précieux de la décharge et encourageons l'entraide au sein du secteur. Les matériaux inutilisés sont remis à des associations disposant de moins de moyens. Il s'agit d'une collaboration entre Toestand VZW, Zinneke, La Monnaie et Rotor DC. La gestion est fait par Toestand VZW.",
     "partnersteller": "Partenaires depuis 2018",
     "tonmateriaal": "matériaux réempoié par an",
     "opening": "Tout les mercredis 10h–17h",
@@ -599,6 +599,10 @@
       {
         "question": "Qu'est-ce que vous n'acceptez pas ?",
         "answer": "Nous n'acceptons pas la nourriture, les vêtements ni les matériaux en mauvais état. Les matériaux inadaptés à la réutilisation ou présentant un risque pour la sécurité ne sont pas non plus acceptés. Vous doutez que votre matériel soit éligible ? Contactez-nous d'abord avant de le déposer au dépôt."
+      },
+      {
+        "question": "Comment puis-je, en tant qu'étudiant, utiliser In Limbo ?",
+        "answer": "Une école doit être inscrite par un enseignant qui souhaite être la personne de référence pour cette école. Une fois l'école inscrite, vous pouvez, en tant qu'étudiant, vous rendre à l'entrepôt pour vous procurer des matériaux. Vous n'avez pas d'accès direct à la plateforme web. Vous pouvez toujours faire une demande par l'intermédiaire de votre enseignant référent."
       }
     ]
   },
