@@ -524,3 +524,120 @@ async def get_stats(
         "transfers_count": transfers_count,
         "checkins_count": checkins_count,
     }
+
+
+# ---------------------------------------------------------------------------
+# Transacties: overzicht + ongedaan maken (checkin/checkout)
+# ---------------------------------------------------------------------------
+MAGAZIJN_LABEL = "Magazijn (In Limbo)"
+
+
+def _items_material_summary(items: list[dict]) -> str:
+    materials = [i.get("material") for i in (items or []) if i.get("material")]
+    unique = list(dict.fromkeys(materials))
+    if not unique:
+        return ""
+    if len(unique) == 1:
+        return unique[0]
+    return f"{unique[0]} +{len(unique) - 1}"
+
+
+@router.get("/admin/transactions")
+async def admin_list_transactions(
+    admin: dict = Depends(get_admin_user),
+    type: str | None = Query(None, description="platform | checkin | checkout"),
+    organisationId: str | None = Query(None),
+    dateFrom: str | None = Query(None, description="ISO datum, bv. 2026-01-01"),
+    dateTo: str | None = Query(None, description="ISO datum, bv. 2026-12-31"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Eén samengevoegde, gepagineerde lijst van alle platform-overdrachten,
+    checkins en checkouts — met van/naar-organisatie, materiaal en gewicht.
+    De 3 bronnen hebben elk een ander schema en worden hier genormaliseerd
+    naar één gemeenschappelijke vorm. Filtering/sortering gebeurt in-memory
+    na ophalen (voldoende voor het verwachte datavolume van dit platform)."""
+    date_filt: dict = {}
+    if dateFrom:
+        date_filt["$gte"] = dateFrom
+    if dateTo:
+        date_filt["$lte"] = dateTo + "T23:59:59"
+    base_query: dict = {"createdAt": date_filt} if date_filt else {}
+
+    rows: list[dict] = []
+
+    if type in (None, "platform"):
+        async for tr in db.platform_transfers.find(base_query).sort("createdAt", -1).limit(5000):
+            from_id = tr.get("senderOrganisationId") or tr.get("offererOrganisationId")
+            to_id = tr.get("receiverOrganisationId")
+            if organisationId and organisationId not in (from_id, to_id):
+                continue
+            rows.append({
+                "id": tr["id"],
+                "type": "platform",
+                "createdAt": tr.get("createdAt"),
+                "fromOrgId": from_id,
+                "fromOrgName": tr.get("senderOrganisationName"),
+                "toOrgId": to_id,
+                "toOrgName": tr.get("receiverOrganisationName"),
+                "material": tr.get("material"),
+                "weightKg": tr.get("weightKg"),
+                "listingId": tr.get("listingId"),
+                "listingTitle": tr.get("listingTitle"),
+                "canDelete": False,  # aanbieding-overdrachten draai je terug via 'Herbestemming ongedaan maken' op de aanbieding zelf
+            })
+
+    if type in (None, "checkin"):
+        async for c in db.checkins.find(base_query).sort("createdAt", -1).limit(5000):
+            if organisationId and organisationId != c.get("organisationId"):
+                continue
+            rows.append({
+                "id": c["id"],
+                "type": "checkin",
+                "createdAt": c.get("createdAt"),
+                "fromOrgId": c.get("organisationId"),
+                "fromOrgName": c.get("organisationName"),
+                "toOrgId": None,
+                "toOrgName": MAGAZIJN_LABEL,
+                "material": _items_material_summary(c.get("items")),
+                "weightKg": c.get("totalWeightKg"),
+                "canDelete": True,
+            })
+
+    if type in (None, "checkout"):
+        async for c in db.checkouts.find(base_query).sort("createdAt", -1).limit(5000):
+            if organisationId and organisationId != c.get("organisationId"):
+                continue
+            rows.append({
+                "id": c["id"],
+                "type": "checkout",
+                "createdAt": c.get("createdAt"),
+                "fromOrgId": None,
+                "fromOrgName": MAGAZIJN_LABEL,
+                "toOrgId": c.get("organisationId"),
+                "toOrgName": c.get("organisationName"),
+                "material": _items_material_summary(c.get("items")),
+                "weightKg": c.get("totalWeightKg"),
+                "canDelete": True,
+            })
+
+    rows.sort(key=lambda r: r.get("createdAt") or "", reverse=True)
+    total = len(rows)
+    page = rows[skip: skip + limit]
+    return {"total": total, "items": page, "skip": skip, "limit": limit}
+
+
+@router.delete("/admin/transactions/checkin/{checkin_id}")
+async def admin_delete_checkin(checkin_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.checkins.delete_one({"id": checkin_id})
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Checkin niet gevonden")
+    return {"ok": True}
+
+
+@router.delete("/admin/transactions/checkout/{checkout_id}")
+async def admin_delete_checkout(checkout_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.checkouts.delete_one({"id": checkout_id})
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Checkout niet gevonden")
+    return {"ok": True}

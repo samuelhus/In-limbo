@@ -13,6 +13,7 @@ const SECTIONS = [
   { key: 'organisaties', label: 'Organisaties' },
   { key: 'nieuws', label: 'Nieuws' },
   { key: 'statistieken', label: 'Statistieken' },
+  { key: 'transacties', label: 'Transacties' },
   { key: 'meldingen', label: 'Meldingen' },
   { key: 'gearchiveerd', label: 'Gearchiveerd' },
 ];
@@ -23,6 +24,7 @@ const SECTION_TITLES = {
   organisaties: 'Organisaties',
   nieuws: 'Nieuws',
   statistieken: 'Statistieken',
+  transacties: 'Transacties',
   meldingen: 'Meldingen',
   gearchiveerd: 'Gearchiveerde aanbiedingen',
 };
@@ -302,6 +304,8 @@ export default function AdminPanel() {
 
         {section === 'statistieken' && <Statistieken />}
 
+        {section === 'transacties' && <AdminTransacties />}
+
         {section === 'meldingen' && (
           <div data-testid="admin-meldingen-placeholder">
             <p className="overline mb-4">Binnenkort beschikbaar</p>
@@ -333,6 +337,169 @@ const MONTHS_NL = [
   'januari', 'februari', 'maart', 'april', 'mei', 'juni',
   'juli', 'augustus', 'september', 'oktober', 'november', 'december',
 ];
+
+const TX_TYPE_LABEL = {
+  platform: 'Aanbieding',
+  checkin: 'Checkin',
+  checkout: 'Checkout',
+};
+
+const TX_TYPE_BADGE_CLASS = {
+  platform: 'bg-[#ADEBB3] text-foreground',
+  checkin: 'bg-blue-100 text-blue-900',
+  checkout: 'bg-amber-100 text-amber-900',
+};
+
+function AdminTransacties() {
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [skip, setSkip] = useState(0);
+  const [type, setType] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null);
+  const limit = 50;
+
+  const load = useCallback(async (currentSkip, currentType) => {
+    setLoading(true);
+    try {
+      const params = { skip: currentSkip, limit };
+      if (currentType) params.type = currentType;
+      const { data } = await api.get('/admin/transactions', { params });
+      setItems(data.items);
+      setTotal(data.total);
+    } catch (e) {
+      alert(formatApiError(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(skip, type); }, [load, skip, type]);
+
+  const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString('nl-BE', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  }) : '—';
+
+  const undo = async (row) => {
+    const label = row.type === 'checkin' ? 'deze checkin' : 'deze checkout';
+    if (!window.confirm(`Weet je zeker dat je ${label} definitief wil verwijderen? Dit kan niet ongedaan gemaakt worden.`)) return;
+    setBusyId(row.id);
+    try {
+      await api.delete(`/admin/transactions/${row.type}/${row.id}`);
+      await load(skip, type);
+    } catch (e) {
+      alert(formatApiError(e));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div data-testid="admin-transacties">
+      <p className="overline mb-4">Overzicht</p>
+      <h2 className="text-2xl font-bold tracking-tight mb-6">Transacties</h2>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        {[
+          { key: '', label: 'Alles' },
+          { key: 'platform', label: 'Aanbiedingen' },
+          { key: 'checkin', label: 'Checkins' },
+          { key: 'checkout', label: 'Checkouts' },
+        ].map((f) => (
+          <button
+            key={f.key}
+            onClick={() => { setType(f.key); setSkip(0); }}
+            className={`px-3 py-1.5 text-xs border transition-colors ${
+              type === f.key ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'
+            }`}
+            data-testid={`tx-filter-${f.key || 'alles'}`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Laden…</p>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Geen transacties gevonden.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-y border-border" data-testid="tx-table">
+            <thead>
+              <tr className="text-left border-b border-border text-muted-foreground">
+                <th className="py-2 pr-3 font-medium">Datum</th>
+                <th className="py-2 pr-3 font-medium">Type</th>
+                <th className="py-2 pr-3 font-medium">Van</th>
+                <th className="py-2 pr-3 font-medium">Naar</th>
+                <th className="py-2 pr-3 font-medium">Materiaal</th>
+                <th className="py-2 pr-3 font-medium text-right">Gewicht</th>
+                <th className="py-2 pr-3 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((row) => (
+                <tr key={`${row.type}-${row.id}`} className="border-b border-border/60" data-testid={`tx-row-${row.type}-${row.id}`}>
+                  <td className="py-2 pr-3 whitespace-nowrap text-xs">{formatDate(row.createdAt)}</td>
+                  <td className="py-2 pr-3">
+                    <span className={`px-2 py-0.5 text-xs ${TX_TYPE_BADGE_CLASS[row.type] || ''}`}>
+                      {TX_TYPE_LABEL[row.type] || row.type}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3">{row.fromOrgName || '—'}</td>
+                  <td className="py-2 pr-3">{row.toOrgName || '—'}</td>
+                  <td className="py-2 pr-3">
+                    {row.material || '—'}
+                    {row.listingTitle && (
+                      <span className="text-muted-foreground"> · {row.listingTitle}</span>
+                    )}
+                  </td>
+                  <td className="py-2 pr-3 text-right whitespace-nowrap">
+                    {row.weightKg != null ? `${row.weightKg} kg` : '—'}
+                  </td>
+                  <td className="py-2 pr-3 text-right">
+                    {row.canDelete && (
+                      <button
+                        onClick={() => undo(row)}
+                        disabled={busyId === row.id}
+                        className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                        data-testid={`tx-undo-${row.type}-${row.id}`}
+                      >
+                        Ongedaan maken
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {total > limit && (
+        <div className="flex items-center justify-between mt-4 text-sm">
+          <button
+            onClick={() => setSkip(Math.max(0, skip - limit))}
+            disabled={skip === 0}
+            className="btn-secondary !py-1.5 !px-3 text-xs disabled:opacity-40"
+          >
+            ← Vorige
+          </button>
+          <span className="text-muted-foreground text-xs">
+            {skip + 1}–{Math.min(skip + limit, total)} van {total}
+          </span>
+          <button
+            onClick={() => setSkip(skip + limit)}
+            disabled={skip + limit >= total}
+            className="btn-secondary !py-1.5 !px-3 text-xs disabled:opacity-40"
+          >
+            Volgende →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Statistieken() {
   const [years, setYears] = useState([]);

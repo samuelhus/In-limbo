@@ -99,6 +99,7 @@ async def withdraw_application(application_id: str, user: dict = Depends(get_val
             {"id": listing_id},
             {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
         )
+        await db.platform_transfers.delete_many({"listingId": listing_id})
         listing = await db.listings.find_one({"id": listing_id})
         offerer = await db.users.find_one({"id": listing["userId"]}) if listing else None
         if offerer:
@@ -250,7 +251,10 @@ async def select_applicant(
 
 async def _reset_listing_to_available(listing_id: str, target_status: str = "beschikbaar") -> None:
     """Reset herbestemde listing terug (naar beschikbaar, of naar in_magazijn als het
-    oorspronkelijk een magazijn-item was) + heropen selected/not_selected aanvragen."""
+    oorspronkelijk een magazijn-item was) + heropen selected/not_selected aanvragen
+    + verwijder het/de bijhorende platform_transfers-record(en), aangezien de
+    overdracht niet effectief heeft plaatsgevonden en dus niet in de CO2/gewicht-
+    statistieken mag blijven meetellen."""
     now = now_iso()
     await db.applications.update_many(
         {"listingId": listing_id, "status": {"$in": ["selected", "not_selected"]}},
@@ -260,6 +264,7 @@ async def _reset_listing_to_available(listing_id: str, target_status: str = "bes
         {"id": listing_id},
         {"$set": {"status": target_status, "selectedApplicantId": None, "updatedAt": now}},
     )
+    await db.platform_transfers.delete_many({"listingId": listing_id})
 
 
 @router.post("/listings/{listing_id}/unrehome")
