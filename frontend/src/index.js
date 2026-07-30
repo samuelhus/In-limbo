@@ -13,6 +13,16 @@ Sentry.init({
   sendDefaultPii: false,
 });
 
+// Umami-analytics: enkel activeren als beide env-vars effectief gezet zijn
+// (dus niet in lokale ontwikkeling, tenzij je dat zelf configureert).
+if (process.env.REACT_APP_UMAMI_URL && process.env.REACT_APP_UMAMI_WEBSITE_ID) {
+  const script = document.createElement("script");
+  script.defer = true;
+  script.src = `${process.env.REACT_APP_UMAMI_URL}/script.js`;
+  script.setAttribute("data-website-id", process.env.REACT_APP_UMAMI_WEBSITE_ID);
+  document.head.appendChild(script);
+}
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>

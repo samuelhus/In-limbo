@@ -28,6 +28,8 @@ services:
       args:
         REACT_APP_SENTRY_DSN: ${REACT_APP_SENTRY_DSN}
         REACT_APP_ENVIRONMENT: ${ENVIRONMENT}
+        REACT_APP_UMAMI_URL: ${REACT_APP_UMAMI_URL}
+        REACT_APP_UMAMI_WEBSITE_ID: ${REACT_APP_UMAMI_WEBSITE_ID}
     restart: unless-stopped
     expose:
       - "80"
@@ -54,6 +56,29 @@ services:
     expose:
       - "80"
 
+  umami-db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - umami_db_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@umami-db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET}
+    depends_on:
+      - umami-db
+    expose:
+      - "3000"
+
   caddy:
     image: caddy:2
     restart: unless-stopped
@@ -67,9 +92,11 @@ services:
     depends_on:
       - frontend
       - ntfy
+      - umami
 
 volumes:
   mongo_data:
   caddy_data:
   caddy_config:
   ntfy_cache:
+  umami_db_data:
