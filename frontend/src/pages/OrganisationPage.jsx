@@ -113,7 +113,7 @@ function ListingsGrid({ items, muted = false }) {
       {items.map((item) => (
         <Link
           key={item.id}
-          to={`/aanbieding/${item.id}`}
+          to={`/aanbieding/${item.slug || item.id}`}
           data-testid={`org-listing-${item.id}`}
           className={`group block ${muted ? 'opacity-70' : ''}`}
         >

@@ -52,6 +52,23 @@ async def generate_unique_org_slug(db, name: str, org_id: str | None = None) -> 
         counter += 1
 
 
+async def generate_unique_listing_slug(db, title: str, listing_id: str | None = None) -> str:
+    """Genereert een unieke slug voor een aanbieding, op basis van de titel.
+    Bij een naamsbotsing wordt -2, -3, ... toegevoegd (zelfde patroon als organisaties)."""
+    base = slugify(title) if title else "aanbieding"
+    slug = base
+    counter = 2
+    while True:
+        query = {"slug": slug}
+        if listing_id:
+            query["id"] = {"$ne": listing_id}
+        existing = await db.listings.find_one(query, {"_id": 0, "id": 1})
+        if not existing:
+            return slug
+        slug = f"{base}-{counter}"
+        counter += 1
+
+
 DEFAULT_EMAIL_PREFS = {
     "new_application": True,
     "selected_as_receiver": True,

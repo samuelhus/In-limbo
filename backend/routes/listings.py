@@ -12,7 +12,7 @@ import uuid
 import cloudinary.utils
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
 
-from deps import db, now_iso, strip_mongo
+from deps import db, now_iso, strip_mongo, generate_unique_listing_slug
 from auth import get_admin_user
 
 from models import ListingCreateBody, ListingUpdate
@@ -240,7 +240,7 @@ async def my_listings(user: dict = Depends(get_donateur_or_validated_user)):
 
 @router.get("/listings/{listing_id}")
 async def get_listing(listing_id: str, request: Request):
-    listing = await db.listings.find_one({"id": listing_id})
+    listing = await db.listings.find_one({"$or": [{"id": listing_id}, {"slug": listing_id}]})
     if not listing:
         raise HTTPException(404, "Aanbieding niet gevonden")
     viewer = await get_current_user_optional(request)
@@ -275,7 +275,7 @@ async def get_listing(listing_id: str, request: Request):
             view["isOwner"] = is_owner
 
             my_app = await db.applications.find_one(
-                {"listingId": listing_id, "applicantUserId": viewer["id"]},
+                {"listingId": listing["id"], "applicantUserId": viewer["id"]},
                 sort=[("createdAt", -1)],
             )
             if my_app:
@@ -327,10 +327,12 @@ async def create_listing(body: ListingCreateBody, user: dict = Depends(get_donat
         raise HTTPException(400, "Minstens één foto is vereist")
     listing_id = str(uuid.uuid4())
     now = now_iso()
+    slug = await generate_unique_listing_slug(db, body.title, listing_id)
     initial_status = "in_magazijn" if (body.placeInWarehouse and user.get("role") == "admin") else "beschikbaar"
     doc = body.model_dump(exclude={"placeInWarehouse"})
     doc.update({
         "id": listing_id,
+        "slug": slug,
         "status": initial_status,
         "selectedApplicantId": None,
         "userId": user["id"],

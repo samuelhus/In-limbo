@@ -77,7 +77,7 @@ function ListingTile({ item, isValidated, isAdmin }) {
   const isDonateurOffer = !item.limited && item.offererIsDonateur && item.offererUsername;
   const showOfferer = !item.limited && item.offererFirstName && item.organisation;
 
-  const goToListing = () => navigate(`/aanbieding/${item.id}`);
+  const goToListing = () => navigate(`/aanbieding/${item.slug || item.id}`);
   const goToOrg = (e) => {
     e.stopPropagation();
     e.preventDefault();
