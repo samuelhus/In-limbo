@@ -75,6 +75,30 @@ function MagazijnWidget({ align = 'right' }) {
   );
 }
 
+function MoveNoticeBanner() {
+  const { t } = useTranslation();
+  return (
+    <div className="bg-foreground text-background" data-testid="move-notice-banner">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span className="inline-block w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
+        <p className="font-semibold text-base sm:text-lg leading-snug">
+          {t('landing.move_notice_title')}
+        </p>
+        <p className="text-background/80 text-sm sm:text-base leading-snug flex-1 min-w-[200px]">
+          {t('landing.move_notice_body')}
+        </p>
+        <Link
+          to="/contact"
+          className="shrink-0 text-sm sm:text-base font-semibold underline underline-offset-4 hover:opacity-80"
+          data-testid="move-notice-cta"
+        >
+          {t('landing.move_notice_cta')}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
 const { t, i18n } = useTranslation();
 const { user } = useAuth();
@@ -111,6 +135,8 @@ const isLoggedIn = user && typeof user === 'object';
 
   return (
     <div className="min-h-[calc(100vh-4rem)]" data-testid="landing-page">
+      <MoveNoticeBanner />
+
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-border">
         <div
@@ -148,22 +174,7 @@ const isLoggedIn = user && typeof user === 'object';
                 </>
               )}
             </div>
-
-            {/* MOBILE: widget onder knoppen */}
-            {/*tijdelijk uitgeschakeld
-            
-            <div className="mt-10 md:hidden">
-              <MagazijnWidget align="left" />
-            </div>*/}
-            
           </div>
-
-          {/* DESKTOP: widget rechts in hero */}
-          {/*tijdelijk uitgeschakeld
-          <div className="md:col-span-5 hidden md:flex justify-end items-end">
-            <MagazijnWidget align="right" />
-          </div>*/}
-
         </div>
       </section>
 
