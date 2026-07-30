@@ -207,7 +207,7 @@ export default function ImpactMethodologie() {
           bereikt</strong>: rechtstreekse overdrachten tussen organisaties via het platform, en
           materiaal opgehaald uit het gedeelde magazijn. Materiaal dat enkel is binnengebracht
           maar nog in het magazijn ligt, telt bewust nog niet mee — dat is nog geen gerealiseerde
-          impact.
+          impact. Voor de individuele impact van organisaties houden we wel rekening met gedoneerd materiaal in het magazijn.
         </p>
       </section>
 
@@ -276,9 +276,7 @@ export default function ImpactMethodologie() {
         <h2 className="text-2xl font-bold tracking-tight mb-4">Vragen of suggesties?</h2>
         <p className="text-sm text-foreground/80 leading-relaxed">
           Heb je een betere bron voor een van deze cijfers, of specifieke kennis over
-          Belgische/Brusselse LCA-data? Neem contact op via{' '}
-          <a href="mailto:info@inlimbo.brussels" className="industrial-link">
-            info@inlimbo.brussels
+          Belgische/Brusselse LCA-data? Neem contact op met ons.
           </a>
           .
         </p>
