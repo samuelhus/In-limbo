@@ -277,8 +277,6 @@ export default function ImpactMethodologie() {
         <p className="text-sm text-foreground/80 leading-relaxed">
           Heb je een betere bron voor een van deze cijfers, of specifieke kennis over
           Belgische/Brusselse LCA-data? Neem contact op met ons.
-          </a>
-          .
         </p>
       </section>
     </div>
