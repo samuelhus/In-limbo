@@ -89,13 +89,6 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
-@api.get("/debug-sentry")
-async def debug_sentry():
-    """Tijdelijk test-endpoint: veroorzaakt bewust een fout om Sentry te verifiëren.
-    Verwijder dit endpoint weer zodra je bevestigd hebt dat het werkt."""
-    raise ValueError("Test-fout voor Sentry — dit is opzettelijk, alles werkt naar behoren.")
-
-
 # --------------------------------------------------------------------------
 # Startup / shutdown
 # --------------------------------------------------------------------------
