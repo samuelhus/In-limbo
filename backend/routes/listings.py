@@ -286,6 +286,8 @@ async def get_listing(listing_id: str, request: Request):
                     "status": my_app["status"],
                     "motivation": my_app.get("motivation"),
                     "createdAt": my_app.get("createdAt"),
+                    "requestedQuantity": my_app.get("requestedQuantity", 1),
+                    "allocatedQuantity": my_app.get("allocatedQuantity"),
                 }
 
             selected_ids = listing.get("selectedApplicantIds") or []
@@ -313,6 +315,7 @@ async def get_listing(listing_id: str, request: Request):
                     view["selectedApplicantsContacts"] = [{
                         "applicationId": my_app["id"],
                         "allocatedQuantity": my_app.get("allocatedQuantity"),
+                        "requestedQuantity": my_app.get("requestedQuantity", 1),
                         "firstName": owner.get("firstName"),
                         "lastName": owner.get("lastName"),
                         "email": owner.get("email"),

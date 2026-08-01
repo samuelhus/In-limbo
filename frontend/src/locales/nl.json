@@ -304,6 +304,8 @@
     "verwijderen_bezig": "Bezig met verwijderen…",
     "definitief_verwijderen": "Definitief verwijderen",
     "geselecteerd_contact": "Neem contact op met de organisatie om een afspraak te maken.",
+    "volledig_toegewezen": "{{count}}x toegewezen",
+    "gedeeltelijk_toegewezen": "{{allocated}}x toegewezen (van {{requested}} gevraagd)",
     "requestvalidated": "Je aanvraag is ingediend.",
     "not_found": "Aanbieding niet gevonden.",
     "limited_view": "Beperkte weergave",

@@ -263,11 +263,15 @@ function ApplicantPanel({ listing, myApp, sameOrg, isAdmin, onOpenApply, onChang
     );
   }
 
+  // Al geselecteerd (volledig of gedeeltelijk toegewezen) — contactblok toont de details,
+  // hier verder niets tonen (ook niet bij gedeeltelijke toewijzing, wanneer listing.status
+  // nog 'beschikbaar' is omdat er nog restvoorraad over is voor andere aanvragers).
+  if (myApp?.status === 'selected') {
+    return null;
+  }
+
   // Herbestemd — show appropriate message
   if (listing.status === 'herbestemd') {
-    if (myApp?.status === 'selected') {
-      return null; // selected applicant sees contact block instead
-    }
     if (myApp?.status === 'not_selected') {
       return (
         <div className="mt-8 border-t border-border pt-6 text-sm text-foreground/75" data-testid="apply-not-selected">
@@ -653,7 +657,22 @@ function SelectedContactBanner({ contact, title }) {
       className="mt-8 border-l-4 border-l-green-700 border border-green-700/30 bg-green-50 p-5"
       data-testid="selected-contact-banner"
     >
-      <p className="overline text-green-900 mb-2">{title}</p>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <p className="overline text-green-900">{title}</p>
+        {contact.allocatedQuantity != null && contact.requestedQuantity > 1 && (
+          <span
+            className="text-xs font-semibold tracking-wide text-green-900"
+            data-testid="selected-contact-allocated-quantity"
+          >
+            {contact.allocatedQuantity === contact.requestedQuantity
+              ? t('listing.volledig_toegewezen', { count: contact.allocatedQuantity })
+              : t('listing.gedeeltelijk_toegewezen', {
+                  allocated: contact.allocatedQuantity,
+                  requested: contact.requestedQuantity,
+                })}
+          </span>
+        )}
+      </div>
       <p className="text-foreground text-sm mb-3 leading-relaxed">
         {t('listing.geselecteerd_contact')}
         

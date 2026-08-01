@@ -237,6 +237,8 @@
     "niet_geselecteerd": "Vous n'avez pas été sélectionné pour cette annonce.",
     "jij_bent_gekozen": "Vous avez été choisi !",
     "geselecteerd_contact": "Contactez l'organisation pour faire une rendez-vous",
+    "volledig_toegewezen": "{{count}}x attribué",
+    "gedeeltelijk_toegewezen": "{{allocated}}x attribué (sur {{requested}} demandé)",
     "markeer_herbestemd": "Marquer comme redistribué",
     "herbestemming_ongedaan": "Annuler la redistribution",
     "confirm_intrekken": "Êtes-vous sûr de vouloir retirer votre demande ?",
