@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
@@ -8,6 +9,25 @@ import { INSPIRATIE_CATEGORY_COLORS } from './Inspiratie';
 
 const HERO_BG =
   'https://res.cloudinary.com/dbjizykvb/image/upload/v1780092187/in-limbo/482df555-c97b-4374-b3b0-ee0302eea5c7/n0elipswg2etu9mmbx4j.jpg';
+
+// Herbruikbare motion-variants — subtiele fade + slide-up, en een stagger-wrapper
+// die kind-elementen na elkaar laat verschijnen i.p.v. allemaal tegelijk.
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const fadeScale = {
+  hidden: { opacity: 0, scale: 0.94 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09 } },
+};
+
+const MotionLink = motion(Link);
 
 function getMagazijnStatus() {
   const now = new Date();
@@ -105,6 +125,9 @@ const { user } = useAuth();
 const isLoggedIn = user && typeof user === 'object';
   const [landingPosts, setLandingPosts] = useState([]);
   const [impact, setImpact] = useState(null);
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const heroBgY = useTransform(scrollYProgress, [0, 1], ['0%', '18%']);
 
   useEffect(() => {
     Promise.all([
@@ -138,24 +161,30 @@ const isLoggedIn = user && typeof user === 'object';
       <MoveNoticeBanner />
 
       {/* HERO */}
-      <section className="relative overflow-hidden border-b border-border">
-        <div
+      <section ref={heroRef} className="relative overflow-hidden border-b border-border">
+        <motion.div
           className="absolute inset-0 opacity-20 mix-blend-multiply"
           style={{
             backgroundImage: `url(${HERO_BG})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            y: heroBgY,
           }}
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-16 sm:pt-24 pb-24 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
-          <div className="md:col-span-7 animate-fade-in">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl tracking-tightest font-bold leading-[0.95]">
+          <motion.div
+            className="md:col-span-7"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.h1 variants={fadeUp} className="text-5xl sm:text-6xl lg:text-7xl tracking-tightest font-bold leading-[0.95]">
               {t('landing.hero_title')}
-            </h1>
-            <p className="mt-8 text-lg text-foreground/80 max-w-xl leading-relaxed">
+            </motion.h1>
+            <motion.p variants={fadeUp} className="mt-8 text-lg text-foreground/80 max-w-xl leading-relaxed">
               {t('landing.hero_subtitle')}
-            </p>
-            <div className="mt-10 flex flex-wrap gap-4" data-testid="hero-cta">
+            </motion.p>
+            <motion.div variants={fadeUp} className="mt-10 flex flex-wrap gap-4" data-testid="hero-cta">
               <Link to="/catalogus" className="btn-primary" data-testid="hero-catalogus-btn">
                 {t('landing.explore_catalogus')}
               </Link>
@@ -173,25 +202,31 @@ const isLoggedIn = user && typeof user === 'object';
                   </Link>
                 </>
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* MANIFESTO */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 grid grid-cols-1 md:grid-cols-12 gap-8">
-        <div className="md:col-span-4">
+      <motion.section
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 grid grid-cols-1 md:grid-cols-12 gap-8"
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-100px' }}
+      >
+        <motion.div variants={fadeUp} className="md:col-span-4">
           <p className="overline">{t('landing.het_idee')}</p>
-        </div>
-        <div className="md:col-span-8 space-y-6 text-lg leading-relaxed">
+        </motion.div>
+        <motion.div variants={fadeUp} className="md:col-span-8 space-y-6 text-lg leading-relaxed">
           <p>
             {t('landing.p1')}
           </p>
           <p>
             {t('landing.p2')}
           </p>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* IMPACT WIDGET */}
       {impact && (impact.totalWeightKg > 0 || impact.totalCo2Kg > 0) && (
@@ -204,24 +239,30 @@ const isLoggedIn = user && typeof user === 'object';
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-10">
               Onze impact tot nu toe
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-6">
-              <div data-testid="landing-impact-weight">
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-6"
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-100px' }}
+            >
+              <motion.div variants={fadeScale} data-testid="landing-impact-weight">
                 <p className="text-5xl sm:text-6xl font-bold tracking-tight tabular-nums">
                   {impact.totalWeightKg.toLocaleString('nl-BE')}
                 </p>
                 <p className="mt-2 text-sm uppercase tracking-widest text-foreground/70">
                   kg materiaal hergebruikt
                 </p>
-              </div>
-              <div data-testid="landing-impact-co2">
+              </motion.div>
+              <motion.div variants={fadeScale} data-testid="landing-impact-co2">
                 <p className="text-5xl sm:text-6xl font-bold tracking-tight tabular-nums">
                   {impact.totalCo2Kg.toLocaleString('nl-BE')}
                 </p>
                 <p className="mt-2 text-sm uppercase tracking-widest text-foreground/70">
                   kg CO2-equivalent bespaard
                 </p>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
             <Link
               to="/impact-methodologie"
               className="industrial-link text-sm"
@@ -275,7 +316,13 @@ const isLoggedIn = user && typeof user === 'object';
               </Link>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+          >
             {landingPosts.map((p) => {
               const isInspiratie = p.postType === 'inspiratie';
               const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
@@ -287,9 +334,10 @@ const isLoggedIn = user && typeof user === 'object';
               const cover = p.photo || (p.photos && p.photos[0]);
               const href = isInspiratie ? `/inspiratie/${p.id}` : `/nieuws/${p.id}`;
               return (
-                <Link
+                <MotionLink
                   key={p.id}
                   to={href}
+                  variants={fadeUp}
                   data-testid={`landing-post-${p.id}`}
                   className="group block border border-border hover:border-foreground transition-colors bg-surface"
                 >
@@ -318,16 +366,22 @@ const isLoggedIn = user && typeof user === 'object';
                       {formatDateNL(p.createdAt)}
                     </p>
                   </div>
-                </Link>
+                </MotionLink>
               );
             })}
-          </div>
+          </motion.div>
         </section>
       )}
 
       {/* CTA */}
       {!isLoggedIn && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 border-t border-border">
+        <motion.section
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-24 border-t border-border"
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+        >
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
             <h2 className="text-4xl sm:text-5xl font-bold tracking-tight max-w-2xl">
               {t('landing.cta_section_title')}
@@ -341,7 +395,7 @@ const isLoggedIn = user && typeof user === 'object';
               </Link>
             </div>
           </div>
-        </section>
+        </motion.section>
       )}
     </div>
   );
