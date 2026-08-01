@@ -44,6 +44,8 @@ def _public_listing_view(listing: dict, viewer: dict | None) -> dict:
         "title": lst["title"],
         "material": lst["material"],
         "status": lst["status"],
+        "quantity": lst.get("quantity", 1),
+        "remainingQuantity": lst.get("remainingQuantity", lst.get("quantity", 1)),
         "photos": lst["photos"][:1] if lst.get("photos") else [],
         "isRecurrent": lst.get("isRecurrent", False),
         "limited": True,
@@ -286,33 +288,38 @@ async def get_listing(listing_id: str, request: Request):
                     "createdAt": my_app.get("createdAt"),
                 }
 
-            selected_app_id = listing.get("selectedApplicantId")
-            if selected_app_id and listing.get("status") == "herbestemd":
-                selected_app = await db.applications.find_one({"id": selected_app_id})
-                if selected_app:
-                    is_selected = my_app and my_app["id"] == selected_app_id and my_app["status"] == "selected"
-                    if is_owner:
-                        applicant_user = await db.users.find_one({"id": selected_app["applicantUserId"]})
-                        applicant_org = await db.organisations.find_one({"id": selected_app["applicantOrganisationId"]})
+            selected_ids = listing.get("selectedApplicantIds") or []
+            if selected_ids:
+                selected_apps = await db.applications.find({"id": {"$in": selected_ids}}).to_list(len(selected_ids))
+                if is_owner:
+                    contacts = []
+                    for sel in selected_apps:
+                        applicant_user = await db.users.find_one({"id": sel["applicantUserId"]})
+                        applicant_org = await db.organisations.find_one({"id": sel["applicantOrganisationId"]})
                         if applicant_user:
-                            view["selectedApplicantContact"] = {
+                            contacts.append({
+                                "applicationId": sel["id"],
+                                "allocatedQuantity": sel.get("allocatedQuantity"),
                                 "firstName": applicant_user.get("firstName"),
                                 "lastName": applicant_user.get("lastName"),
                                 "email": applicant_user.get("email"),
                                 "phone": applicant_user.get("phone"),
                                 "organisationName": applicant_org.get("name") if applicant_org else None,
                                 "organisationId": applicant_org.get("id") if applicant_org else None,
-                            }
-                    elif is_selected and owner:
-                        owner_org = await db.organisations.find_one({"id": listing.get("organisationId")}) if listing.get("organisationId") else None
-                        view["selectedApplicantContact"] = {
-                            "firstName": owner.get("firstName"),
-                            "lastName": owner.get("lastName"),
-                            "email": owner.get("email"),
-                            "phone": owner.get("phone"),
-                            "organisationName": (owner_org or {}).get("name"),
-                            "organisationId": (owner_org or {}).get("id"),
-                        }
+                            })
+                    view["selectedApplicantsContacts"] = contacts
+                elif my_app and my_app["id"] in selected_ids and my_app["status"] == "selected" and owner:
+                    owner_org = await db.organisations.find_one({"id": listing.get("organisationId")}) if listing.get("organisationId") else None
+                    view["selectedApplicantsContacts"] = [{
+                        "applicationId": my_app["id"],
+                        "allocatedQuantity": my_app.get("allocatedQuantity"),
+                        "firstName": owner.get("firstName"),
+                        "lastName": owner.get("lastName"),
+                        "email": owner.get("email"),
+                        "phone": owner.get("phone"),
+                        "organisationName": (owner_org or {}).get("name"),
+                        "organisationId": (owner_org or {}).get("id"),
+                    }]
     return view
 
 
@@ -334,7 +341,8 @@ async def create_listing(body: ListingCreateBody, user: dict = Depends(get_donat
         "id": listing_id,
         "slug": slug,
         "status": initial_status,
-        "selectedApplicantId": None,
+        "selectedApplicantIds": [],
+        "remainingQuantity": body.quantity,
         "userId": user["id"],
         "organisationId": None if is_donateur else user.get("organisationId"),
         "createdAt": now,
@@ -381,6 +389,15 @@ async def update_listing(
         update["weight"] = body.weight
     if body.material is not None:
         update["material"] = body.material
+    if body.quantity is not None:
+        already_allocated = listing.get("quantity", 1) - listing.get("remainingQuantity", listing.get("quantity", 1))
+        if body.quantity < already_allocated:
+            raise HTTPException(
+                400,
+                f"Aantal kan niet lager dan {already_allocated} — er is al {already_allocated}x toegewezen aan aanvragers.",
+            )
+        update["quantity"] = body.quantity
+        update["remainingQuantity"] = body.quantity - already_allocated
     if body.photos is not None:
         update["photos"] = body.photos
     if body.technicalFiles is not None:

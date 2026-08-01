@@ -48,7 +48,7 @@ export default function ListingWizard({ editMode = false }) {
   const [loadingListing, setLoadingListing] = useState(editMode);
 
   const [data, setData] = useState({
-    photos: [], title: '', description: '', weight: '',
+    photos: [], title: '', description: '', weight: '', quantity: '1',
     material: 'Hout', deadline: '', isRecurrent: false,
     dimensions: '', transport: '', placeInWarehouse: false,
     technicalFiles: [],
@@ -71,6 +71,7 @@ export default function ListingWizard({ editMode = false }) {
           title: listing.title || '',
           description: listing.description || '',
           weight: listing.weight?.toString() || '',
+          quantity: (listing.quantity ?? 1).toString(),
           material: listing.material || 'Hout',
           deadline: listing.deadline || '',
           isRecurrent: listing.isRecurrent || false,
@@ -185,10 +186,12 @@ export default function ListingWizard({ editMode = false }) {
       const warehouseShortcut = isAdmin && data.placeInWarehouse;
       const parsedWeight = parseFloat(data.weight);
       const hasWeight = !isNaN(parsedWeight) && parsedWeight > 0;
+      const parsedQuantity = parseInt(data.quantity, 10);
       const payload = {
         title: data.title.trim(),
         description: data.description.trim(),
         weight: hasWeight ? parsedWeight : (warehouseShortcut ? 0 : parsedWeight),
+        quantity: !isNaN(parsedQuantity) && parsedQuantity >= 1 ? parsedQuantity : 1,
         material: hasWeight ? data.material : (warehouseShortcut ? 'Ander' : data.material),
         photos: data.photos,
         technicalFiles: data.technicalFiles,
@@ -403,20 +406,37 @@ export default function ListingWizard({ editMode = false }) {
         </section>
       )}
 
-      {/* STEP 5: Weight */}
+      {/* STEP 5: Weight + Quantity */}
       {step === 5 && (
-        <section className="space-y-3" data-testid="wizard-step-weight">
-          <label className="label-overline">{t('listing.wizard_weight_label')}</label>
-          <input
-            type="number"
-            step="0.1"
-            min="0.1"
-            className="input-flat text-lg"
-            data-testid="wizard-weight-input"
-            value={data.weight}
-            onChange={(e) => setData({ ...data, weight: e.target.value })}
-            autoFocus
-          />
+        <section className="space-y-6" data-testid="wizard-step-weight">
+          <div className="space-y-3">
+            <label className="label-overline">{t('listing.wizard_weight_label')}</label>
+            <input
+              type="number"
+              step="0.1"
+              min="0.1"
+              className="input-flat text-lg"
+              data-testid="wizard-weight-input"
+              value={data.weight}
+              onChange={(e) => setData({ ...data, weight: e.target.value })}
+              autoFocus
+            />
+          </div>
+          <div className="space-y-3">
+            <label className="label-overline">
+              {t('listing.wizard_quantity_label')}
+              <span className="text-muted-foreground normal-case"> ({t('listing.wizard_quantity_hint')})</span>
+            </label>
+            <input
+              type="number"
+              step="1"
+              min="1"
+              className="input-flat text-lg"
+              data-testid="wizard-quantity-input"
+              value={data.quantity}
+              onChange={(e) => setData({ ...data, quantity: e.target.value })}
+            />
+          </div>
         </section>
       )}
 

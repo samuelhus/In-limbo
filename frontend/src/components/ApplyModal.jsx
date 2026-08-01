@@ -5,15 +5,22 @@ import { api, formatApiError } from '@/lib/api';
 export default function ApplyModal({ listing, onClose, onSubmitted }) {
   const { t } = useTranslation();
   const [motivation, setMotivation] = useState('');
+  const [requestedQuantity, setRequestedQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const remaining = listing.remainingQuantity ?? listing.quantity ?? 1;
+  const showQuantityField = remaining > 1;
 
   const submit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError('');
     try {
-      const { data } = await api.post(`/listings/${listing.id}/apply`, { motivation: motivation.trim() });
+      const { data } = await api.post(`/listings/${listing.id}/apply`, {
+        motivation: motivation.trim(),
+        requestedQuantity: showQuantityField ? requestedQuantity : 1,
+      });
       onSubmitted?.(data);
     } catch (er) {
       setError(formatApiError(er));
@@ -42,6 +49,29 @@ export default function ApplyModal({ listing, onClose, onSubmitted }) {
         </div>
 
         <form onSubmit={submit} className="space-y-5">
+          {showQuantityField && (
+            <div>
+              <label className="label-overline">
+                {t('listing.apply_quantity_label')}
+                <span className="text-muted-foreground normal-case"> ({t('listing.apply_quantity_available', { count: remaining })})</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                max={remaining}
+                step="1"
+                required
+                value={requestedQuantity}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  setRequestedQuantity(isNaN(v) ? 1 : Math.min(Math.max(v, 1), remaining));
+                }}
+                className="input-flat text-lg"
+                data-testid="apply-quantity-input"
+              />
+            </div>
+          )}
+
           <div>
             <label className="label-overline">{t('listing.motivation')}</label>
             <textarea

@@ -57,6 +57,17 @@ export default function MijnAanvragen() {
                     <p className="font-medium truncate">{a.listing?.title || 'Aanbieding'}</p>
                     <p className="text-xs text-muted-foreground truncate">
                       {a.listing?.organisationName} · ingediend op {new Date(a.createdAt).toLocaleDateString('nl-BE')}
+                      {a.requestedQuantity > 1 && (
+                        <span data-testid={`aanvragen-qty-${a.id}`}>
+                          {' · '}
+                          {a.status === 'selected' && a.allocatedQuantity != null
+                            ? t('applications.allocated_of_requested', {
+                                allocated: a.allocatedQuantity,
+                                requested: a.requestedQuantity,
+                              })
+                            : t('applications.requested_quantity', { count: a.requestedQuantity })}
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs text-foreground/70 italic line-clamp-1 mt-1">"{a.motivation}"</p>
                   </div>

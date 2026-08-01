@@ -121,8 +121,16 @@ export default function ListingDetail() {
                 </div>
                 <div>
                   <dt className="overline mb-1">{t('listing.weight')}</dt>
-                  <dd>{item.weight} kg</dd>
+                  <dd>{item.weight} kg {item.quantity > 1 && <span className="text-muted-foreground text-xs">/ {t('listing.per_stuk')}</span>}</dd>
                 </div>
+                {item.quantity > 1 && (
+                  <div>
+                    <dt className="overline mb-1">{t('listing.quantity_available')}</dt>
+                    <dd data-testid="listing-remaining-quantity">
+                      {item.remainingQuantity} / {item.quantity}
+                    </dd>
+                  </div>
+                )}
                 {item.dimensions && (
                   <div className="col-span-2">
                     <dt className="overline mb-1">{t('listing.dimensions')}</dt>
@@ -199,8 +207,8 @@ export default function ListingDetail() {
               )}
 
               {/* Selected contact banner (applicant side) */}
-              {!isOwner && item.selectedApplicantContact && myApp?.status === 'selected' && (
-                <SelectedContactBanner contact={item.selectedApplicantContact} title={t('listing.jij_bent_gekozen')} />
+              {!isOwner && item.selectedApplicantsContacts?.[0] && myApp?.status === 'selected' && (
+                <SelectedContactBanner contact={item.selectedApplicantsContacts[0]} title={t('listing.jij_bent_gekozen')} />
               )}
 
               {/* Applicant flow */}
@@ -353,11 +361,11 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
     }
   }, [listing.id]);
 
-  useEffect(() => { loadApps(); }, [loadApps, listing.status, listing.selectedApplicantId]);
+  useEffect(() => { loadApps(); }, [loadApps, listing.status, listing.remainingQuantity]);
 
   const visibleApps = apps.filter((a) => ['open', 'selected'].includes(a.status));
   const openApps = apps.filter((a) => a.status === 'open');
-  const selected = apps.find((a) => a.id === listing.selectedApplicantId);
+  const selectedApps = apps.filter((a) => (listing.selectedApplicantIds || []).includes(a.id));
   const formatDate = (iso) => new Date(iso).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', year: 'numeric' });
 
   const callAction = async (path) => {
@@ -369,11 +377,31 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
     finally { setBusy(false); }
   };
 
-  const selectApplicant = async (applicationId, applicantName) => {
-    if (!window.confirm(t('listing.confirm_selecteer', { name: applicantName || t('listing.deze_aanvrager') }))) return;
+  const selectApplicant = async (applicationId, applicantName, requestedQuantity = 1) => {
+    let quantity = requestedQuantity;
+    if (listing.quantity > 1) {
+      const maxAllowed = Math.min(requestedQuantity, listing.remainingQuantity);
+      const input = window.prompt(
+        t('listing.confirm_aantal_toewijzen', {
+          name: applicantName || t('listing.deze_aanvrager'),
+          requested: requestedQuantity,
+          remaining: listing.remainingQuantity,
+        }),
+        String(maxAllowed),
+      );
+      if (input === null) return; // geannuleerd
+      const parsed = parseInt(input, 10);
+      if (isNaN(parsed) || parsed < 1 || parsed > listing.remainingQuantity) {
+        alert(t('listing.ongeldig_aantal', { max: listing.remainingQuantity }));
+        return;
+      }
+      quantity = parsed;
+    } else {
+      if (!window.confirm(t('listing.confirm_selecteer', { name: applicantName || t('listing.deze_aanvrager') }))) return;
+    }
     setBusy(true);
     try {
-      await api.post(`/listings/${listing.id}/select-applicant`, { applicationId });
+      await api.post(`/listings/${listing.id}/select-applicant`, { applicationId, quantity });
       onChanged?.();
     } catch (e) { alert(formatApiError(e)); }
     finally { setBusy(false); }
@@ -449,37 +477,50 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
         </div>
       </div>
 
-      {listing.status === 'herbestemd' && selected && (
-        <div className="mb-6 border border-foreground bg-surface p-5" data-testid="owner-selected-block">
-          <p className="overline mb-2">{t('listing.selected_recipient')}</p>
-          <p className="font-medium">
-            {selected.applicant.firstName} {selected.applicant.lastName}{' '}
-            <span className="text-muted-foreground font-normal">
-              · {selected.applicant.organisationName}
-            </span>
-          </p>
-          {selected.applicant.email && (
-            <p className="text-sm mt-2">
-              <a href={`mailto:${selected.applicant.email}`} className="industrial-link">{selected.applicant.email}</a>
-            </p>
+      {selectedApps.length > 0 && (
+        <div className="mb-6 space-y-4" data-testid="owner-selected-block">
+          {selectedApps.map((sel) => (
+            <div key={sel.id} className="border border-foreground bg-surface p-5">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <p className="overline">{t('listing.selected_recipient')}</p>
+                {listing.quantity > 1 && (
+                  <span className="text-xs font-semibold tracking-wide" data-testid={`owner-selected-qty-${sel.id}`}>
+                    {sel.allocatedQuantity}x
+                  </span>
+                )}
+              </div>
+              <p className="font-medium">
+                {sel.applicant.firstName} {sel.applicant.lastName}{' '}
+                <span className="text-muted-foreground font-normal">
+                  · {sel.applicant.organisationName}
+                </span>
+              </p>
+              {sel.applicant.email && (
+                <p className="text-sm mt-2">
+                  <a href={`mailto:${sel.applicant.email}`} className="industrial-link">{sel.applicant.email}</a>
+                </p>
+              )}
+              {sel.applicant.phone && (
+                <p className="text-sm">
+                  <a href={`tel:${sel.applicant.phone}`} className="industrial-link">{sel.applicant.phone}</a>
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground italic mt-3">"{sel.motivation}"</p>
+            </div>
+          ))}
+          {listing.status === 'herbestemd' && (
+            <button
+              onClick={() => {
+                if (!window.confirm(t('listing.undo_rehome_confirm'))) return;
+                callAction(`/listings/${listing.id}/unrehome`);
+              }}
+              disabled={busy}
+              className="btn-secondary !py-1.5 px-3 text-xs"
+              data-testid="owner-unselect-btn"
+            >
+              {t('listing.undo_rehome_btn')}
+            </button>
           )}
-          {selected.applicant.phone && (
-            <p className="text-sm">
-              <a href={`tel:${selected.applicant.phone}`} className="industrial-link">{selected.applicant.phone}</a>
-            </p>
-          )}
-          <p className="text-xs text-muted-foreground italic mt-3">"{selected.motivation}"</p>
-          <button
-            onClick={() => {
-              if (!window.confirm(t('listing.undo_rehome_confirm'))) return;
-              callAction(`/listings/${listing.id}/unrehome`);
-            }}
-            disabled={busy}
-            className="btn-secondary !py-1.5 px-3 text-xs mt-4"
-            data-testid="owner-unselect-btn"
-          >
-            {t('listing.undo_rehome_btn')}
-          </button>
         </div>
       )}
 
@@ -502,7 +543,14 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
                     {a.applicant.organisationName}
                   </Link>
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">{formatDate(a.createdAt)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatDate(a.createdAt)}
+                  {listing.quantity > 1 && (
+                    <span data-testid={`owner-app-qty-${a.id}`}>
+                      {' · '}{t('listing.requested_quantity', { count: a.requestedQuantity || 1 })}
+                    </span>
+                  )}
+                </p>
                 {a.applicant.email && (
                   <p className="text-sm mt-2">
                     <a href={`mailto:${a.applicant.email}`} className="industrial-link">{a.applicant.email}</a>
@@ -517,7 +565,7 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
               </div>
               <div className="md:col-span-4 md:flex md:justify-end items-start">
                 <button
-                  onClick={() => selectApplicant(a.id, `${a.applicant.firstName} ${a.applicant.lastName || ''}`.trim())}
+                  onClick={() => selectApplicant(a.id, `${a.applicant.firstName} ${a.applicant.lastName || ''}`.trim(), a.requestedQuantity || 1)}
                   disabled={busy}
                   className="btn-primary !py-2 text-xs"
                   data-testid={`owner-select-${a.id}`}

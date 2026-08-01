@@ -41,6 +41,13 @@ async def apply_to_listing(
     if existing:
         raise HTTPException(409, "Je hebt al een lopende aanvraag voor deze aanbieding")
 
+    remaining = listing.get("remainingQuantity", listing.get("quantity", 1))
+    if body.requestedQuantity > remaining:
+        raise HTTPException(
+            400,
+            f"Je vraagt {body.requestedQuantity} stuks aan, maar er {'is' if remaining == 1 else 'zijn'} nog maar {remaining} beschikbaar.",
+        )
+
     now = now_iso()
     app_doc = {
         "id": str(uuid.uuid4()),
@@ -48,6 +55,8 @@ async def apply_to_listing(
         "applicantUserId": user["id"],
         "applicantOrganisationId": user["organisationId"],
         "motivation": body.motivation,
+        "requestedQuantity": body.requestedQuantity,
+        "allocatedQuantity": None,
         "status": "open",
         "createdAt": now,
         "updatedAt": now,
@@ -91,28 +100,46 @@ async def withdraw_application(application_id: str, user: dict = Depends(get_val
     if was_selected:
         listing_id = app_doc["listingId"]
         now = now_iso()
-        await db.applications.update_many(
-            {"listingId": listing_id, "status": "not_selected"},
-            {"$set": {"status": "open", "updatedAt": now}},
-        )
-        await db.listings.update_one(
-            {"id": listing_id},
-            {"$set": {"status": "beschikbaar", "selectedApplicantId": None, "updatedAt": now}},
-        )
-        await db.platform_transfers.delete_many({"listingId": listing_id})
+        # Enkel de transfer-record van DEZE toewijzing verwijderen — niet die van
+        # eventuele andere aanvragers op dezelfde listing (bij quantity > 1 kunnen
+        # er meerdere onafhankelijke toewijzingen/transfers naast elkaar bestaan).
+        await db.platform_transfers.delete_many({"listingId": listing_id, "applicationId": application_id})
         listing = await db.listings.find_one({"id": listing_id})
+        if listing:
+            released = app_doc.get("allocatedQuantity") or 1
+            was_exhausted = listing.get("status") == "herbestemd"
+            new_remaining = listing.get("remainingQuantity", 0) + released
+            selected_ids = [i for i in (listing.get("selectedApplicantIds") or []) if i != application_id]
+            listing_update: dict = {
+                "remainingQuantity": new_remaining,
+                "selectedApplicantIds": selected_ids,
+                "updatedAt": now,
+            }
+            if was_exhausted:
+                listing_update["status"] = "beschikbaar"
+                # Enkel de aanvragen heropenen die automatisch afgewezen werden toen de
+                # voorraad opraakte — er is nu weer plaats vrijgekomen.
+                await db.applications.update_many(
+                    {"listingId": listing_id, "status": "not_selected"},
+                    {"$set": {"status": "open", "updatedAt": now}},
+                )
+            await db.listings.update_one({"id": listing_id}, {"$set": listing_update})
+            listing = await db.listings.find_one({"id": listing_id})
         offerer = await db.users.find_one({"id": listing["userId"]}) if listing else None
         if offerer:
             applicant_name = user.get("firstName") or user.get("username") or "Een aanvrager"
-            msg = f'{applicant_name} heeft zijn aanvraag ingetrokken voor "{listing.get("title","")}". Je kan een nieuwe ontvanger aanduiden.'
+            msg = (
+                f'{applicant_name} heeft zijn aanvraag ingetrokken voor "{listing.get("title","")}" '
+                f'({released}x vrijgekomen). Je kan een nieuwe ontvanger aanduiden voor dat aantal.'
+            )
             await create_notification(db, offerer["id"], "application_withdrawn", msg, listing_id, listing.get("title"))
             html = render_email(
-                "Aanvraag ingetrokken — kies een nieuwe ontvanger",
-                [msg, "De aanbieding staat opnieuw open en eerdere openstaande aanvragen zijn heropend."],
+                "Aanvraag ingetrokken — voorraad terug beschikbaar",
+                [msg, "Er is opnieuw voorraad beschikbaar voor deze aanbieding."],
                 cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
             )
             await maybe_send_email(db, offerer["id"], "application_withdrawn", offerer.get("email"),
-                                   "Aanvraag ingetrokken — kies een nieuwe ontvanger", html)
+                                   "Aanvraag ingetrokken — voorraad terug beschikbaar", html)
     return {"ok": True}
 
 
@@ -199,19 +226,38 @@ async def select_applicant(
         raise HTTPException(404, "Aanvraag niet gevonden")
     if app_doc["status"] != "open":
         raise HTTPException(400, "Deze aanvraag is niet meer open")
+
+    remaining = listing.get("remainingQuantity", listing.get("quantity", 1))
+    allocated = body.quantity if body.quantity is not None else app_doc.get("requestedQuantity", 1)
+    if allocated < 1:
+        raise HTTPException(400, "Toegewezen aantal moet minstens 1 zijn")
+    if allocated > remaining:
+        raise HTTPException(400, f"Je kan maximaal {remaining} toewijzen — dat is de resterende voorraad.")
+
     now = now_iso()
+    new_remaining = remaining - allocated
     await db.applications.update_one(
         {"id": body.applicationId},
-        {"$set": {"status": "selected", "updatedAt": now}},
+        {"$set": {"status": "selected", "allocatedQuantity": allocated, "updatedAt": now}},
     )
-    await db.applications.update_many(
-        {"listingId": listing_id, "status": "open", "id": {"$ne": body.applicationId}},
-        {"$set": {"status": "not_selected", "updatedAt": now}},
-    )
-    await db.listings.update_one(
-        {"id": listing_id},
-        {"$set": {"status": "herbestemd", "selectedApplicantId": body.applicationId, "updatedAt": now}},
-    )
+
+    selected_ids = (listing.get("selectedApplicantIds") or []) + [body.applicationId]
+    listing_update: dict = {
+        "remainingQuantity": new_remaining,
+        "selectedApplicantIds": selected_ids,
+        "updatedAt": now,
+    }
+
+    exhausted = new_remaining <= 0
+    if exhausted:
+        listing_update["status"] = "herbestemd"
+        # Voorraad is volledig toegewezen: overige openstaande aanvragen automatisch afwijzen.
+        await db.applications.update_many(
+            {"listingId": listing_id, "status": "open"},
+            {"$set": {"status": "not_selected", "updatedAt": now}},
+        )
+
+    await db.listings.update_one({"id": listing_id}, {"$set": listing_update})
 
     if listing.get("weight") and listing.get("material"):
         receiver_user = await db.users.find_one({"id": app_doc["applicantUserId"]})
@@ -222,9 +268,12 @@ async def select_applicant(
         transfer_doc = {
             "id": str(uuid.uuid4()),
             "listingId": listing_id,
+            "applicationId": body.applicationId,  # nodig om precies deze toewijzing later te kunnen terugdraaien
             "listingTitle": listing.get("title", ""),
             "material": listing["material"],
-            "weightKg": float(listing["weight"]),
+            # Gewicht in Listing.weight is PER STUK — vermenigvuldig met het toegewezen aantal.
+            "weightKg": float(listing["weight"]) * allocated,
+            "quantity": allocated,
             "offererOrganisationId": sender_org_id,
             "senderOrganisationId": sender_org_id,
             "senderOrganisationName": sender_org["name"] if sender_org else None,
@@ -237,7 +286,7 @@ async def select_applicant(
 
     receiver = await db.users.find_one({"id": app_doc["applicantUserId"]})
     if receiver:
-        msg = f'Je bent aangeduid als ontvanger van "{listing.get("title","")}". Bekijk de contactgegevens van de aanbieder.'
+        msg = f'Je bent aangeduid als ontvanger van {allocated}x "{listing.get("title","")}". Bekijk de contactgegevens van de aanbieder.'
         await create_notification(db, receiver["id"], "selected_as_receiver", msg, listing_id, listing.get("title"))
         html = render_email(
             "Je bent geselecteerd als ontvanger",
@@ -246,23 +295,32 @@ async def select_applicant(
         )
         await maybe_send_email(db, receiver["id"], "selected_as_receiver", receiver.get("email"),
                                "Je bent geselecteerd als ontvanger", html)
-    return {"ok": True}
+    return {"ok": True, "allocatedQuantity": allocated, "remainingQuantity": new_remaining}
 
 
 async def _reset_listing_to_available(listing_id: str, target_status: str = "beschikbaar") -> None:
-    """Reset herbestemde listing terug (naar beschikbaar, of naar in_magazijn als het
-    oorspronkelijk een magazijn-item was) + heropen selected/not_selected aanvragen
-    + verwijder het/de bijhorende platform_transfers-record(en), aangezien de
-    overdracht niet effectief heeft plaatsgevonden en dus niet in de CO2/gewicht-
-    statistieken mag blijven meetellen."""
+    """Reset herbestemde listing volledig terug (naar beschikbaar, of naar in_magazijn als het
+    oorspronkelijk een magazijn-item was) + heropen alle selected/not_selected aanvragen +
+    herstel de volledige oorspronkelijke voorraad + verwijder alle bijhorende
+    platform_transfers-records (de overdracht(en) hebben niet effectief plaatsgevonden en
+    mogen dus niet in de CO2/gewicht-statistieken blijven meetellen). Dit is een 'alles
+    ongedaan maken' voor de hele listing — voor het intrekken van één specifieke toewijzing,
+    zie withdraw_application."""
     now = now_iso()
+    listing = await db.listings.find_one({"id": listing_id})
+    full_quantity = listing.get("quantity", 1) if listing else 1
     await db.applications.update_many(
         {"listingId": listing_id, "status": {"$in": ["selected", "not_selected"]}},
-        {"$set": {"status": "open", "updatedAt": now}},
+        {"$set": {"status": "open", "allocatedQuantity": None, "updatedAt": now}},
     )
     await db.listings.update_one(
         {"id": listing_id},
-        {"$set": {"status": target_status, "selectedApplicantId": None, "updatedAt": now}},
+        {"$set": {
+            "status": target_status,
+            "selectedApplicantIds": [],
+            "remainingQuantity": full_quantity,
+            "updatedAt": now,
+        }},
     )
     await db.platform_transfers.delete_many({"listingId": listing_id})
 
@@ -272,10 +330,10 @@ async def unrehome(listing_id: str, user: dict = Depends(get_donateur_or_validat
     listing = await _require_listing_owner_or_admin(listing_id, user)
     if listing["status"] != "herbestemd":
         raise HTTPException(400, "Deze aanbieding is niet herbestemd")
-    selected_id = listing.get("selectedApplicantId")
+    selected_ids = listing.get("selectedApplicantIds") or []
     target_status = "in_magazijn" if listing.get("placeInWarehouse") else "beschikbaar"
     await _reset_listing_to_available(listing_id, target_status)
-    if selected_id:
+    for selected_id in selected_ids:
         app_doc = await db.applications.find_one({"id": selected_id})
         if app_doc:
             receiver = await db.users.find_one({"id": app_doc["applicantUserId"]})
@@ -316,6 +374,6 @@ async def mark_rehomed(listing_id: str, user: dict = Depends(get_donateur_or_val
     )
     await db.listings.update_one(
         {"id": listing_id},
-        {"$set": {"status": "herbestemd", "updatedAt": now}},
+        {"$set": {"status": "herbestemd", "remainingQuantity": 0, "updatedAt": now}},
     )
     return {"ok": True}

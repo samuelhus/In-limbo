@@ -81,8 +81,9 @@ class OrgPublic(OrgBase):
 class ListingBase(BaseModel):
     title: str = Field(..., max_length=35)
     description: str = Field(..., max_length=400)
-    weight: Optional[float] = Field(None, ge=0)
+    weight: Optional[float] = Field(None, ge=0)  # gewicht PER STUK, niet totaal
     material: ListingMaterial
+    quantity: int = Field(1, ge=1)  # totaal aantal beschikbare stuks
     photos: List[str] = Field(default_factory=list, max_length=5)
     technicalFiles: List[str] = Field(default_factory=list, max_length=3)
     deadline: Optional[str] = None  # ISO date string
@@ -98,6 +99,7 @@ class ListingCreateBody(ListingBase):
 
 class ListingPublic(ListingBase):
     id: str
+    remainingQuantity: int = 0  # server-beheerd: quantity minus reeds toegewezen aantal
     status: ListingStatus = "beschikbaar"
     userId: str
     organisationId: str
@@ -175,10 +177,12 @@ ApplicationStatus = Literal["open", "selected", "not_selected", "withdrawn"]
 
 class ApplicationCreate(BaseModel):
     motivation: str = Field(..., max_length=500, min_length=1)
+    requestedQuantity: int = Field(1, ge=1)
 
 
 class SelectApplicantBody(BaseModel):
     applicationId: str
+    quantity: Optional[int] = Field(None, ge=1)  # None = ken toe wat gevraagd werd
 
 
 # ---------- Update bodies ----------
@@ -207,6 +211,7 @@ class ListingUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=400)
     weight: Optional[float] = Field(None, ge=0)
     material: Optional[ListingMaterial] = None
+    quantity: Optional[int] = Field(None, ge=1)
     photos: Optional[List[str]] = None
     technicalFiles: Optional[List[str]] = None
     dimensions: Optional[str] = None
