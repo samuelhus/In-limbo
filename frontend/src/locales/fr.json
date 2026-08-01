@@ -737,5 +737,93 @@
     "gallery_prev": "Photo précédente",
     "gallery_next": "Photo suivante",
     "gallery_counter": "{{current}} / {{total}}"
+  },
+  "impact_methodologie": {
+    "overline": "Méthodologie",
+    "title": "Comment calculons-nous notre impact CO2 ?",
+    "intro": "In Limbo calcule les émissions de CO2 évitées pour chaque matériau réemployé sur la base d'un facteur CO2 moyen par catégorie de matériau — les mêmes catégories que vous choisissez lors de la création d'une annonce. Nous avons délibérément opté pour cette approche simple plutôt qu'une analyse de cycle de vie (ACV) complète par objet : cette dernière n'est pas réalisable pour une plateforme comme la nôtre, et les moyennes utilisées sont transparentes et traçables jusqu'à des sources reconnues (voir le tableau ci-dessous).",
+    "live_label": "Aujourd'hui, depuis le début de l'année",
+    "live_weight_label": "matériaux réemployés",
+    "live_co2_label": "équivalent CO2 économisé",
+    "counts_title": "Qu'est-ce qui est comptabilisé ?",
+    "counts_text": "Nous ne comptabilisons que les matériaux qui <bold>ont réellement atteint un nouvel utilisateur</bold> : les transferts directs entre organisations via la plateforme, et les matériaux récupérés dans l'entrepôt partagé. Les matériaux simplement déposés mais encore présents dans l'entrepôt ne sont volontairement pas encore comptabilisés — il ne s'agit pas encore d'un impact réalisé. Pour l'impact individuel des organisations, nous tenons toutefois compte des matériaux donnés se trouvant dans l'entrepôt.",
+    "factors_title": "Facteurs CO2 par catégorie",
+    "table_header_category": "Catégorie",
+    "table_header_value": "kg CO2-eq / kg",
+    "table_header_range": "Fourchette dans la littérature",
+    "table_header_source": "Source et explication",
+    "internal_calc": "Calcul interne — voir explication",
+    "limitations_title": "Limites importantes",
+    "limitation_1": "Il s'agit de chiffres <bold>moyens et génériques</bold> — et non d'une analyse de cycle de vie spécifique à chaque produit. Pour des matériaux fortement atypiques au sein d'une catégorie (par ex. un lot d'aluminium dans « Métal », ou de la laine dans « Textile »), l'impact réel peut être supérieur à celui calculé ici.",
+    "limitation_2_pre": "Ces chiffres sont basés sur des <bold>sources internationales</bold> (principalement britanniques et issues de la littérature générale), et non sur des données ACV belges/bruxelloises telles que",
+    "limitation_2_post": "(Tool to Optimise the Total Environmental impact of Materials, l'outil officiel des 3 Régions belges) ou le B-EPD. TOTEM est certes gratuit et accessible au public, mais a été conçu comme un <bold>outil de calcul interactif pour des éléments de construction complets</bold> (par ex. « 1 m² de mur extérieur, composition spécifique »), et non comme un simple tableau reprenant un facteur CO2 unique par catégorie générique de matériau, comme ci-dessus. Il n'existe aucune API publique ni jeu de données téléchargeable permettant de le consulter directement ou de le comparer automatiquement à nos chiffres. Nous ne pouvons donc pas confirmer avec certitude que nos catégories correspondent exactement aux valeurs TOTEM — les méthodologies sous-jacentes (toutes deux basées sur l'ACV) sont toutefois du même ordre de grandeur. Nous étudions la possibilité de compléter ou remplacer ces chiffres à terme par des sources belges pour les catégories liées à la construction.",
+    "limitation_3": "<bold>L'impact financier (euros économisés) n'est pas encore inclus</bold> dans ce calcul. Il sera ajouté dans une phase ultérieure, sur la base d'estimations de la valeur marchande par matériau.",
+    "questions_title": "Des questions ou suggestions ?",
+    "questions_text": "Vous disposez d'une meilleure source pour l'un de ces chiffres, ou de connaissances spécifiques sur les données ACV belges/bruxelloises ? Contactez-nous.",
+    "factors": {
+      "hout": {
+        "category": "Bois",
+        "range": "0,3 – 0,5 kg CO2-eq/kg",
+        "sourceLabel": "ICE Database v4.1 (University of Bath / Circular Ecology)",
+        "note": "Bois de structure. La base de données ICE est l'une des bases de données d'empreinte carbone intrinsèque les plus utilisées et gratuites au monde pour les matériaux de construction."
+      },
+      "metaal": {
+        "category": "Métal",
+        "range": "1,4 – 4,0 kg CO2-eq/kg (acier) ; l'aluminium primaire est nettement plus élevé",
+        "sourceLabel": "Data Center Life Cycle Co-Design Optimization (facteur acier basé sur ICE)",
+        "note": "Nous utilisons une moyenne pondérée pour l'acier, car la plupart des annonces « métal » sur la plateforme concernent des produits en acier ou du métal mixte. Attention : les articles en aluminium ont un impact bien plus élevé (aluminium primaire >13 kg CO2-eq/kg, secondaire ~4 % de ce chiffre) — pour d'importants lots d'aluminium, cette moyenne est une sous-estimation.",
+        "extraSourceLabel": "ICE Database v4.1 — ratio aluminium primaire/secondaire"
+      },
+      "plastic": {
+        "category": "Plastique",
+        "range": "~1,2 – 4,4 kg CO2-eq/kg, fortement dépendant du type de polymère",
+        "sourceLabel": "ICE Database v2.0 Summary Tables (valeur de référence nylon)",
+        "note": "Estimation mixte pour les plastiques courants (PE, PP, PVC, PET se situent généralement entre 1,7 et 3,5 ; les plastiques techniques comme le nylon sont plus élevés, jusqu'à 4,4).",
+        "extraSourceLabel": "8 Billion Trees — empreinte carbone du polyester/plastiques"
+      },
+      "steen": {
+        "category": "Pierre",
+        "range": "0,18 – 0,24 kg CO2-eq/kg (brique cuite)",
+        "sourceLabel": "Greenhouse Gas Emissions and Decarbonization Potential of Global Fired Clay Brick Production (revue par les pairs, PMC)",
+        "note": "Cette étude confirme en outre que sa valeur calculée correspond à la valeur de la base ICE (0,22 kg CO2-eq/kg). La pierre naturelle et le béton sont souvent encore plus bas — il s'agit donc plutôt d'une estimation prudente (plus élevée) pour la catégorie « Pierre » dans son ensemble."
+      },
+      "textiel": {
+        "category": "Textile",
+        "range": "coton ~5,3 · laine ~14,1 · polyester (vierge) ~1,2 kg CO2-eq/kg",
+        "sourceLabel": "ResearchGate — Industrial carbon footprint of textile fabrics",
+        "note": "Le textile présente la plus grande dispersion de toutes les catégories — le type de fibre détermine presque entièrement l'impact. Notre moyenne est une valeur médiane pondérée ; pour d'importants lots de laine, il s'agit d'une sous-estimation significative.",
+        "extraSourceLabel": "8 Billion Trees — empreinte carbone du polyester"
+      },
+      "electro": {
+        "category": "Électro",
+        "range": "24,9 kg CO2-eq/kg (gouvernement britannique, 2021)",
+        "sourceLabel": "Maxey Moverley — Carbon Footprint of Electronics (basé sur des chiffres du gouvernement britannique 2021)",
+        "note": "Cette valeur est confirmée de manière indépendante par plusieurs autres sources citant exactement le même chiffre. L'électro est de loin la catégorie la plus intensive en CO2 — le réemploi d'appareils électroniques a donc, proportionnellement, l'impact le plus important par kg."
+      },
+      "vloeistof": {
+        "category": "Liquide",
+        "range": "~2,1 kg CO2-eq/kg (référence : peinture)",
+        "sourceLabel": "8 Billion Trees — Carbon Footprint of Paint",
+        "note": "Calculé comme suit : un seau de peinture de 5 litres (~6,5 kg) génère environ 13,5 kg CO2-eq lors de sa production. La peinture a été choisie comme matériau de référence représentatif de la catégorie « Liquide », comme convenu avec le commanditaire."
+      },
+      "papier": {
+        "category": "Papier",
+        "range": "0,7 – 1,2 kg CO2-eq/kg (vierge), plus bas pour le papier recyclé",
+        "sourceLabel": "Carbonfact — carbon footprint packaging (base de données DEFRA, papier vierge)",
+        "note": "Confirmé par deux sources indépendantes dans la même fourchette de 0,7 à 1,2 kg CO2-eq/kg."
+      },
+      "isolatie": {
+        "category": "Isolation",
+        "range": "laine de verre 0,6–1,2 · laine de roche 1,4–4,2 · EPS 1,9–3,5 kg CO2-eq/kg",
+        "sourceLabel": "Historic England — Embodied Carbon Emissions of Construction and Retrofit Materials",
+        "note": "Moyenne pondérée sur les types d'isolation les plus courants. Le type exact d'isolation (laine de verre vs laine de roche vs EPS) influence considérablement l'impact réel.",
+        "extraSourceLabel": "Ecohome — Embodied Carbon in Insulation Materials"
+      },
+      "ander": {
+        "category": "Autre",
+        "range": "médiane des 9 catégories ci-dessus",
+        "note": "La MÉDIANE a été délibérément choisie plutôt que la moyenne arithmétique : la moyenne serait fortement faussée par la valeur extrême de l'Électro (24,9 par rapport à une fourchette de 0,2–4,0 pour les autres catégories), ce qui donnerait un chiffre irréaliste pour une simple « catégorie résiduelle »."
+      }
+    }
   }
 }

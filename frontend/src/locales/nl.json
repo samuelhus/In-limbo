@@ -727,5 +727,93 @@
     "gallery_prev": "Vorige foto",
     "gallery_next": "Volgende foto",
     "gallery_counter": "{{current}} / {{total}}"
+  },
+  "impact_methodologie": {
+    "overline": "Verantwoording",
+    "title": "Hoe berekenen we onze CO2-impact?",
+    "intro": "In Limbo berekent de bespaarde CO2-uitstoot per hergebruikt materiaal op basis van een gemiddelde CO2-factor per materiaalcategorie — dezelfde categorieën die je bij het plaatsen van een aanbieding kiest. We kozen bewust voor deze eenvoudige aanpak in plaats van een volledige levenscyclusanalyse (LCA) per object: dat laatste is voor een marktplaats als de onze niet haalbaar, en de gebruikte gemiddelden zijn transparant en herleidbaar naar erkende bronnen (zie tabel hieronder).",
+    "live_label": "Vandaag sinds het begin van het jaar",
+    "live_weight_label": "materiaal hergebruikt",
+    "live_co2_label": "CO2-equivalent bespaard",
+    "counts_title": "Wat telt mee?",
+    "counts_text": "We tellen enkel materiaal dat <bold>daadwerkelijk een nieuwe gebruiker heeft bereikt</bold>: rechtstreekse overdrachten tussen organisaties via het platform, en materiaal opgehaald uit het gedeelde magazijn. Materiaal dat enkel is binnengebracht maar nog in het magazijn ligt, telt bewust nog niet mee — dat is nog geen gerealiseerde impact. Voor de individuele impact van organisaties houden we wel rekening met gedoneerd materiaal in het magazijn.",
+    "factors_title": "CO2-factoren per categorie",
+    "table_header_category": "Categorie",
+    "table_header_value": "kg CO2-eq / kg",
+    "table_header_range": "Range in de literatuur",
+    "table_header_source": "Bron & toelichting",
+    "internal_calc": "Intern berekend — zie toelichting",
+    "limitations_title": "Belangrijke beperkingen",
+    "limitation_1": "Dit zijn <bold>gemiddelde, generieke</bold> cijfers — geen productspecifieke levenscyclusanalyse. Voor sterk afwijkende materialen binnen een categorie (bv. een partij aluminium binnen \"Metaal\", of wol binnen \"Textiel\") kan de werkelijke impact hoger liggen dan hier berekend.",
+    "limitation_2_pre": "De cijfers zijn gebaseerd op <bold>internationale bronnen</bold> (voornamelijk VK en algemene literatuur), niet op Belgische/Brusselse LCA-data zoals",
+    "limitation_2_post": "(Tool to Optimise the Total Environmental impact of Materials, de officiële tool van de 3 Belgische gewesten) of B-EPD. TOTEM is weliswaar gratis en publiek toegankelijk, maar is opgebouwd als een <bold>interactieve rekentool voor volledige bouwelementen</bold> (bv. \"1m² buitenmuur, specifieke opbouw\"), niet als een eenvoudige tabel met één CO2-factor per generieke materiaalcategorie zoals hierboven. Er bestaat geen publieke API of downloadbare dataset om dit rechtstreeks te raadplegen of automatisch te vergelijken met onze cijfers. We kunnen dus niet met zekerheid bevestigen dat onze categorieën exact overeenkomen met TOTEM-waarden — de onderliggende methodes (beide op LCA gebaseerd) liggen wel in dezelfde grootorde. We onderzoeken of we deze cijfers op termijn kunnen aanvullen of vervangen met Belgische bronnen voor de bouwgerelateerde categorieën.",
+    "limitation_3": "<bold>Financiële impact (euro's bespaard) is nog niet opgenomen</bold> in deze berekening. Dit komt in een latere fase, op basis van marktwaarde-schattingen per materiaal.",
+    "questions_title": "Vragen of suggesties?",
+    "questions_text": "Heb je een betere bron voor een van deze cijfers, of specifieke kennis over Belgische/Brusselse LCA-data? Neem contact op met ons.",
+    "factors": {
+      "hout": {
+        "category": "Hout",
+        "range": "0,3 – 0,5 kg CO2-eq/kg",
+        "sourceLabel": "ICE Database v4.1 (University of Bath / Circular Ecology)",
+        "note": "Structureel hout. De ICE-database is een van de meest gebruikte, gratis embodied-carbon-databases voor bouwmaterialen wereldwijd."
+      },
+      "metaal": {
+        "category": "Metaal",
+        "range": "1,4 – 4,0 kg CO2-eq/kg (staal); primair aluminium ligt sterk hoger",
+        "sourceLabel": "Data Center Life Cycle Co-Design Optimization (ICE-gebaseerde staalfactor)",
+        "note": "We gebruiken een staal-gewogen gemiddelde omdat de meeste metalen listings op het platform staalproducten of gemengd metaal betreffen. Let op: aluminium-items hebben een veel hogere impact (primair aluminium >13 kg CO2-eq/kg, secundair ~4% daarvan) — voor grote aluminium-partijen is dit gemiddelde een onderschatting.",
+        "extraSourceLabel": "ICE Database v4.1 — aluminium-verhouding primair/secundair"
+      },
+      "plastic": {
+        "category": "Plastic",
+        "range": "~1,2 – 4,4 kg CO2-eq/kg, sterk afhankelijk van polymeertype",
+        "sourceLabel": "ICE Database v2.0 Summary Tables (nylon-referentiewaarde)",
+        "note": "Gemengde schatting over courante kunststoffen (PE, PP, PVC, PET liggen doorgaans 1,7–3,5; technische kunststoffen zoals nylon hoger, tot 4,4).",
+        "extraSourceLabel": "8 Billion Trees — carbon footprint polyester/kunststoffen"
+      },
+      "steen": {
+        "category": "Steen",
+        "range": "0,18 – 0,24 kg CO2-eq/kg (gebakken baksteen)",
+        "sourceLabel": "Greenhouse Gas Emissions and Decarbonization Potential of Global Fired Clay Brick Production (peer-reviewed, PMC)",
+        "note": "Deze studie bevestigt bovendien dat haar berekende waarde overeenkomt met de ICE-databasewaarde (0,22 kg CO2-eq/kg). Natuursteen en beton liggen vaak nog lager — dit is dus eerder een voorzichtige (hogere) schatting voor de categorie \"Steen\" als geheel."
+      },
+      "textiel": {
+        "category": "Textiel",
+        "range": "katoen ~5,3 · wol ~14,1 · polyester (virgin) ~1,2 kg CO2-eq/kg",
+        "sourceLabel": "ResearchGate — Industrial carbon footprint of textile fabrics",
+        "note": "Textiel heeft de grootste spreiding van alle categorieën — het vezeltype bepaalt de impact vrijwel volledig. Ons gemiddelde is een gewogen middenwaarde; voor grote wol-partijen is dit een aanzienlijke onderschatting.",
+        "extraSourceLabel": "8 Billion Trees — carbon footprint polyester"
+      },
+      "electro": {
+        "category": "Electro",
+        "range": "24,9 kg CO2-eq/kg (Britse overheid, 2021)",
+        "sourceLabel": "Maxey Moverley — Carbon Footprint of Electronics (op basis van UK Government-cijfers 2021)",
+        "note": "Deze waarde wordt onafhankelijk bevestigd door meerdere andere bronnen die exact hetzelfde cijfer citeren. Electro is verreweg de meest CO2-intensieve categorie — hergebruik van elektronica heeft dus proportioneel de grootste impact per kg."
+      },
+      "vloeistof": {
+        "category": "Vloeistof",
+        "range": "~2,1 kg CO2-eq/kg (proxy: verf)",
+        "sourceLabel": "8 Billion Trees — Carbon Footprint of Paint",
+        "note": "Berekend uit: een emmer verf van 5 liter (~6,5 kg) draagt ±13,5 kg CO2-eq bij aan de productie. Verf is gekozen als representatief proxy-materiaal voor de categorie \"Vloeistof\", zoals afgesproken met de opdrachtgever."
+      },
+      "papier": {
+        "category": "Papier",
+        "range": "0,7 – 1,2 kg CO2-eq/kg (virgin), lager voor gerecycleerd papier",
+        "sourceLabel": "Carbonfact — carbon footprint packaging (DEFRA-database, virgin paper)",
+        "note": "Bevestigd door twee onafhankelijke bronnen binnen dezelfde 0,7–1,2 kg CO2-eq/kg-range."
+      },
+      "isolatie": {
+        "category": "Isolatie",
+        "range": "glaswol 0,6–1,2 · steenwol 1,4–4,2 · EPS 1,9–3,5 kg CO2-eq/kg",
+        "sourceLabel": "Historic England — Embodied Carbon Emissions of Construction and Retrofit Materials",
+        "note": "Gewogen gemiddelde over de meest voorkomende isolatietypes. Het exacte type isolatie (glaswol vs. steenwol vs. EPS) beïnvloedt de werkelijke impact aanzienlijk.",
+        "extraSourceLabel": "Ecohome — Embodied Carbon in Insulation Materials"
+      },
+      "ander": {
+        "category": "Ander",
+        "range": "mediaan van de 9 bovenstaande categorieën",
+        "note": "Bewust de MEDIAAN gekozen i.p.v. het rekenkundig gemiddelde: het gemiddelde zou sterk vertekend worden door de Electro-uitschieter (24,9 t.o.v. een range van 0,2–4,0 bij de overige categorieën), en zou daardoor voor een gewone \"restcategorie\" een onrealistisch hoog cijfer opleveren."
+      }
+    }
   }
 }
