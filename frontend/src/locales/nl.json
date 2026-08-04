@@ -266,6 +266,8 @@
     "wizard_weight_label": "Gewicht per stuk, in kilogram",
     "wizard_quantity_label": "Aantal beschikbaar",
     "wizard_quantity_hint": "bv. 10 als je 10 identieke stuks aanbiedt",
+    "wizard_step_quantity": "Aantal",
+    "wizard_total_weight_label": "Totaalgewicht",
     "wizard_material_label": "Materiaal",
     "wizard_dimensions_placeholder": "bv. 240 x 80 x 4 cm",
     "wizard_transport_placeholder": "bv. Op te halen in Molenbeek met bestelwagen",

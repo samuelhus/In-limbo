@@ -504,6 +504,15 @@ export default function ListingWizard({ editMode = false }) {
             {data.weight && parseFloat(data.weight) > 0 && (
               <Row label={t('listing.wizard_step_weight')} value={`${data.weight} kg`} />
             )}
+            {data.quantity && parseInt(data.quantity, 10) > 0 && (
+              <Row label={t('listing.wizard_step_quantity')} value={`${parseInt(data.quantity, 10)}`} />
+            )}
+            {data.weight && parseFloat(data.weight) > 0 && data.quantity && parseInt(data.quantity, 10) > 0 && (
+              <Row
+                label={t('listing.wizard_total_weight_label')}
+                value={`${(parseFloat(data.weight) * parseInt(data.quantity, 10)).toLocaleString('nl-BE', { maximumFractionDigits: 2 })} kg`}
+              />
+            )}
             {data.material && parseFloat(data.weight) > 0 && (
               <Row label={t('listing.wizard_step_material')} value={data.material} />
             )}

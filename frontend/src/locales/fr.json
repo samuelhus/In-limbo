@@ -292,6 +292,8 @@
     "wizard_weight_label": "Poids par pièce, en kilogrammes",
     "wizard_quantity_label": "Quantité disponible",
     "wizard_quantity_hint": "ex. 10 si vous proposez 10 pièces identiques",
+    "wizard_step_quantity": "Quantité",
+    "wizard_total_weight_label": "Poids total",
     "wizard_material_label": "Matériaux",
     "wizard_dimensions_placeholder": "ex. 240 x 80 x 4 cm",
     "wizard_transport_placeholder": "ex. À enlever à Molenbeek avec camionnette",
