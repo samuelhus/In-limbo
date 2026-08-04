@@ -20,6 +20,7 @@ from auth import (
     get_current_user_optional, get_donateur_or_validated_user,
 )
 from search_keywords import enrich_listing_keywords, DICTIONARY
+from notifications import notify_ntfy, NTFY_TOPIC_LISTINGS, FRONTEND_URL
 
 router = APIRouter()
 
@@ -359,6 +360,26 @@ async def create_listing(body: ListingCreateBody, user: dict = Depends(get_donat
             await db.listings.update_one({"id": listing_id}, {"$set": {"searchKeywords": kws}})
     except Exception:
         pass
+
+    # Best-effort: ntfy-melding op de aparte "listings"-feed bij elke nieuwe aanbieding
+    try:
+        offerer_label = None
+        if doc.get("organisationId"):
+            org = await db.organisations.find_one({"id": doc["organisationId"]})
+            offerer_label = org["name"] if org else None
+        if not offerer_label:
+            offerer_label = f'{user.get("firstName", "")} {user.get("lastName", "")}'.strip() or "Iemand"
+        await notify_ntfy(
+            title="Nieuwe aanbieding",
+            message=f'{offerer_label} plaatste "{body.title}" ({body.material}).',
+            priority="default",
+            tags=["package"],
+            click_url=f"{FRONTEND_URL}/aanbieding/{slug}",
+            topic=NTFY_TOPIC_LISTINGS,
+        )
+    except Exception:
+        pass
+
     return strip_mongo(doc)
 
 

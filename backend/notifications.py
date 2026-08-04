@@ -37,6 +37,9 @@ CONTACT_FALLBACK_EMAIL = os.environ.get("CONTACT_FALLBACK_EMAIL", "info@inlimbo.
 # de topic-naam zelf is de enige bescherming).
 NTFY_URL = os.environ.get("NTFY_URL", "").rstrip("/")
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
+# Aparte topic/feed specifiek voor nieuwe-aanbieding-meldingen. Valt terug op de
+# hoofd-topic als deze niet apart is ingesteld (dan komt alles op één feed terecht).
+NTFY_TOPIC_LISTINGS = os.environ.get("NTFY_TOPIC_LISTINGS", NTFY_TOPIC)
 
 LOGO_URL = (
     "https://res.cloudinary.com/dbjizykvb/image/upload/v1782338137/logoil_uoqeoo.png"
@@ -140,13 +143,16 @@ async def notify_ntfy(
     priority: str = "default",
     tags: Optional[list[str]] = None,
     click_url: Optional[str] = None,
+    topic: Optional[str] = None,
 ) -> None:
     """Stuur een ntfy push-notificatie. Fails soft (nooit een fout doorgeven aan de caller).
 
     priority: "min" | "low" | "default" | "high" | "urgent"
     tags: ntfy-emoji-tags, bv. ["warning"], ["tada"], ["rotating_light"]
+    topic: optionele specifieke feed/topic (bv. NTFY_TOPIC_LISTINGS). Standaard NTFY_TOPIC.
     """
-    if not NTFY_URL or not NTFY_TOPIC:
+    target_topic = topic or NTFY_TOPIC
+    if not NTFY_URL or not target_topic:
         return
     try:
         headers = {"Title": title, "Priority": priority}
@@ -156,7 +162,7 @@ async def notify_ntfy(
             headers["Click"] = click_url
         async with httpx.AsyncClient(timeout=10) as client:
             await client.post(
-                f"{NTFY_URL}/{NTFY_TOPIC}",
+                f"{NTFY_URL}/{target_topic}",
                 content=message.encode("utf-8"),
                 headers=headers,
             )
