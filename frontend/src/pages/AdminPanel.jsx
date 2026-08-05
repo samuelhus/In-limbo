@@ -355,15 +355,17 @@ function AdminTransacties() {
   const [total, setTotal] = useState(0);
   const [skip, setSkip] = useState(0);
   const [type, setType] = useState('');
+  const [photoFilter, setPhotoFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const limit = 50;
 
-  const load = useCallback(async (currentSkip, currentType) => {
+  const load = useCallback(async (currentSkip, currentType, currentPhotoFilter) => {
     setLoading(true);
     try {
       const params = { skip: currentSkip, limit };
       if (currentType) params.type = currentType;
+      if (currentPhotoFilter) params.photoReceived = currentPhotoFilter;
       const { data } = await api.get('/admin/transactions', { params });
       setItems(data.items);
       setTotal(data.total);
@@ -374,7 +376,7 @@ function AdminTransacties() {
     }
   }, []);
 
-  useEffect(() => { load(skip, type); }, [load, skip, type]);
+  useEffect(() => { load(skip, type, photoFilter); }, [load, skip, type, photoFilter]);
 
   const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString('nl-BE', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -386,11 +388,26 @@ function AdminTransacties() {
     setBusyId(row.id);
     try {
       await api.delete(`/admin/transactions/${row.type}/${row.id}`);
-      await load(skip, type);
+      await load(skip, type, photoFilter);
     } catch (e) {
       alert(formatApiError(e));
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const togglePhotoReceived = async (row) => {
+    const next = !row.photoReceived;
+    setItems((prev) => prev.map((it) => (
+      it.type === row.type && it.id === row.id ? { ...it, photoReceived: next } : it
+    )));
+    try {
+      await api.patch(`/admin/transactions/${row.type}/${row.id}/photo-received`, { received: next });
+    } catch (e) {
+      alert(formatApiError(e));
+      setItems((prev) => prev.map((it) => (
+        it.type === row.type && it.id === row.id ? { ...it, photoReceived: !next } : it
+      )));
     }
   };
 
@@ -419,6 +436,25 @@ function AdminTransacties() {
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-2 mb-6">
+        {[
+          { key: '', label: 'Foto: alle' },
+          { key: 'yes', label: 'Foto ontvangen: ja' },
+          { key: 'no', label: 'Foto ontvangen: nee' },
+        ].map((f) => (
+          <button
+            key={f.key}
+            onClick={() => { setPhotoFilter(f.key); setSkip(0); }}
+            className={`px-3 py-1.5 text-xs border transition-colors ${
+              photoFilter === f.key ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'
+            }`}
+            data-testid={`tx-photo-filter-${f.key || 'alle'}`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Laden…</p>
       ) : items.length === 0 ? (
@@ -434,6 +470,7 @@ function AdminTransacties() {
                 <th className="py-2 pr-3 font-medium">Naar</th>
                 <th className="py-2 pr-3 font-medium">Materiaal</th>
                 <th className="py-2 pr-3 font-medium text-right">Gewicht</th>
+                <th className="py-2 pr-3 font-medium">Foto</th>
                 <th className="py-2 pr-3 font-medium"></th>
               </tr>
             </thead>
@@ -456,6 +493,18 @@ function AdminTransacties() {
                   </td>
                   <td className="py-2 pr-3 text-right whitespace-nowrap">
                     {row.weightKg != null ? `${row.weightKg} kg` : '—'}
+                  </td>
+                  <td className="py-2 pr-3">
+                    {row.needsPhoto ? (
+                      <input
+                        type="checkbox"
+                        checked={!!row.photoReceived}
+                        onChange={() => togglePhotoReceived(row)}
+                        data-testid={`tx-photo-checkbox-${row.type}-${row.id}`}
+                      />
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
                   </td>
                   <td className="py-2 pr-3 text-right">
                     {row.canDelete && (

@@ -2,7 +2,7 @@
 from __future__ import annotations
 import calendar
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Body
 
 from deps import db, now_iso, strip_mongo, anonymize_user, slugify, generate_unique_org_slug
 from models import AdminDecision, AdminUserUpdate, AdminOrgUpdate
@@ -556,6 +556,7 @@ async def admin_list_transactions(
     organisationId: str | None = Query(None),
     dateFrom: str | None = Query(None, description="ISO datum, bv. 2026-01-01"),
     dateTo: str | None = Query(None, description="ISO datum, bv. 2026-12-31"),
+    photoReceived: str | None = Query(None, description="'yes' of 'no' — filtert enkel platform/checkout (checkins hebben geen foto nodig)"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
 ):
@@ -592,6 +593,8 @@ async def admin_list_transactions(
                 "listingId": tr.get("listingId"),
                 "listingTitle": tr.get("listingTitle"),
                 "canDelete": False,  # aanbieding-overdrachten draai je terug via 'Herbestemming ongedaan maken' op de aanbieding zelf
+                "needsPhoto": True,
+                "photoReceived": bool(tr.get("photoReceived", False)),
             })
 
     if type in (None, "checkin"):
@@ -609,6 +612,7 @@ async def admin_list_transactions(
                 "material": _items_material_summary(c.get("items")),
                 "weightKg": c.get("totalWeightKg"),
                 "canDelete": True,
+                "needsPhoto": False,
             })
 
     if type in (None, "checkout"):
@@ -626,9 +630,17 @@ async def admin_list_transactions(
                 "material": _items_material_summary(c.get("items")),
                 "weightKg": c.get("totalWeightKg"),
                 "canDelete": True,
+                "needsPhoto": True,
+                "photoReceived": bool(c.get("photoReceived", False)),
             })
 
     rows.sort(key=lambda r: r.get("createdAt") or "", reverse=True)
+
+    if photoReceived == "yes":
+        rows = [r for r in rows if r.get("needsPhoto") and r.get("photoReceived")]
+    elif photoReceived == "no":
+        rows = [r for r in rows if r.get("needsPhoto") and not r.get("photoReceived")]
+
     total = len(rows)
     page = rows[skip: skip + limit]
     return {"total": total, "items": page, "skip": skip, "limit": limit}
@@ -648,3 +660,23 @@ async def admin_delete_checkout(checkout_id: str, admin: dict = Depends(get_admi
     if result.deleted_count == 0:
         raise HTTPException(404, "Checkout niet gevonden")
     return {"ok": True}
+
+
+@router.patch("/admin/transactions/{tx_type}/{tx_id}/photo-received")
+async def admin_set_transaction_photo_received(
+    tx_type: str,
+    tx_id: str,
+    body: dict = Body(...),
+    admin: dict = Depends(get_admin_user),
+):
+    """Zet de 'foto ontvangen'-vlag op een aanbieding-overdracht of checkout.
+    Checkins hebben hier bewust geen foto voor nodig (materiaal komt binnen,
+    er is geen ontvanger om een foto van het resultaat te vragen)."""
+    collection = {"platform": db.platform_transfers, "checkout": db.checkouts}.get(tx_type)
+    if collection is None:
+        raise HTTPException(400, "Ongeldig type — enkel 'platform' of 'checkout'")
+    received = bool(body.get("received"))
+    result = await collection.update_one({"id": tx_id}, {"$set": {"photoReceived": received}})
+    if result.matched_count == 0:
+        raise HTTPException(404, "Transactie niet gevonden")
+    return {"ok": True, "photoReceived": received}
