@@ -1,12 +1,46 @@
 """User profile + e-mail voorkeuren."""
 from __future__ import annotations
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
 
-from deps import db, strip_mongo, DEFAULT_EMAIL_PREFS
+from deps import db, now_iso, strip_mongo, anonymize_user, DEFAULT_EMAIL_PREFS
 from models import UserUpdate, EmailPreferencesUpdate
-from auth import hash_password, get_current_user
+from auth import hash_password, get_current_user, clear_auth_cookie
 
 router = APIRouter()
+
+
+@router.delete("/users/me")
+async def delete_me(response: Response, user: dict = Depends(get_current_user)):
+    """Zelf-verwijdering van je account (GDPR-recht op verwijdering).
+
+    Anonimiseert je persoonsgegevens (zie deps.anonymize_user). Je
+    aanbiedingen en aanvragen blijven bestaan zodat andere gebruikers en
+    statistieken/impact-cijfers niet beïnvloed worden — enkel je naam wordt
+    vervangen door 'Verwijderde gebruiker'.
+
+    Ben je het enige lid van je organisatie, dan wordt die organisatie mee
+    volledig verwijderd.
+    """
+    org_id = user.get("organisationId")
+
+    await db.listings.update_many(
+        {"userId": user["id"]},
+        {"$set": {"status": "gearchiveerd", "updatedAt": now_iso()}},
+    )
+
+    org_also_deleted = False
+    if org_id:
+        remaining_members = await db.users.count_documents(
+            {"organisationId": org_id, "id": {"$ne": user["id"]}}
+        )
+        if remaining_members == 0:
+            await db.organisations.delete_one({"id": org_id})
+            org_also_deleted = True
+
+    await anonymize_user(db, user["id"])
+    clear_auth_cookie(response)
+
+    return {"ok": True, "organisationDeleted": org_also_deleted}
 
 
 @router.patch("/users/me")

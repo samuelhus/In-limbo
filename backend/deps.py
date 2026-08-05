@@ -20,6 +20,33 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+async def anonymize_user(db, user_id: str) -> None:
+    """GDPR-verwijdering: vervangt persoonsgegevens door anonieme placeholders,
+    maar behoudt het document zelf (en dus zijn id) zodat listings/aanvragen
+    die naar deze gebruiker verwijzen geldig blijven — de naam die daar
+    getoond wordt, wordt via deze functie automatisch 'Verwijderde gebruiker'.
+
+    Structurele data (listings, aanvragen, platform_transfers, checkins,
+    checkouts) wordt hier bewust NIET aangeraakt — die bevat geen
+    persoonsgegevens (enkel organisatie-/materiaaldata) en blijft dus intact
+    voor statistieken en de historiek van andere gebruikers/organisaties.
+    """
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "firstName": "Verwijderde",
+            "lastName": "gebruiker",
+            "username": None,
+            "email": f"verwijderd-{user_id}@inlimbo.brussels",
+            "phone": None,
+            "passwordHash": "!",  # onbruikbaar, kan nooit matchen met verify_password
+            "status": "rejected",
+            "deletedAt": now_iso(),
+        }},
+    )
+    await db.notifications.delete_many({"userId": user_id})
+
+
 def strip_mongo(d: dict) -> dict:
     d.pop("_id", None)
     d.pop("_seed", None)

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
@@ -12,7 +12,8 @@ const EMAIL_PREF_LABELS = [
 ];
 
 export default function Profiel() {
-  const { user, refresh } = useAuth();
+  const { user, refresh, setUser } = useAuth();
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isDonateur = user.role === 'donateur';
 
@@ -28,6 +29,9 @@ export default function Profiel() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const [prefs, setPrefs] = useState(null);
   const [prefMsg, setPrefMsg] = useState('');
@@ -123,6 +127,19 @@ export default function Profiel() {
       setErr(formatApiError(e));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete('/users/me');
+      setUser(false);
+      navigate('/');
+    } catch (e) {
+      setDeleteError(formatApiError(e));
+      setDeleting(false);
     }
   };
 
@@ -270,6 +287,52 @@ export default function Profiel() {
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="mt-16 border-t border-border pt-6" data-testid="profiel-delete-account">
+        <p className="overline mb-2 text-destructive">{t('profile.delete_account_title')}</p>
+        <p className="text-sm text-muted-foreground mb-4">
+          {t('profile.delete_account_body')}
+        </p>
+
+        {deleteError && (
+          <p className="text-destructive text-sm mb-3" data-testid="profiel-delete-error">{deleteError}</p>
+        )}
+
+        {!confirmingDelete ? (
+          <button
+            type="button"
+            onClick={() => setConfirmingDelete(true)}
+            className="text-sm text-destructive underline underline-offset-4 hover:opacity-70"
+            data-testid="profiel-delete-account-btn"
+          >
+            {t('profile.delete_account_cta')}
+          </button>
+        ) : (
+          <div className="border border-destructive/40 bg-destructive/5 p-4" data-testid="profiel-delete-confirm">
+            <p className="text-sm font-medium mb-4">{t('profile.delete_account_confirm')}</p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="btn-secondary !border-destructive !text-destructive hover:!bg-destructive hover:!text-background text-sm"
+                data-testid="profiel-delete-account-confirm-btn"
+              >
+                {deleting ? t('common.loading') : t('profile.delete_account_confirm_btn')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+                className="text-sm text-muted-foreground hover:text-foreground"
+                data-testid="profiel-delete-account-cancel-btn"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

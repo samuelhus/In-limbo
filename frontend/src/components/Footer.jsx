@@ -26,6 +26,7 @@ export default function Footer() {
             <li><a href="/over-ons" className="industrial-link">{t('nav.about')}</a></li>
             <li><a href="/contact" className="industrial-link" data-testid="footer-contact-link">{t('common.contact')}</a></li>
             <li><a href="/voorwaarden" className="industrial-link">{t('footer.terms')}</a></li>
+            <li><a href="/privacy" className="industrial-link" data-testid="footer-privacy-link">{t('footer.privacy')}</a></li>
             <li><a href="/impact-methodologie" className="industrial-link" data-testid="footer-impact-link">Impact-methodologie</a></li>
           </ul>
         </div>

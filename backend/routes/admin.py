@@ -4,7 +4,7 @@ import calendar
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 
-from deps import db, now_iso, strip_mongo, slugify, generate_unique_org_slug
+from deps import db, now_iso, strip_mongo, anonymize_user, slugify, generate_unique_org_slug
 from models import AdminDecision, AdminUserUpdate, AdminOrgUpdate
 from auth import get_admin_user
 from notifications import maybe_send_email, render_email, FRONTEND_URL
@@ -172,18 +172,21 @@ async def admin_update_user(user_id: str, body: AdminUserUpdate, admin: dict = D
 
 @router.delete("/admin/users/{user_id}")
 async def admin_delete_user(user_id: str, admin: dict = Depends(get_admin_user)):
-    """Delete any user (donateur, user, admin). Archives all their listings and removes their applications."""
+    """GDPR-verwijdering van een gebruiker (donateur, user, admin).
+    Anonimiseert persoonsgegevens (zie deps.anonymize_user) en archiveert
+    zijn/haar aanbiedingen. Aanvragen blijven behouden (bevatten geen
+    persoonsgegevens, enkel een verwijzing — de naam wordt automatisch
+    anoniem via de anonimisatie van de gebruiker zelf)."""
     if user_id == admin["id"]:
         raise HTTPException(400, "Je kan jezelf niet verwijderen")
     existing = await db.users.find_one({"id": user_id})
     if not existing:
         raise HTTPException(404, "Gebruiker niet gevonden")
-    await db.users.delete_one({"id": user_id})
     await db.listings.update_many(
         {"userId": user_id},
         {"$set": {"status": "gearchiveerd", "updatedAt": now_iso()}},
     )
-    await db.applications.delete_many({"applicantUserId": user_id})
+    await anonymize_user(db, user_id)
     return {"ok": True}
 
 
@@ -362,6 +365,9 @@ async def admin_org_stats(org_id: str, admin: dict = Depends(get_admin_user)):
 
 @router.delete("/admin/organisations/{org_id}")
 async def admin_delete_organisation(org_id: str, admin: dict = Depends(get_admin_user)):
+    """Verwijdert een organisatie én anonimiseert (GDPR) alle leden ervan.
+    De organisatie zelf wordt volledig verwijderd (geen persoonsgegevens,
+    enkel entiteitsdata) — de leden worden geanonimiseerd, niet hard verwijderd."""
     existing = await db.organisations.find_one({"id": org_id})
     if not existing:
         raise HTTPException(404, "Organisatie niet gevonden")
@@ -372,7 +378,8 @@ async def admin_delete_organisation(org_id: str, admin: dict = Depends(get_admin
             {"userId": {"$in": user_ids}},
             {"$set": {"status": "gearchiveerd", "updatedAt": now_iso()}},
         )
-    await db.users.delete_many({"organisationId": org_id})
+        for uid in user_ids:
+            await anonymize_user(db, uid)
     await db.organisations.delete_one({"id": org_id})
     return {"ok": True, "deletedUsers": len(user_ids)}
 

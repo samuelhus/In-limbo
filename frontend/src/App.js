@@ -40,6 +40,7 @@ import WachtwoordVergeten from '@/pages/WachtwoordVergeten';
 import WachtwoordReset from '@/pages/WachtwoordReset';
 import Notificaties from '@/pages/Notificaties';
 import Voorwaarden from '@/pages/Voorwaarden';
+import Privacy from '@/pages/Privacy';
 import AdminDonateurListings from '@/pages/AdminDonateurListings';
 
 
@@ -88,6 +89,7 @@ export default function App() {
                 }
               />
               <Route path="/voorwaarden" element={<Voorwaarden />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route
                 path="/notificaties"
                 element={
