@@ -8,7 +8,7 @@ from deps import db, now_iso, strip_mongo
 from models import ApplicationCreate, SelectApplicantBody
 from auth import get_validated_user, get_donateur_or_validated_user
 from notifications import (
-    create_notification, maybe_send_email, render_email, FRONTEND_URL,
+    create_notification, maybe_send_email, render_email, FRONTEND_URL, pick_lang,
 )
 from routes.listings import _require_listing_owner_or_admin
 
@@ -72,14 +72,25 @@ async def apply_to_listing(
     msg = f'{applicant_name} heeft een aanvraag gedaan voor "{listing.get("title","")}"'
     await create_notification(db, listing["userId"], "new_application", msg, listing_id, listing.get("title"))
     cta_url = f"{FRONTEND_URL}/aanbieding/{listing_id}"
-    html = render_email(
-        "Nieuwe aanvraag op je aanbieding",
-        [msg + ".", "Bekijk de motivatie en beslis wie de ontvanger wordt."],
-        cta_text="Bekijk aanvraag →", cta_url=cta_url,
-    )
+    lang = pick_lang(offerer)
+    if lang == "fr":
+        applicant_msg_fr = f'{applicant_name} a soumis une demande pour "{listing.get("title","")}"'
+        html = render_email(
+            "Nouvelle demande sur votre annonce",
+            [applicant_msg_fr + ".", "Consultez la motivation et décidez qui sera le destinataire."],
+            cta_text="Voir la demande →", cta_url=cta_url,
+        )
+        subject = "Nouvelle demande sur votre annonce"
+    else:
+        html = render_email(
+            "Nieuwe aanvraag op je aanbieding",
+            [msg + ".", "Bekijk de motivatie en beslis wie de ontvanger wordt."],
+            cta_text="Bekijk aanvraag →", cta_url=cta_url,
+        )
+        subject = "Nieuwe aanvraag op je aanbieding"
     if offerer:
         await maybe_send_email(db, offerer["id"], "new_application", offerer.get("email"),
-                               "Nieuwe aanvraag op je aanbieding", html)
+                               subject, html)
     return strip_mongo(app_doc)
 
 
@@ -133,13 +144,27 @@ async def withdraw_application(application_id: str, user: dict = Depends(get_val
                 f'({released}x vrijgekomen). Je kan een nieuwe ontvanger aanduiden voor dat aantal.'
             )
             await create_notification(db, offerer["id"], "application_withdrawn", msg, listing_id, listing.get("title"))
-            html = render_email(
-                "Aanvraag ingetrokken — voorraad terug beschikbaar",
-                [msg, "Er is opnieuw voorraad beschikbaar voor deze aanbieding."],
-                cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
-            )
+            lang = pick_lang(offerer)
+            if lang == "fr":
+                msg_fr = (
+                    f'{applicant_name} a retiré sa demande pour "{listing.get("title","")}" '
+                    f'({released}x libéré(s)). Vous pouvez désigner un nouveau destinataire pour cette quantité.'
+                )
+                html = render_email(
+                    "Demande retirée — stock à nouveau disponible",
+                    [msg_fr, "Du stock est à nouveau disponible pour cette annonce."],
+                    cta_text="Voir l'annonce →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+                )
+                subject = "Demande retirée — stock à nouveau disponible"
+            else:
+                html = render_email(
+                    "Aanvraag ingetrokken — voorraad terug beschikbaar",
+                    [msg, "Er is opnieuw voorraad beschikbaar voor deze aanbieding."],
+                    cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+                )
+                subject = "Aanvraag ingetrokken — voorraad terug beschikbaar"
             await maybe_send_email(db, offerer["id"], "application_withdrawn", offerer.get("email"),
-                                   "Aanvraag ingetrokken — voorraad terug beschikbaar", html)
+                                   subject, html)
     return {"ok": True}
 
 
@@ -289,13 +314,24 @@ async def select_applicant(
     if receiver:
         msg = f'Je bent aangeduid als ontvanger van {allocated}x "{listing.get("title","")}". Bekijk de contactgegevens van de aanbieder.'
         await create_notification(db, receiver["id"], "selected_as_receiver", msg, listing_id, listing.get("title"))
-        html = render_email(
-            "Je bent geselecteerd als ontvanger",
-            [msg, "Spreek af met de aanbieder en haal het materiaal op."],
-            cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
-        )
+        lang = pick_lang(receiver)
+        if lang == "fr":
+            msg_fr = f'Vous avez été désigné comme destinataire de {allocated}x "{listing.get("title","")}". Consultez les coordonnées du donateur.'
+            html = render_email(
+                "Vous avez été sélectionné comme destinataire",
+                [msg_fr, "Convenez d'un rendez-vous avec le donateur et récupérez le matériel."],
+                cta_text="Voir l'annonce →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+            )
+            subject = "Vous avez été sélectionné comme destinataire"
+        else:
+            html = render_email(
+                "Je bent geselecteerd als ontvanger",
+                [msg, "Spreek af met de aanbieder en haal het materiaal op."],
+                cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+            )
+            subject = "Je bent geselecteerd als ontvanger"
         await maybe_send_email(db, receiver["id"], "selected_as_receiver", receiver.get("email"),
-                               "Je bent geselecteerd als ontvanger", html)
+                               subject, html)
     return {"ok": True, "allocatedQuantity": allocated, "remainingQuantity": new_remaining}
 
 
@@ -341,13 +377,24 @@ async def unrehome(listing_id: str, user: dict = Depends(get_donateur_or_validat
             if receiver:
                 msg = f'De aanbieding "{listing.get("title","")}" is terug beschikbaar. Je aanvraag is opnieuw open.'
                 await create_notification(db, receiver["id"], "unrehomed", msg, listing_id, listing.get("title"))
-                html = render_email(
-                    "Aanbieding terug beschikbaar",
-                    [msg, "Je staat opnieuw in de wachtrij voor deze aanbieding."],
-                    cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
-                )
+                lang = pick_lang(receiver)
+                if lang == "fr":
+                    msg_fr = f'L\'annonce "{listing.get("title","")}" est à nouveau disponible. Votre demande est de nouveau ouverte.'
+                    html = render_email(
+                        "Annonce à nouveau disponible",
+                        [msg_fr, "Vous êtes de nouveau dans la file d'attente pour cette annonce."],
+                        cta_text="Voir l'annonce →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+                    )
+                    subject = "Annonce à nouveau disponible"
+                else:
+                    html = render_email(
+                        "Aanbieding terug beschikbaar",
+                        [msg, "Je staat opnieuw in de wachtrij voor deze aanbieding."],
+                        cta_text="Bekijk aanbieding →", cta_url=f"{FRONTEND_URL}/aanbieding/{listing_id}",
+                    )
+                    subject = "Aanbieding terug beschikbaar"
                 await maybe_send_email(db, receiver["id"], "unrehomed", receiver.get("email"),
-                                       "Aanbieding terug beschikbaar", html)
+                                       subject, html)
     return {"ok": True}
 
 

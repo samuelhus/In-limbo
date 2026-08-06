@@ -17,7 +17,7 @@ from auth import (
     set_auth_cookie, clear_auth_cookie, get_current_user,
 )
 from notifications import (
-    notify_admins_new_registration, send_email, render_email, FRONTEND_URL,
+    notify_admins_new_registration, send_email, render_email, FRONTEND_URL, pick_lang,
 )
 
 router = APIRouter()
@@ -283,20 +283,37 @@ async def forgot_password(request: Request, body: PasswordResetRequest = Body(..
 
     reset_url = f"{FRONTEND_URL}/wachtwoord-reset?token={token}"
     first = user.get("firstName") or user.get("username") or "daar"
-    html = render_email(
-        title="Wachtwoord opnieuw instellen",
-        body_lines=[
-            f"Dag {first},",
-            "Je hebt gevraagd om je wachtwoord opnieuw in te stellen.",
-            "Klik op onderstaande knop om een nieuw wachtwoord in te stellen. De link is 24 uur geldig.",
-            "Als je dit niet zelf hebt aangevraagd, kan je deze e-mail negeren.",
-        ],
-        cta_text="Stel nieuw wachtwoord in →",
-        cta_url=reset_url,
-    )
+    lang = pick_lang(user)
+    if lang == "fr":
+        first_fr = user.get("firstName") or user.get("username") or ""
+        html = render_email(
+            title="Réinitialiser votre mot de passe",
+            body_lines=[
+                f"Bonjour {first_fr},",
+                "Vous avez demandé à réinitialiser votre mot de passe.",
+                "Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe. Ce lien est valable 24 heures.",
+                "Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.",
+            ],
+            cta_text="Définir un nouveau mot de passe →",
+            cta_url=reset_url,
+        )
+        subject = "Réinitialiser votre mot de passe — In Limbo"
+    else:
+        html = render_email(
+            title="Wachtwoord opnieuw instellen",
+            body_lines=[
+                f"Dag {first},",
+                "Je hebt gevraagd om je wachtwoord opnieuw in te stellen.",
+                "Klik op onderstaande knop om een nieuw wachtwoord in te stellen. De link is 24 uur geldig.",
+                "Als je dit niet zelf hebt aangevraagd, kan je deze e-mail negeren.",
+            ],
+            cta_text="Stel nieuw wachtwoord in →",
+            cta_url=reset_url,
+        )
+        subject = "Wachtwoord opnieuw instellen — In Limbo"
     asyncio.create_task(send_email(
         to_email=email,
-        subject="Wachtwoord opnieuw instellen — In Limbo",
+        subject=subject,
         html_content=html,
     ))
     return SAFE_FORGOT_RESPONSE
@@ -330,19 +347,35 @@ async def reset_password(request: Request, body: PasswordResetConfirm = Body(...
     user = await db.users.find_one({"id": record["userId"]})
     if user:
         first = user.get("firstName") or user.get("username") or "daar"
-        html = render_email(
-            title="Wachtwoord gewijzigd",
-            body_lines=[
-                f"Dag {first},",
-                "Je wachtwoord is succesvol gewijzigd.",
-                "Als je dit niet zelf hebt gedaan, neem dan onmiddellijk contact op via hello@inlimbo.be.",
-            ],
-            cta_text="Inloggen →",
-            cta_url=f"{FRONTEND_URL}/login",
-        )
+        lang = pick_lang(user)
+        if lang == "fr":
+            first_fr = user.get("firstName") or user.get("username") or ""
+            html = render_email(
+                title="Mot de passe modifié",
+                body_lines=[
+                    f"Bonjour {first_fr},",
+                    "Votre mot de passe a été modifié avec succès.",
+                    "Si vous n'êtes pas à l'origine de ce changement, contactez-nous immédiatement via hello@inlimbo.be.",
+                ],
+                cta_text="Se connecter →",
+                cta_url=f"{FRONTEND_URL}/login",
+            )
+            subject = "Votre mot de passe a été modifié — In Limbo"
+        else:
+            html = render_email(
+                title="Wachtwoord gewijzigd",
+                body_lines=[
+                    f"Dag {first},",
+                    "Je wachtwoord is succesvol gewijzigd.",
+                    "Als je dit niet zelf hebt gedaan, neem dan onmiddellijk contact op via hello@inlimbo.be.",
+                ],
+                cta_text="Inloggen →",
+                cta_url=f"{FRONTEND_URL}/login",
+            )
+            subject = "Je wachtwoord is gewijzigd — In Limbo"
         asyncio.create_task(send_email(
             to_email=user["email"],
-            subject="Je wachtwoord is gewijzigd — In Limbo",
+            subject=subject,
             html_content=html,
         ))
 

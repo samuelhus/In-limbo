@@ -41,6 +41,11 @@ NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 # hoofd-topic als deze niet apart is ingesteld (dan komt alles op één feed terecht).
 NTFY_TOPIC_LISTINGS = os.environ.get("NTFY_TOPIC_LISTINGS", NTFY_TOPIC)
 
+
+def pick_lang(user: Optional[dict]) -> str:
+    """Voorkeurstaal van een gebruiker ('nl' of 'fr'), met 'nl' als terugval."""
+    return (user or {}).get("preferredLanguage") or "nl"
+
 LOGO_URL = (
     "https://res.cloudinary.com/dbjizykvb/image/upload/v1782338137/logoil_uoqeoo.png"
 )

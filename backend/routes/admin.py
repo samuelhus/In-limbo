@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query, Body
 from deps import db, now_iso, strip_mongo, anonymize_user, slugify, generate_unique_org_slug
 from models import AdminDecision, AdminUserUpdate, AdminOrgUpdate
 from auth import get_admin_user
-from notifications import maybe_send_email, render_email, FRONTEND_URL
+from notifications import maybe_send_email, render_email, FRONTEND_URL, pick_lang
 from tasks import archive_expired_listings, mark_inactive_orgs
 
 router = APIRouter()
@@ -59,17 +59,31 @@ async def admin_decide_user(
                 {"$set": {"status": "active", "updatedAt": now}},
             )
         first = target.get("firstName") or target.get("username") or ""
-        html = render_email(
-            "Welkom bij In Limbo",
-            [
-                f"Dag {first},",
-                "Je account is geactiveerd. Je hebt nu toegang tot de volledige catalogus en kan aanvragen indienen of materiaal aanbieden.",
-                "Bedankt om mee te bouwen aan een circulaire culturele sector in Brussel.",
-            ],
-            cta_text="Ga naar het platform →", cta_url=f"{FRONTEND_URL}/catalogus",
-        )
+        lang = pick_lang(target)
+        if lang == "fr":
+            html = render_email(
+                "Bienvenue chez In Limbo",
+                [
+                    f"Bonjour {first},",
+                    "Votre compte est activé. Vous avez maintenant accès au catalogue complet et pouvez faire des demandes ou proposer du matériel.",
+                    "Merci de contribuer à un secteur culturel circulaire à Bruxelles.",
+                ],
+                cta_text="Accéder à la plateforme →", cta_url=f"{FRONTEND_URL}/catalogus",
+            )
+            subject = "Bienvenue chez In Limbo — votre compte est activé"
+        else:
+            html = render_email(
+                "Welkom bij In Limbo",
+                [
+                    f"Dag {first},",
+                    "Je account is geactiveerd. Je hebt nu toegang tot de volledige catalogus en kan aanvragen indienen of materiaal aanbieden.",
+                    "Bedankt om mee te bouwen aan een circulaire culturele sector in Brussel.",
+                ],
+                cta_text="Ga naar het platform →", cta_url=f"{FRONTEND_URL}/catalogus",
+            )
+            subject = "Welkom bij In Limbo — je account is geactiveerd"
         await maybe_send_email(db, user_id, "account_validated", target.get("email"),
-                               "Welkom bij In Limbo — je account is geactiveerd", html)
+                               subject, html)
         return {"ok": True, "status": "validated"}
 
     # reject
