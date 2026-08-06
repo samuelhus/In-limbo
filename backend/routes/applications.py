@@ -279,6 +279,7 @@ async def select_applicant(
             "senderOrganisationName": sender_org["name"] if sender_org else None,
             "receiverOrganisationId": receiver_org_id,
             "receiverOrganisationName": receiver_org["name"] if receiver_org else None,
+            "receiverUserId": app_doc["applicantUserId"],
             "type": "platform",
             "createdAt": now,
         }

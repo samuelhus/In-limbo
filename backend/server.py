@@ -32,7 +32,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from deps import db, client, log, limiter
 from seed import seed
-from tasks import archive_expired_listings, mark_inactive_orgs
+from tasks import archive_expired_listings, mark_inactive_orgs, send_photo_reminders
 
 scheduler = AsyncIOScheduler(timezone="Europe/Brussels")
 
@@ -99,6 +99,12 @@ async def _nightly_maintenance() -> None:
     log.info(f"Nachtelijke maintenance — archived={archived} inactive_orgs={inactive}")
 
 
+async def _photo_reminder_job() -> None:
+    """Dagelijkse taak om 13:12: herinner ontvangers om een resultaatfoto te sturen."""
+    sent = await send_photo_reminders(db)
+    log.info(f"Photo-reminder job — {sent} herinneringsmail(s) verstuurd")
+
+
 @app.on_event("startup")
 async def startup() -> None:
     await db.users.create_index("email", unique=True)
@@ -125,6 +131,8 @@ async def startup() -> None:
     await db.checkins.create_index("createdAt")  # admin stats datumfilter
     await db.checkouts.create_index("organisationId")
     await db.checkouts.create_index("createdAt")  # admin stats datumfilter
+    await db.photo_reminders.create_index([("txType", 1), ("txId", 1)])
+    await db.photo_reminders.create_index([("organisationId", 1), ("monthKey", 1)])
     await db.password_resets.create_index("token", unique=True)
     await db.password_resets.create_index("expiresAt", expireAfterSeconds=0)
     await db.newsletter_subscribers.create_index("email", unique=True)
@@ -138,8 +146,10 @@ async def startup() -> None:
 
     # Nachtelijke scheduler: elke dag om 02:00 Brusselse tijd
     scheduler.add_job(_nightly_maintenance, CronTrigger(hour=2, minute=0))
+    # Foto-herinneringsmails: elke dag om 13:12 Brusselse tijd
+    scheduler.add_job(_photo_reminder_job, CronTrigger(hour=13, minute=12))
     scheduler.start()
-    log.info("Scheduler gestart — nachtelijke maintenance om 02:00")
+    log.info("Scheduler gestart — nachtelijke maintenance om 02:00, foto-herinneringen om 13:12")
 
 
 @app.on_event("shutdown")
