@@ -51,7 +51,13 @@ export default function OrganisationPage() {
           {org.website && (
             <div>
               <p className="overline mb-1">{t('organisation.website')}</p>
-              <a href={org.website} target="_blank" rel="noreferrer" className="industrial-link" data-testid="org-website-link">
+              <a
+                href={/^https?:\/\//i.test(org.website) ? org.website : `https://${org.website}`}
+                target="_blank"
+                rel="noreferrer"
+                className="industrial-link"
+                data-testid="org-website-link"
+              >
                 {org.website.replace(/^https?:\/\//, '')}
               </a>
             </div>
