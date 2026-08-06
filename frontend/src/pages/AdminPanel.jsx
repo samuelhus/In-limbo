@@ -356,16 +356,18 @@ function AdminTransacties() {
   const [skip, setSkip] = useState(0);
   const [type, setType] = useState('');
   const [photoFilter, setPhotoFilter] = useState('');
+  const [receiverSearch, setReceiverSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const limit = 50;
 
-  const load = useCallback(async (currentSkip, currentType, currentPhotoFilter) => {
+  const load = useCallback(async (currentSkip, currentType, currentPhotoFilter, currentReceiverSearch) => {
     setLoading(true);
     try {
       const params = { skip: currentSkip, limit };
       if (currentType) params.type = currentType;
       if (currentPhotoFilter) params.photoReceived = currentPhotoFilter;
+      if (currentReceiverSearch) params.receiverSearch = currentReceiverSearch;
       const { data } = await api.get('/admin/transactions', { params });
       setItems(data.items);
       setTotal(data.total);
@@ -376,7 +378,12 @@ function AdminTransacties() {
     }
   }, []);
 
-  useEffect(() => { load(skip, type, photoFilter); }, [load, skip, type, photoFilter]);
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      load(skip, type, photoFilter, receiverSearch);
+    }, receiverSearch ? 300 : 0);
+    return () => clearTimeout(handle);
+  }, [load, skip, type, photoFilter, receiverSearch]);
 
   const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString('nl-BE', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -388,7 +395,7 @@ function AdminTransacties() {
     setBusyId(row.id);
     try {
       await api.delete(`/admin/transactions/${row.type}/${row.id}`);
-      await load(skip, type, photoFilter);
+      await load(skip, type, photoFilter, receiverSearch);
     } catch (e) {
       alert(formatApiError(e));
     } finally {
@@ -453,6 +460,17 @@ function AdminTransacties() {
             {f.label}
           </button>
         ))}
+      </div>
+
+      <div className="mb-6 max-w-sm">
+        <input
+          type="text"
+          value={receiverSearch}
+          onChange={(e) => { setReceiverSearch(e.target.value); setSkip(0); }}
+          placeholder="Zoek op ontvanger…"
+          className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-foreground"
+          data-testid="tx-receiver-search"
+        />
       </div>
 
       {loading ? (

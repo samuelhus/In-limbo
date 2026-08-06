@@ -568,6 +568,7 @@ async def admin_list_transactions(
     admin: dict = Depends(get_admin_user),
     type: str | None = Query(None, description="platform | checkin | checkout"),
     organisationId: str | None = Query(None),
+    receiverSearch: str | None = Query(None, description="Zoekterm op naam van de ontvangende organisatie (case-insensitive, deel van naam volstaat)"),
     dateFrom: str | None = Query(None, description="ISO datum, bv. 2026-01-01"),
     dateTo: str | None = Query(None, description="ISO datum, bv. 2026-12-31"),
     photoReceived: str | None = Query(None, description="'yes' of 'no' — filtert enkel platform/checkout (checkins hebben geen foto nodig)"),
@@ -649,6 +650,10 @@ async def admin_list_transactions(
             })
 
     rows.sort(key=lambda r: r.get("createdAt") or "", reverse=True)
+
+    if receiverSearch:
+        needle = receiverSearch.strip().lower()
+        rows = [r for r in rows if needle in (r.get("toOrgName") or "").lower()]
 
     if photoReceived == "yes":
         rows = [r for r in rows if r.get("needsPhoto") and r.get("photoReceived")]
