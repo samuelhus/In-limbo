@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Request
 
 from deps import db, now_iso, limiter
 from models import ContactMessageCreate, NewsletterSubscribeCreate
-from notifications import notify_admins_contact_message, sync_to_mailerlite
+from notifications import notify_admins_contact_message, sync_to_mailerlite, MAILERLITE_GROUP_ID
 
 router = APIRouter()
 
@@ -40,7 +40,7 @@ async def submit_contact(request: Request, body: ContactMessageCreate = Body(...
 async def newsletter_subscribe(request: Request, body: NewsletterSubscribeCreate = Body(...)):
     """Idempotent newsletter signup. Stores locally, attempts MailerLite sync if configured."""
     email = body.email.lower()
-    synced = await sync_to_mailerlite(email)
+    synced = await sync_to_mailerlite(email, MAILERLITE_GROUP_ID)
     await db.newsletter_subscribers.update_one(
         {"email": email},
         {

@@ -33,6 +33,7 @@ from apscheduler.triggers.cron import CronTrigger
 from deps import db, client, log, limiter
 from seed import seed
 from tasks import archive_expired_listings, mark_inactive_orgs, send_photo_reminders
+from notifications import backfill_mailerlite
 
 scheduler = AsyncIOScheduler(timezone="Europe/Brussels")
 
@@ -143,6 +144,17 @@ async def startup() -> None:
     archived = await archive_expired_listings(db)
     inactive = await mark_inactive_orgs(db)
     log.info(f"Startup OK — archived={archived} inactive_orgs={inactive}")
+
+    # MailerLite-inhaalslag: no-op als MAILERLITE_API_KEY niet is ingesteld. Zodra
+    # de key wél ingesteld wordt, haalt de eerstvolgende herstart automatisch alle
+    # nog niet-gesynchroniseerde nieuwsbrief-abonnees en gebruikers in.
+    mailerlite_result = await backfill_mailerlite(db)
+    if not mailerlite_result.get("skipped"):
+        log.info(
+            "MailerLite-inhaalslag: %s nieuwsbrief-abonnees, %s gebruikers gesynchroniseerd",
+            mailerlite_result.get("newsletter_synced", 0),
+            mailerlite_result.get("users_synced", 0),
+        )
 
     # Nachtelijke scheduler: elke dag om 02:00 Brusselse tijd
     scheduler.add_job(_nightly_maintenance, CronTrigger(hour=2, minute=0))

@@ -25,7 +25,8 @@ resend.api_key = os.environ.get("RESEND_API_KEY", "")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/")
 MAILERLITE_API_KEY = os.environ.get("MAILERLITE_API_KEY", "")
-MAILERLITE_GROUP_ID = os.environ.get("MAILERLITE_GROUP_ID", "")
+MAILERLITE_GROUP_ID = os.environ.get("MAILERLITE_GROUP_ID", "")  # "Nieuwsbrief"-lijst
+MAILERLITE_USERS_GROUP_ID = os.environ.get("MAILERLITE_USERS_GROUP_ID", "")  # "Gebruiker"-lijst: alle platformgebruikers
 # Vast e-mailadres dat altijd een kopie krijgt van contactformulier-berichten,
 # los van welke gebruikers de rol "admin" hebben. Handig tijdens de testfase
 # of als er (nog) geen admin-accounts in de database staan.
@@ -203,17 +204,17 @@ async def purge_old_notifications(db, days: int = 30) -> int:
     return res.deleted_count
 
 
-async def sync_to_mailerlite(email: str) -> bool:
-    """Add a subscriber to a MailerLite group. Fails soft.
+async def sync_to_mailerlite(email: str, group_id: str) -> bool:
+    """Add a subscriber to a specific MailerLite group. Fails soft.
 
-    No-ops (returns False) if MAILERLITE_API_KEY or MAILERLITE_GROUP_ID
-    is not configured. On API failure logs a warning and returns False.
-    Returns True only on successful API confirmation.
+    No-ops (returns False) if MAILERLITE_API_KEY or group_id is not configured.
+    On API failure logs a warning and returns False. Returns True only on
+    successful API confirmation.
     """
-    if not email or not MAILERLITE_API_KEY or not MAILERLITE_GROUP_ID:
+    if not email or not MAILERLITE_API_KEY or not group_id:
         return False
     url = "https://connect.mailerlite.com/api/subscribers"
-    payload = {"email": email, "groups": [MAILERLITE_GROUP_ID]}
+    payload = {"email": email, "groups": [group_id]}
     headers = {
         "Authorization": f"Bearer {MAILERLITE_API_KEY}",
         "Content-Type": "application/json",
@@ -229,6 +230,47 @@ async def sync_to_mailerlite(email: str) -> bool:
     except Exception as e:
         logger.warning("MailerLite sync failed for %s: %s", email, e)
         return False
+
+
+async def sync_user_to_mailerlite(db, user_id: str, email: str) -> None:
+    """Sync één nieuwe gebruiker naar de 'Gebruiker'-lijst (technische platform-info,
+    alle gebruikers ongeacht rol). Fire-and-forget vanuit de registratie-routes —
+    faalt zacht, blokkeert nooit de registratie zelf."""
+    synced = await sync_to_mailerlite(email, MAILERLITE_USERS_GROUP_ID)
+    await db.users.update_one({"id": user_id}, {"$set": {"userMailerliteSynced": bool(synced)}})
+
+
+async def backfill_mailerlite(db) -> dict:
+    """Eenmalige (idempotente) inhaalslag: synct alle bestaande, nog niet
+    gesynchroniseerde nieuwsbrief-abonnees én platformgebruikers naar hun
+    respectievelijke MailerLite-lijst. No-ops volledig als MAILERLITE_API_KEY
+    niet is ingesteld — dus veilig om bij elke opstart te draaien; zodra de
+    key wél is ingesteld, haalt de eerstvolgende herstart alles automatisch in.
+    """
+    if not MAILERLITE_API_KEY:
+        return {"skipped": True}
+
+    newsletter_synced = 0
+    if MAILERLITE_GROUP_ID:
+        async for sub in db.newsletter_subscribers.find({"mailerliteSynced": {"$ne": True}}):
+            ok = await sync_to_mailerlite(sub["email"], MAILERLITE_GROUP_ID)
+            if ok:
+                await db.newsletter_subscribers.update_one(
+                    {"id": sub["id"]}, {"$set": {"mailerliteSynced": True}}
+                )
+                newsletter_synced += 1
+
+    users_synced = 0
+    if MAILERLITE_USERS_GROUP_ID:
+        async for u in db.users.find({"userMailerliteSynced": {"$ne": True}}):
+            ok = await sync_to_mailerlite(u["email"], MAILERLITE_USERS_GROUP_ID)
+            if ok:
+                await db.users.update_one(
+                    {"id": u["id"]}, {"$set": {"userMailerliteSynced": True}}
+                )
+                users_synced += 1
+
+    return {"skipped": False, "newsletter_synced": newsletter_synced, "users_synced": users_synced}
 
 
 async def notify_admins_contact_message(

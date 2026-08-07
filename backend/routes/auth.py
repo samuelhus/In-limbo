@@ -18,6 +18,7 @@ from auth import (
 )
 from notifications import (
     notify_admins_new_registration, send_email, render_email, FRONTEND_URL, pick_lang,
+    sync_user_to_mailerlite,
 )
 
 router = APIRouter()
@@ -119,6 +120,7 @@ async def register_new_org(request: Request, body: RegisterNewOrg = Body(...), r
 
     token = create_access_token(user_id, email, "user")
     set_auth_cookie(response, token)
+    asyncio.create_task(sync_user_to_mailerlite(db, user_id, email))
     asyncio.create_task(notify_admins_new_registration(
         db=db,
         new_user_firstName=body.firstName,
@@ -165,6 +167,7 @@ async def register_existing_org(request: Request, body: RegisterExistingOrg = Bo
 
     token = create_access_token(user_id, email, "user")
     set_auth_cookie(response, token)
+    asyncio.create_task(sync_user_to_mailerlite(db, user_id, email))
     asyncio.create_task(notify_admins_new_registration(
         db=db,
         new_user_firstName=body.firstName,
@@ -206,6 +209,7 @@ async def register_donateur(request: Request, body: RegisterDonateur = Body(...)
     })
     token = create_access_token(user_id, email, "donateur")
     set_auth_cookie(response, token)
+    asyncio.create_task(sync_user_to_mailerlite(db, user_id, email))
     return {"ok": True, "userId": user_id, "status": "validated"}
 
 
