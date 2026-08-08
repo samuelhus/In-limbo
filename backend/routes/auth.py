@@ -359,7 +359,7 @@ async def reset_password(request: Request, body: PasswordResetConfirm = Body(...
                 body_lines=[
                     f"Bonjour {first_fr},",
                     "Votre mot de passe a été modifié avec succès.",
-                    "Si vous n'êtes pas à l'origine de ce changement, contactez-nous immédiatement via hello@inlimbo.be.",
+                    "Si vous n'êtes pas à l'origine de ce changement, contactez-nous immédiatement via info@inlimbo.be.",
                 ],
                 cta_text="Se connecter →",
                 cta_url=f"{FRONTEND_URL}/login",
@@ -371,7 +371,7 @@ async def reset_password(request: Request, body: PasswordResetConfirm = Body(...
                 body_lines=[
                     f"Dag {first},",
                     "Je wachtwoord is succesvol gewijzigd.",
-                    "Als je dit niet zelf hebt gedaan, neem dan onmiddellijk contact op via hello@inlimbo.be.",
+                    "Als je dit niet zelf hebt gedaan, neem dan onmiddellijk contact op via info@inlimbo.be.",
                 ],
                 cta_text="Inloggen →",
                 cta_url=f"{FRONTEND_URL}/login",
