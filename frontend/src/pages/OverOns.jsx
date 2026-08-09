@@ -56,18 +56,48 @@ export default function OverOns() {
             <p className="overline mb-4">{t('overons.wie_zijn_we')}</p>
             <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.wat_is_title')}</h2>
             <p className="text-foreground/80 leading-relaxed mb-4">
-              {t('overons.p1')}
+              {t('overons.wat_p1')}
+            </p>
+            <p className="text-foreground/80 leading-relaxed mb-4">
+              {t('overons.wat_p2')}
+            </p>
+            <p className="text-foreground/80 leading-relaxed mb-4">
+              {t('overons.wat_p3')}
             </p>
             <p className="text-foreground/80 leading-relaxed">
-              {t('overons.p2')}
+              {t('overons.wat_p4')}
             </p>
           </div>
-          <div className="aspect-square overflow-hidden">
-            <img
-              src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261972/InLimbo_overons_3_whcnrr.jpg"
-              alt={t('overons.alt_materialen')}
-              className="w-full h-full object-cover"
-            />
+          {/* Fotocollage — tijdelijke foto's (deels dubbels), later te vervangen */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261972/InLimbo_overons_3_whcnrr.jpg"
+                alt={t('overons.alt_materialen')}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261970/InLimbo_overons_1_jf6ijc.jpg"
+                alt={t('overons.alt_magazijn')}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_2_pyhem2.jpg"
+                alt={t('overons.alt_voor_wie')}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="aspect-square overflow-hidden">
+              <img
+                src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261966/inlimbo_06_npcqbk.jpg"
+                alt={t('overons.alt_materialen_balk')}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -103,10 +133,13 @@ export default function OverOns() {
             <p className="overline mb-4">{t('overons.doelgroep')}</p>
             <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.voor_wie_title')}</h2>
             <p className="text-foreground/80 leading-relaxed mb-4">
-              {t('overons.p3')}
+              {t('overons.voorwie_p1')}
+            </p>
+            <p className="text-foreground/80 leading-relaxed mb-4">
+              {t('overons.voorwie_p2')}
             </p>
             <p className="text-foreground/80 leading-relaxed">
-              {t('overons.p4')}
+              {t('overons.voorwie_p3')}
             </p>
           </div>
           <div className="aspect-square overflow-hidden">
@@ -137,8 +170,11 @@ export default function OverOns() {
                 <span className="text-2xl font-bold text-muted-foreground/50 leading-none">01</span>
                 <div>
                   <p className="font-semibold mb-1">{t('overons.werking1')}</p>
-                  <p className="text-sm text-foreground/70">
+                  <p className="text-sm text-foreground/70 mb-1">
                     {t('overons.werking2')}
+                  </p>
+                  <p className="text-sm text-foreground/50 italic">
+                    {t('overons.werking2_waarom')}
                   </p>
                 </div>
               </li>
@@ -146,8 +182,11 @@ export default function OverOns() {
                 <span className="text-2xl font-bold text-muted-foreground/50 leading-none">02</span>
                 <div>
                   <p className="font-semibold mb-1">{t('overons.werking3')}</p>
-                  <p className="text-sm text-foreground/70">
+                  <p className="text-sm text-foreground/70 mb-1">
                     {t('overons.werking4')}
+                  </p>
+                  <p className="text-sm text-foreground/50 italic">
+                    {t('overons.werking4_waarom')}
                   </p>
                 </div>
               </li>
@@ -155,8 +194,11 @@ export default function OverOns() {
                 <span className="text-2xl font-bold text-muted-foreground/50 leading-none">03</span>
                 <div>
                   <p className="font-semibold mb-1">{t('overons.werking5')}</p>
-                  <p className="text-sm text-foreground/70">
+                  <p className="text-sm text-foreground/70 mb-1">
                     {t('overons.werking6')}
+                  </p>
+                  <p className="text-sm text-foreground/50 italic">
+                    {t('overons.werking6_waarom')}
                   </p>
                 </div>
               </li>
@@ -164,14 +206,42 @@ export default function OverOns() {
                 <span className="text-2xl font-bold text-muted-foreground/50 leading-none">04</span>
                 <div>
                   <p className="font-semibold mb-1">{t('overons.werking7')}</p>
-                  <p className="text-sm text-foreground/70">
+                  <p className="text-sm text-foreground/70 mb-1">
                     {t('overons.werking8')}
+                  </p>
+                  <p className="text-sm text-foreground/50 italic">
+                    {t('overons.werking8_waarom')}
                   </p>
                 </div>
               </li>
             </ol>
           </div>
         </div>
+      </section>
+
+      {/* 5b. ONZE DIENSTEN — teaser, volledige pagina volgt later op /diensten */}
+      <section className="py-16 border-b border-border" data-testid="over-ons-diensten">
+        <p className="overline mb-4">{t('overons.diensten_overline')}</p>
+        <h2 className="text-3xl font-bold tracking-tight mb-4">{t('overons.diensten_title')}</h2>
+        <p className="text-foreground/80 leading-relaxed max-w-2xl mb-10">
+          {t('overons.diensten_intro')}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {t('overons.diensten_items', { returnObjects: true }).map((item, i) => (
+            <div
+              key={i}
+              data-testid={`diensten-item-${i}`}
+              className="border border-border bg-surface p-6"
+            >
+              <h3 className="font-semibold mb-2">{item.title}</h3>
+              <p className="text-sm text-foreground/70 leading-relaxed">{item.text}</p>
+            </div>
+          ))}
+        </div>
+        {/* Link wijst bewust naar /diensten — route volgt in een latere stap */}
+        <Link to="/diensten" className="btn-secondary mt-8" data-testid="over-ons-cta-diensten">
+          {t('overons.diensten_cta')}
+        </Link>
       </section>
 
       {/* 6. MATERIAAL DONEREN */}
@@ -258,7 +328,18 @@ export default function OverOns() {
               </span>
             ))}
           </div>
+          <p className="text-sm text-foreground/70 max-w-2xl">
+            {t('overons.samenwerking_intro')}
+          </p>
           {/*<p className="text-sm text-foreground/70">Met steun van Leefmilieu Brussel.</p>*/}
+        </div>
+
+        {/* Toestand — oprichter, extra achtergrond */}
+        <div className="mt-12 max-w-2xl" data-testid="over-ons-toestand">
+          <h3 className="text-xl font-bold tracking-tight mb-3">{t('overons.toestand_title')}</h3>
+          <p className="text-sm text-foreground/70 leading-relaxed">
+            {t('overons.toestand_text')}
+          </p>
         </div>
       </section>
 
