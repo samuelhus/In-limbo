@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 
+// Voegt Cloudinary's f_auto (WebP/AVIF waar ondersteund), q_auto (slimme compressie)
+// en w_<width> (nooit groter downloaden dan nodig) toe aan een bestaande upload-URL.
+// Voorbeeld: .../upload/v123/foto.jpg -> .../upload/f_auto,q_auto,w_800/v123/foto.jpg
+const cld = (url, width) => url.replace('/upload/', `/upload/f_auto,q_auto,w_${width}/`);
+
 const CATEGORY_ORDER = [
   'beeldende_kunsten', 'educatie', 'jeugdwerk', 'podiumkunsten',
   'sociaal_werk', 'sport', 'noodopvang', 'ander',
@@ -42,9 +47,11 @@ export default function OverOns() {
         </p>
         <div className="mt-10 aspect-[21/9] overflow-hidden">
           <img
-            src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261970/InLimbo_overons_1_jf6ijc.jpg"
+            src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261970/InLimbo_overons_1_jf6ijc.jpg", 1600)}
             alt={t('overons.alt_magazijn')}
             className="w-full h-full object-cover"
+            loading="eager"
+            fetchpriority="high"
           />
         </div>
       </section>
@@ -72,30 +79,34 @@ export default function OverOns() {
           <div className="grid grid-cols-2 gap-2">
             <div className="aspect-square overflow-hidden">
               <img
-                src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261972/InLimbo_overons_3_whcnrr.jpg"
+                src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261972/InLimbo_overons_3_whcnrr.jpg", 600)}
                 alt={t('overons.alt_materialen')}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
             <div className="aspect-square overflow-hidden">
               <img
-                src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261970/InLimbo_overons_1_jf6ijc.jpg"
+                src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261970/InLimbo_overons_1_jf6ijc.jpg", 600)}
                 alt={t('overons.alt_magazijn')}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
             <div className="aspect-square overflow-hidden">
               <img
-                src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_2_pyhem2.jpg"
+                src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_2_pyhem2.jpg", 600)}
                 alt={t('overons.alt_voor_wie')}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
             <div className="aspect-square overflow-hidden">
               <img
-                src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261966/inlimbo_06_npcqbk.jpg"
+                src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261966/inlimbo_06_npcqbk.jpg", 600)}
                 alt={t('overons.alt_materialen_balk')}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
           </div>
@@ -144,9 +155,10 @@ export default function OverOns() {
           </div>
           <div className="aspect-square overflow-hidden">
             <img
-              src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_2_pyhem2.jpg"
+              src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_2_pyhem2.jpg", 800)}
               alt={t('overons.alt_voor_wie')}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
         </div>
@@ -157,9 +169,10 @@ export default function OverOns() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="aspect-square overflow-hidden">
             <img
-              src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261967/InLimbo_overons_5_iyd4p5.jpg"
+              src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261967/InLimbo_overons_5_iyd4p5.jpg", 800)}
               alt={t('overons.alt_hoe_werkt')}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
           <div>
@@ -249,23 +262,37 @@ export default function OverOns() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="aspect-square overflow-hidden">
             <img
-              src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261972/InLimbo_overons_4_gvdavc.jpg"
+              src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261972/InLimbo_overons_4_gvdavc.jpg", 800)}
               alt={t('overons.alt_doneren')}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
           <div>
             <p className="overline mb-4">{t('overons.doneren_overline')}</p>
             <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.doneren_title')}</h2>
             <p className="text-foreground/80 leading-relaxed mb-4">
-              {t('overons.p5')}
+              {t('overons.doneren_materialen')}
+            </p>
+            <p className="text-foreground/80 leading-relaxed mb-4">
+              {t('overons.doneren_p1')}
+            </p>
+            <p className="text-foreground/80 leading-relaxed mb-6">
+              {t('overons.doneren_p2')}
+            </p>
+            <h3 className="font-semibold mb-3">{t('overons.doneren_subtitle')}</h3>
+            <p className="text-foreground/80 leading-relaxed mb-4">
+              {t('overons.doneren_p3')}
+            </p>
+            <p className="text-foreground/80 leading-relaxed mb-4">
+              {t('overons.doneren_p4')}
             </p>
             <div className="border border-border bg-muted/40 px-4 py-3 text-sm text-foreground/80">
-              ⚠️ {t('overons.p6')}
+              ⚠️ {t('overons.doneren_warning')}
             </div>
-            <Link to="/donateur/registreer" className="btn-primary justify-center mt-8" data-testid="over-ons-cta-donateur">
-            {t('overons.ctadoneer')}
-</Link>
+            <Link to="/donateur/registreer" className="btn-secondary justify-center mt-8" data-testid="over-ons-cta-donateur">
+              {t('nav.donate_material')}
+            </Link>
           </div>
         </div>
       </section>
@@ -301,16 +328,18 @@ export default function OverOns() {
       <div className="grid grid-cols-2 gap-2 my-4">
         <div className="aspect-[4/3] overflow-hidden">
           <img
-            src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_6_pdlxmu.jpg"
+            src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261968/InLimbo_overons_6_pdlxmu.jpg", 800)}
             alt={t('overons.alt_materialen_balk')}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         </div>
         <div className="aspect-[4/3] overflow-hidden">
           <img
-            src="https://res.cloudinary.com/dbjizykvb/image/upload/v1780261966/inlimbo_06_npcqbk.jpg"
+            src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261966/inlimbo_06_npcqbk.jpg", 800)}
             alt={t('overons.alt_magazijn')}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         </div>
       </div>
