@@ -166,7 +166,7 @@ export default function OverOns() {
 
       {/* 5. HOE WERKT HET */}
       <section className="py-16 border-b border-border">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           <div className="aspect-square overflow-hidden">
             <img
               src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261967/InLimbo_overons_5_iyd4p5.jpg", 800)}
@@ -179,54 +179,19 @@ export default function OverOns() {
             <p className="overline mb-4">{t('overons.de_werking')}</p>
             <h2 className="text-3xl font-bold tracking-tight mb-8">{t('overons.hoe_werkt_title')}</h2>
             <ol className="space-y-6">
-              <li className="flex gap-4">
-                <span className="text-2xl font-bold text-muted-foreground/50 leading-none">01</span>
-                <div>
-                  <p className="font-semibold mb-1">{t('overons.werking1')}</p>
-                  <p className="text-sm text-foreground/70 mb-1">
-                    {t('overons.werking2')}
-                  </p>
-                  <p className="text-sm text-foreground/50 italic">
-                    {t('overons.werking2_waarom')}
-                  </p>
-                </div>
-              </li>
-              <li className="flex gap-4">
-                <span className="text-2xl font-bold text-muted-foreground/50 leading-none">02</span>
-                <div>
-                  <p className="font-semibold mb-1">{t('overons.werking3')}</p>
-                  <p className="text-sm text-foreground/70 mb-1">
-                    {t('overons.werking4')}
-                  </p>
-                  <p className="text-sm text-foreground/50 italic">
-                    {t('overons.werking4_waarom')}
-                  </p>
-                </div>
-              </li>
-              <li className="flex gap-4">
-                <span className="text-2xl font-bold text-muted-foreground/50 leading-none">03</span>
-                <div>
-                  <p className="font-semibold mb-1">{t('overons.werking5')}</p>
-                  <p className="text-sm text-foreground/70 mb-1">
-                    {t('overons.werking6')}
-                  </p>
-                  <p className="text-sm text-foreground/50 italic">
-                    {t('overons.werking6_waarom')}
-                  </p>
-                </div>
-              </li>
-              <li className="flex gap-4">
-                <span className="text-2xl font-bold text-muted-foreground/50 leading-none">04</span>
-                <div>
-                  <p className="font-semibold mb-1">{t('overons.werking7')}</p>
-                  <p className="text-sm text-foreground/70 mb-1">
-                    {t('overons.werking8')}
-                  </p>
-                  <p className="text-sm text-foreground/50 italic">
-                    {t('overons.werking8_waarom')}
-                  </p>
-                </div>
-              </li>
+              {t('overons.werking_stappen', { returnObjects: true }).map((stap, i) => (
+                <li key={i} className="flex gap-4" data-testid={`werking-stap-${i}`}>
+                  <span className="text-2xl font-bold text-muted-foreground/50 leading-none">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <p className="font-semibold mb-1">{stap.title}</p>
+                    <p className="text-sm text-foreground/70 leading-relaxed">
+                      {stap.text}
+                    </p>
+                  </div>
+                </li>
+              ))}
             </ol>
           </div>
         </div>

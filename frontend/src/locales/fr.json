@@ -577,18 +577,32 @@
     "voorwie_p3": "Les partenaires viennent sans rendez-vous découvrir ce qui est en stock. Laissez-vous inspirer par ce qui est disponible, et évitez ainsi de devoir acheter du matériel neuf.",
     "de_werking": "Le fonctionnement",
     "hoe_werkt_title": "Comment ça marche ?",
-    "werking1": "Devenez partenaire",
-    "werking2": "Enregistrez votre organisation et accédez à la plateforme complète.",
-    "werking2_waarom": "Seules les organisations du secteur socio-culturel bruxellois peuvent devenir partenaires — cela garde notre communauté cohérente et garantit que le matériel arrive à celles et ceux qui en ont réellement besoin.",
-    "werking3": "Parcourez l'offre",
-    "werking4": "Découvrez les matériaux disponibles d'autres organisations et donateurs.",
-    "werking4_waarom": "L'offre change en permanence : vous pouvez chercher précisément ce dont vous avez besoin, ou simplement passer et vous laisser inspirer par ce qui est disponible sur le moment.",
-    "werking5": "Faites une demande ou proposez",
-    "werking6": "Demandez du matériel ou publiez vous-même une offre. Le donateur choisit qui reçoit le matériel.",
-    "werking6_waarom": "Nous laissons délibérément ce choix à l'offreur. Le contact humain reste ainsi central, et chaque organisation peut juger elle-même quel projet profitera le plus de son matériel.",
-    "werking7": "Venez chercher ou déposez",
-    "werking8": "Prenez rendez-vous et donnez une seconde vie au matériel.",
-    "werking8_waarom": "L'échange se fait directement de main à main — vous convenez vous-mêmes du lieu et du moment, nous ne faisons que faciliter la mise en relation.",
+    "werking_stappen": [
+      {
+        "title": "Anticipez",
+        "text": "Dès que vous savez qu'un objet aura bientôt besoin d'une nouvelle destination, vous pouvez déjà entamer le processus de réemploi. L'objet ne doit pas encore être disponible pour pouvoir être proposé — cela laisse le temps aux futurs bénéficiaires de s'organiser. La conception elle-même peut déjà tenir compte du réemploi ou du démontage (éco-conception, cradle to cradle)."
+      },
+      {
+        "title": "Prenez des photos",
+        "text": "Prenez des photos de l'objet, en place et dans son état actuel. Rassemblez aussi d'éventuels plans techniques ou notices de montage — précieux pour qui donnera une nouvelle vie à l'objet. Les photos sont indispensables : nous validons chaque offre sur base de photos avant tout dépôt (drop off) dans notre SAS."
+      },
+      {
+        "title": "Publiez sur la plateforme",
+        "text": "Créez une offre par objet ou par lot sur la plateforme. Utilisez la description pour partager toutes les infos techniques que vous auriez vous-même trouvées utiles. Indiquez une date limite jusqu'à laquelle l'objet reste disponible — si elle est courte, contactez-nous pour envisager un enlèvement (pick up). Nous partageons votre offre sur nos réseaux sociaux, et la mettons activement sous les yeux des partenaires susceptibles d'être intéressés."
+      },
+      {
+        "title": "Choisissez sa destination",
+        "text": "Avec un peu de patience, vous recevrez plusieurs demandes via la plateforme. Consultez le profil de chaque organisation demandeuse et découvrez comment elle fait vivre la ville. Une fois qu'il y a un match, les deux parties conviennent elles-mêmes des modalités du transport. Le matériel lui-même est toujours gratuit via la plateforme — le transport, lui, se négocie."
+      },
+      {
+        "title": "Envoyez une photo",
+        "text": "Une fois le matériel reçu, nous vous demandons d'envoyer une photo du résultat. Cela permet d'éviter les abus, et d'informer le donateur de l'impact concret de son don."
+      },
+      {
+        "title": "Calcul d'impact",
+        "text": "La plateforme enregistre chaque transaction — via la plateforme et dans l'entrepôt — afin de mesurer précisément l'impact écologique du projet, ainsi que celui de chaque partenaire et donateur individuellement. Cela permet aussi de générer automatiquement un rapport annuel par organisation."
+      }
+    ],
     "diensten_overline": "Ce que nous faisons",
     "diensten_title": "Nos services",
     "diensten_intro": "En plus de la plateforme et de l'entrepôt, nous proposons à nos partenaires toute une série d'autres services.",

@@ -567,18 +567,32 @@
     "voorwie_p3": "Partners komen zonder afspraak ontdekken wat er in voorraad is. Laat je inspireren door wat beschikbaar is en vermijd zo om nieuw materiaal aan te moeten kopen.",
     "de_werking": "De werking",
     "hoe_werkt_title": "Hoe werkt het?",
-    "werking1": "Word partner",
-    "werking2": "Registreer je organisatie en krijg toegang tot het volledige platform.",
-    "werking2_waarom": "Enkel organisaties uit de Brusselse socio-culturele sector kunnen partner worden — dat houdt onze gemeenschap overzichtelijk en zorgt dat materiaal terechtkomt bij wie het echt nodig heeft.",
-    "werking3": "Blader door het aanbod",
-    "werking4": "Ontdek beschikbare materialen van andere organisaties en donateurs.",
-    "werking4_waarom": "Het aanbod verandert voortdurend: je kan gericht zoeken naar wat je nodig hebt, of gewoon langskomen en je laten inspireren door wat er op dat moment beschikbaar is.",
-    "werking5": "Doe een aanvraag of bied aan",
-    "werking6": "Vraag materiaal aan of plaats zelf een aanbieding. De aanbieder kiest wie het materiaal krijgt.",
-    "werking6_waarom": "We laten die keuze bewust bij de aanbieder liggen. Zo blijft het menselijk contact centraal, en kan een organisatie zelf inschatten welk project het meest gebaat is bij haar materiaal.",
-    "werking7": "Haal op of geef af",
-    "werking8": "Spreek af en geef het materiaal een tweede leven.",
-    "werking8_waarom": "De overdracht gebeurt rechtstreeks van hand tot hand — jullie spreken zelf plaats en tijdstip af, wij faciliteren enkel de match.",
+    "werking_stappen": [
+      {
+        "title": "Begin tijdig",
+        "text": "Zodra je weet dat een object binnenkort een nieuwe bestemming nodig heeft, kan je al starten met het hergebruikproces. Het object hoeft nog niet beschikbaar te zijn om het al aan te bieden — zo krijgen mogelijke ontvangers de tijd om zich te organiseren. Ook in het ontwerp zelf kan je al rekening houden met hergebruik of ontmanteling (éco-conception, cradle to cradle)."
+      },
+      {
+        "title": "Neem foto's",
+        "text": "Neem foto's van het object, zowel in opgebouwde staat als in zijn huidige toestand. Verzamel ook eventuele technische plannen of montagehandleidingen — die zijn goud waard voor wie het object een nieuw leven geeft. Foto's zijn bovendien verplicht: wij valideren elke aanbieding op basis van foto's voor je materiaal in onze SAS kan afgezet worden (drop off)."
+      },
+      {
+        "title": "Zet het op het platform",
+        "text": "Maak per object of lot een aanbieding aan op het platform. Gebruik het beschrijvingsveld om alle technische info te delen die je zelf ook nuttig zou vinden als ontvanger. Geef een deadline op tot wanneer het object beschikbaar blijft — is die kort, neem dan contact met ons op, dan bekijken we samen of een pick-up mogelijk is. Wij delen jouw aanbieding via onze sociale media, en brengen ze actief onder de aandacht van partners waarvan we denken dat ze interesse hebben."
+      },
+      {
+        "title": "Kies je bestemming",
+        "text": "Met wat geduld ontvang je via het platform verschillende aanvragen. Bekijk het organisatieprofiel van elke aanvrager en ontdek hoe zij mee de stad laten bruisen. Zodra er een match is, spreken beide partijen zelf af hoe het transport verloopt. Het materiaal zelf is via het platform altijd gratis — het transport is onderling bespreekbaar."
+      },
+      {
+        "title": "Stuur een foto",
+        "text": "Nadat je het materiaal hebt ontvangen, vragen we je om een foto van het resultaat te sturen. Zo kunnen we misbruik tegengaan, en informeren we de donateur meteen over de impact van zijn gift."
+      },
+      {
+        "title": "Bereken de impact",
+        "text": "Het platform houdt elke transactie bij — zowel via het platform als in het magazijn — om de ecologische impact van het project, en van elke individuele partner en donateur, nauwkeurig te meten. Zo kan je via het platform ook automatisch een jaarverslag per organisatie opstellen."
+      }
+    ],
     "diensten_overline": "Wat we doen",
     "diensten_title": "Onze diensten",
     "diensten_intro": "Naast het platform en het magazijn bieden we onze partners nog een reeks andere diensten aan.",
