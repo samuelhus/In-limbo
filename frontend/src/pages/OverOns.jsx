@@ -316,10 +316,21 @@ export default function OverOns() {
           <p className="overline mb-4">{t('overons.samenwerking_overline')}</p>
           <h2 className="text-3xl font-bold tracking-tight mb-6">{t('overons.samenwerking_title')}</h2>
           <div className="flex flex-wrap gap-2 mb-6">
-            {['Toestand', 'Zinneke', 'De Munt', 'Rotor DC'].map((p) => (
-              <span key={p} className="border border-border px-3 py-1.5 text-sm font-medium">
-                {p}
-              </span>
+            {[
+              { name: 'Toestand', url: 'https://www.toestand.be' },
+              { name: 'Zinneke', url: 'https://www.zinneke.org/' },
+              { name: 'De Munt', url: 'https://www.lamonnaiedemunt.be' },
+              { name: 'Rotor DB', url: 'https://rotordb.org/' },
+            ].map((p) => (
+              <a
+                key={p.name}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-border px-3 py-1.5 text-sm font-medium hover:border-foreground hover:bg-surface transition-colors"
+              >
+                {p.name}
+              </a>
             ))}
           </div>
           <p className="text-sm text-foreground/70 max-w-2xl">

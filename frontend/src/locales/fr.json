@@ -580,19 +580,19 @@
     "werking_stappen": [
       {
         "title": "Anticipez",
-        "text": "Dès que vous savez qu'un objet aura bientôt besoin d'une nouvelle destination, vous pouvez déjà entamer le processus de réemploi. L'objet ne doit pas encore être disponible pour pouvoir être proposé — cela laisse le temps aux futurs bénéficiaires de s'organiser. La conception elle-même peut déjà tenir compte du réemploi ou du démontage (éco-conception, cradle to cradle)."
+        "text": "Dès que vous savez qu'un objet aura bientôt besoin d'une nouvelle destination, vous pouvez déjà entamer le processus de réemploi. L'objet ne doit pas encore être disponible pour pouvoir être proposé, ce qui laisse le temps aux futurs bénéficiaires de s'organiser. La conception elle-même peut déjà tenir compte du réemploi ou du démontage (éco-conception, cradle to cradle)."
       },
       {
         "title": "Prenez des photos",
-        "text": "Prenez des photos de l'objet, en place et dans son état actuel. Rassemblez aussi d'éventuels plans techniques ou notices de montage — précieux pour qui donnera une nouvelle vie à l'objet. Les photos sont indispensables : nous validons chaque offre sur base de photos avant tout dépôt (drop off) dans notre SAS."
+        "text": "Prenez des photos de l'objet, en place et dans son état actuel. Rassemblez aussi d'éventuels plans techniques ou notices de montage : précieux pour qui donnera une nouvelle vie à l'objet. Les photos sont indispensables : nous validons chaque offre sur base de photos avant tout dépôt (drop off) dans notre SAS."
       },
       {
         "title": "Publiez sur la plateforme",
-        "text": "Créez une offre par objet ou par lot sur la plateforme. Utilisez la description pour partager toutes les infos techniques que vous auriez vous-même trouvées utiles. Indiquez une date limite jusqu'à laquelle l'objet reste disponible — si elle est courte, contactez-nous pour envisager un enlèvement (pick up). Nous partageons votre offre sur nos réseaux sociaux, et la mettons activement sous les yeux des partenaires susceptibles d'être intéressés."
+        "text": "Créez une offre par objet ou par lot sur la plateforme. Utilisez la description pour partager toutes les infos techniques que vous auriez vous-même trouvées utiles. Indiquez une date limite jusqu'à laquelle l'objet reste disponible. Si elle est courte, contactez-nous pour envisager un enlèvement (pick up). Nous partageons votre offre sur nos réseaux sociaux, et la mettons activement sous les yeux des partenaires susceptibles d'être intéressés."
       },
       {
         "title": "Choisissez sa destination",
-        "text": "Avec un peu de patience, vous recevrez plusieurs demandes via la plateforme. Consultez le profil de chaque organisation demandeuse et découvrez comment elle fait vivre la ville. Une fois qu'il y a un match, les deux parties conviennent elles-mêmes des modalités du transport. Le matériel lui-même est toujours gratuit via la plateforme — le transport, lui, se négocie."
+        "text": "Avec un peu de patience, vous recevrez plusieurs demandes via la plateforme. Consultez le profil de chaque organisation demandeuse et découvrez comment elle fait vivre la ville. Une fois qu'il y a un match, les deux parties conviennent elles-mêmes des modalités du transport. Le matériel lui-même est toujours gratuit via la plateforme. Le transport, lui, se négocie."
       },
       {
         "title": "Envoyez une photo",
@@ -600,7 +600,7 @@
       },
       {
         "title": "Calcul d'impact",
-        "text": "La plateforme enregistre chaque transaction — via la plateforme et dans l'entrepôt — afin de mesurer précisément l'impact écologique du projet, ainsi que celui de chaque partenaire et donateur individuellement. Cela permet aussi de générer automatiquement un rapport annuel par organisation."
+        "text": "La plateforme enregistre chaque transaction, via la plateforme et dans l'entrepôt, afin de mesurer précisément l'impact écologique du projet, ainsi que celui de chaque partenaire et donateur individuellement. Cela permet aussi de générer automatiquement un rapport annuel par organisation."
       }
     ],
     "diensten_overline": "Ce que nous faisons",
