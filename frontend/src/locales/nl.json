@@ -567,6 +567,8 @@
     "voorwie_p3": "Partners komen zonder afspraak ontdekken wat er in voorraad is. Laat je inspireren door wat beschikbaar is en vermijd zo om nieuw materiaal aan te moeten kopen.",
     "de_werking": "De werking",
     "hoe_werkt_title": "Hoe werkt het?",
+    "infografic_url": "https://res.cloudinary.com/dbjizykvb/image/upload/v1786415904/Untitled_Artwork_9_soclyd.png",
+    "alt_infografic": "Infografiek: hoe werkt In Limbo",
     "werking_stappen": [
       {
         "title": "Begin tijdig",
@@ -590,7 +592,9 @@
       },
       {
         "title": "Bereken de impact",
-        "text": "Het platform houdt elke transactie bij, zowel via het platform als in het magazijn, om de ecologische impact van het project, en van elke individuele partner en donateur, nauwkeurig te meten. Zo kan je via het platform ook automatisch een jaarverslag per organisatie opstellen."
+        "text": "Het platform houdt elke transactie bij, zowel via het platform als in het magazijn, om de ecologische impact van het project, en van elke individuele partner en donateur, nauwkeurig te meten. Zo kan je via het platform ook automatisch een jaarverslag per organisatie opstellen.",
+        "link": "/impact-methodologie",
+        "linkText": "Bekijk de methodologie →"
       }
     ],
     "diensten_overline": "Wat we doen",

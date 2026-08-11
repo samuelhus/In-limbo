@@ -167,13 +167,23 @@ export default function OverOns() {
       {/* 5. HOE WERKT HET */}
       <section className="py-16 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-          <div className="aspect-square overflow-hidden">
-            <img
-              src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261967/InLimbo_overons_5_iyd4p5.jpg", 800)}
-              alt={t('overons.alt_hoe_werkt')}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
+          <div>
+            <div className="overflow-hidden mb-4">
+              <img
+                src={cld(t('overons.infografic_url'), 900)}
+                alt={t('overons.alt_infografic')}
+                className="w-full h-auto"
+                loading="lazy"
+              />
+            </div>
+            <div className="aspect-square overflow-hidden">
+              <img
+                src={cld("https://res.cloudinary.com/dbjizykvb/image/upload/v1780261967/InLimbo_overons_5_iyd4p5.jpg", 800)}
+                alt={t('overons.alt_hoe_werkt')}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
           </div>
           <div>
             <p className="overline mb-4">{t('overons.de_werking')}</p>
@@ -189,6 +199,11 @@ export default function OverOns() {
                     <p className="text-sm text-foreground/70 leading-relaxed">
                       {stap.text}
                     </p>
+                    {stap.link && (
+                      <Link to={stap.link} className="inline-block text-sm font-medium underline underline-offset-2 mt-1">
+                        {stap.linkText}
+                      </Link>
+                    )}
                   </div>
                 </li>
               ))}

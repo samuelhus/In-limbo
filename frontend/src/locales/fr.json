@@ -577,6 +577,8 @@
     "voorwie_p3": "Les partenaires viennent sans rendez-vous découvrir ce qui est en stock. Laissez-vous inspirer par ce qui est disponible, et évitez ainsi de devoir acheter du matériel neuf.",
     "de_werking": "Le fonctionnement",
     "hoe_werkt_title": "Comment ça marche ?",
+    "infografic_url": "https://res.cloudinary.com/dbjizykvb/image/upload/v1786415820/Untitled_Artwork_8_1_jjn9bm.png",
+    "alt_infografic": "Infographie : comment fonctionne In Limbo",
     "werking_stappen": [
       {
         "title": "Anticipez",
@@ -600,7 +602,9 @@
       },
       {
         "title": "Calcul d'impact",
-        "text": "La plateforme enregistre chaque transaction, via la plateforme et dans l'entrepôt, afin de mesurer précisément l'impact écologique du projet, ainsi que celui de chaque partenaire et donateur individuellement. Cela permet aussi de générer automatiquement un rapport annuel par organisation."
+        "text": "La plateforme enregistre chaque transaction, via la plateforme et dans l'entrepôt, afin de mesurer précisément l'impact écologique du projet, ainsi que celui de chaque partenaire et donateur individuellement. Cela permet aussi de générer automatiquement un rapport annuel par organisation.",
+        "link": "/impact-methodologie",
+        "linkText": "Voir la méthodologie →"
       }
     ],
     "diensten_overline": "Ce que nous faisons",
