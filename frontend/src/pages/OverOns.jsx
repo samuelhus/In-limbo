@@ -14,7 +14,7 @@ const CATEGORY_ORDER = [
 ];
 
 export default function OverOns() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const FAQ_ITEMS = t('overons.faq_items', { returnObjects: true });
   const [activeIndex, setActiveIndex] = useState(null);
   const [orgs, setOrgs] = useState([]);
@@ -334,7 +334,7 @@ export default function OverOns() {
             {[
               { name: 'Toestand', url: 'https://www.toestand.be' },
               { name: 'Zinneke', url: 'https://www.zinneke.org/' },
-              { name: 'De Munt', url: 'https://www.lamonnaiedemunt.be' },
+              { name: i18n.language === 'fr' ? 'La Monnaie' : 'De Munt', url: 'https://www.lamonnaiedemunt.be' },
               { name: 'Rotor DB', url: 'https://rotordb.org/' },
             ].map((p) => (
               <a
