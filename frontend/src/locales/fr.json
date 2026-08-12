@@ -52,7 +52,7 @@
     "notifications": "Notifications",
     "new_listing": "Nouvelle offre",
     "warehouse": "Entrepôt",
-    "donate_material": "Devenir donneur",
+    "donate_material": "Devenez donneur",
     "join_member": "Devenir partenaire",
     "give_gift": "Faire un don",
     "listings": "Offres",
@@ -508,6 +508,8 @@
     "category_nieuws": "Actualité",
     "category_helpende_handen": "Coup de main",
     "category_opleiding": "Formation",
+    "category_giveaway": "Giveaway",
+    "gallery_photo_alt": "Photo",
     "not_available_in_language": "Cet article n'est pas disponible en français.",
     "language_nl": "NL",
     "language_fr": "FR"
@@ -577,8 +579,6 @@
     "voorwie_p3": "Les partenaires viennent sans rendez-vous découvrir ce qui est en stock. Laissez-vous inspirer par ce qui est disponible, et évitez ainsi de devoir acheter du matériel neuf.",
     "de_werking": "Le fonctionnement",
     "hoe_werkt_title": "Comment ça marche ?",
-    "infografic_url": "https://res.cloudinary.com/dbjizykvb/image/upload/v1786415820/Untitled_Artwork_8_1_jjn9bm.png",
-    "alt_infografic": "Infographie : comment fonctionne In Limbo",
     "werking_stappen": [
       {
         "title": "Anticipez",
@@ -602,9 +602,7 @@
       },
       {
         "title": "Calcul d'impact",
-        "text": "La plateforme enregistre chaque transaction, via la plateforme et dans l'entrepôt, afin de mesurer précisément l'impact écologique du projet, ainsi que celui de chaque partenaire et donateur individuellement. Cela permet aussi de générer automatiquement un rapport annuel par organisation.",
-        "link": "/impact-methodologie",
-        "linkText": "Voir la méthodologie →"
+        "text": "La plateforme enregistre chaque transaction, via la plateforme et dans l'entrepôt, afin de mesurer précisément l'impact écologique du projet, ainsi que celui de chaque partenaire et donateur individuellement. Cela permet aussi de générer automatiquement un rapport annuel par organisation."
       }
     ],
     "diensten_overline": "Ce que nous faisons",
@@ -636,7 +634,7 @@
     "partners_title": "Nos partenaires",
     "samenwerking_overline": "Collaboration",
     "samenwerking_title": "Une initiative de",
-    "samenwerking_intro": "In Limbo a été fondé par les asbl Toestand, Zinneke, La Monnaie et Rotor, et est rendu possible grâce au soutien de la Communauté flamande.",
+    "samenwerking_intro": "In Limbo a été fondé par les asbl Toestand, Zinneke, De Munt et Rotor, et est rendu possible grâce au soutien de la Communauté flamande.",
     "toestand_title": "Toestand",
     "toestand_text": "Chez Toestand, nous croyons que chacun a droit à un espace (social). Nous voulons faire le pont entre les espaces vacants de la ville et le besoin de lieux que tant de personnes recherchent. Nous rendons accessibles des espaces négligés et les redonnons à la société. Nous donnons accès au matériel et aux outils nécessaires pour y construire et y développer des projets. Nous rassemblons autour de nous des faiseurs, faiseuses et bricoleurs qui veulent apporter des réponses à ce qui dysfonctionne dans la société.",
     "contact_overline": "Rendez-nous visite",

@@ -5,7 +5,7 @@ import { formatDateNL } from './Nieuws';
 import RichTextEditor from '@/components/RichTextEditor';
 import { stripHtml } from '@/lib/richtext';
 
-const NIEUWS_CATEGORIES = ['nieuws', 'helpende_handen', 'opleiding'];
+const NIEUWS_CATEGORIES = ['nieuws', 'helpende_handen', 'opleiding', 'giveaway'];
 const INSPIRATIE_CATEGORIES = ['artikel', 'partner_project', 'documentatie'];
 const GALLERY_CATEGORIES = ['artikel', 'partner_project', 'documentatie'];
 const MAX_GALLERY = 10;
@@ -14,6 +14,7 @@ const CATEGORY_LABELS = {
   nieuws: 'Nieuws',
   helpende_handen: 'Helpende handen / Coup de main',
   opleiding: 'Opleiding',
+  giveaway: 'Giveaway',
   artikel: 'Artikel',
   partner_project: 'Project van partner',
   documentatie: 'Documentatie',
@@ -88,21 +89,6 @@ export default function AdminNieuws() {
     });
   };
 
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true); setError('');
-    try {
-      const url = await uploadToCloudinary(file);
-      setForm((f) => ({ ...f, photo: url }));
-    } catch (err) {
-      setError(formatApiError(err) || 'Upload mislukt.');
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
-  };
-
   const handleGalleryUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -153,7 +139,8 @@ export default function AdminNieuws() {
           postType: 'nieuws',
           category: form.category,
           languages: form.languages,
-          photo: form.photo || null,
+          photo: form.photos[0] || null,
+          photos: form.photos,
         };
         if (form.languages.includes('nl')) {
           payload.titleNl = form.titleNl.trim();
@@ -288,26 +275,38 @@ export default function AdminNieuws() {
               </div>
 
               <div>
-                <label className="label-overline">Foto <span className="text-muted-foreground normal-case">(optioneel)</span></label>
-                {form.photo ? (
-                  <div className="flex items-start gap-3">
-                    <img src={form.photo} alt="" className="w-32 h-32 object-cover border border-border" />
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, photo: '' })}
-                      className="btn-secondary !py-1 text-xs"
-                      data-testid="admin-nieuws-photo-remove"
-                    >
-                      Verwijder
-                    </button>
+                <label className="label-overline">
+                  Foto's <span className="text-muted-foreground normal-case">(max {MAX_GALLERY}, {form.photos.length}/{MAX_GALLERY} — eerste foto is de thumbnail)</span>
+                </label>
+                {form.photos.length > 0 && (
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-2">
+                    {form.photos.map((url, i) => (
+                      <div key={url} className="relative">
+                        <img src={url} alt="" className="w-full aspect-square object-cover border border-border" />
+                        {i === 0 && (
+                          <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 uppercase tracking-wide">
+                            Thumbnail
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryPhoto(url)}
+                          className="absolute top-1 right-1 bg-black/60 text-white text-xs w-5 h-5 flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ) : (
+                )}
+                {form.photos.length < MAX_GALLERY && (
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handlePhotoUpload}
+                    multiple
+                    onChange={handleGalleryUpload}
                     disabled={uploading}
-                    data-testid="admin-nieuws-photo-input"
+                    data-testid="admin-nieuws-gallery-input"
                     className="text-sm"
                   />
                 )}

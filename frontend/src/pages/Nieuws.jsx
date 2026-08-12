@@ -7,6 +7,7 @@ export const CATEGORY_COLORS = {
   nieuws: '#FBBF24',
   helpende_handen: '#F87171',
   opleiding: '#A78BFA',
+  giveaway: '#34D399',
 };
 
 export function formatDateNL(iso) {
@@ -21,6 +22,7 @@ function NieuwsCard({ post, t, lang }) {
   const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.nieuws;
   const label = t(`news.category_${post.category}`);
   const title = lang === 'fr' ? (post.titleFr || post.titleNl) : (post.titleNl || post.titleFr);
+  const thumbnail = post.photo || (post.photos && post.photos[0]);
   return (
     <Link
       to={`/nieuws/${post.id}`}
@@ -28,9 +30,9 @@ function NieuwsCard({ post, t, lang }) {
       className="group block border border-border hover:border-foreground transition-colors bg-surface"
     >
       <div className="aspect-[4/3] overflow-hidden">
-        {post.photo ? (
+        {thumbnail ? (
           <img
-            src={post.photo}
+            src={thumbnail}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
           />

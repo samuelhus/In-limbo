@@ -224,11 +224,11 @@ class ListingUpdate(BaseModel):
 # ---------- News / Inspiratie ----------
 # "nieuws" = tijdsgebonden content (1 taal + taal-tag), "inspiratie" = tijdloze content (NL+FR)
 PostType = Literal['nieuws', 'inspiratie']
-NieuwsCategory = Literal['nieuws', 'helpende_handen', 'opleiding']
+NieuwsCategory = Literal['nieuws', 'helpende_handen', 'opleiding', 'giveaway']
 InspiratieCategory = Literal['artikel', 'partner_project', 'documentatie']
 PostLanguage = Literal['nl', 'fr']
 
-NIEUWS_CATEGORIES = {'nieuws', 'helpende_handen', 'opleiding'}
+NIEUWS_CATEGORIES = {'nieuws', 'helpende_handen', 'opleiding', 'giveaway'}
 INSPIRATIE_CATEGORIES = {'artikel', 'partner_project', 'documentatie'}
 INSPIRATIE_GALLERY_CATEGORIES = {'artikel', 'partner_project', 'documentatie'}
 MAX_GALLERY_PHOTOS = 10
@@ -268,6 +268,8 @@ class NewsPostBase(BaseModel):
                 raise ValueError("Titel en inhoud in NL zijn verplicht wanneer NL is aangevinkt")
             if 'fr' in self.languages and (not self.titleFr or not self.contentFr):
                 raise ValueError("Titel en inhoud in FR zijn verplicht wanneer FR is aangevinkt")
+            if self.photos and len(self.photos) > MAX_GALLERY_PHOTOS:
+                raise ValueError(f"Maximaal {MAX_GALLERY_PHOTOS} foto's toegelaten")
         else:
             if self.category not in INSPIRATIE_CATEGORIES:
                 raise ValueError(f"Ongeldige categorie voor inspiratie: {self.category}")

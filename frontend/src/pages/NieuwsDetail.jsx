@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
+import Lightbox from '@/components/Lightbox';
 import { sanitizeRichText, legacyContentToHtml, hydrateRichTextEmbeds } from '@/lib/richtext';
 
 export default function NieuwsDetail() {
@@ -11,6 +12,7 @@ export default function NieuwsDetail() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const contentRef = useRef(null);
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export default function NieuwsDetail() {
   const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.nieuws;
   const label = t(`news.category_${post.category}`);
   const title = lang === 'fr' ? (post.titleFr || post.titleNl) : (post.titleNl || post.titleFr);
+  const gallery = post.photos && post.photos.length > 0 ? post.photos : (post.photo ? [post.photo] : []);
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12" data-testid="nieuws-detail-page">
@@ -62,10 +65,49 @@ export default function NieuwsDetail() {
         {t('news.back_to_news')}
       </Link>
 
-      {post.photo && (
-        <div className="aspect-[16/9] overflow-hidden mb-10">
-          <img src={post.photo} alt={title} className="w-full h-full object-cover" />
+      {gallery.length > 0 && (
+        <div className="mb-10">
+          <button
+            type="button"
+            onClick={() => setLightboxIndex(0)}
+            className="block w-full aspect-[16/9] overflow-hidden cursor-zoom-in"
+            data-testid="nieuws-detail-cover-button"
+          >
+            <img
+              src={gallery[0]}
+              alt={title}
+              className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-300"
+            />
+          </button>
+          {gallery.length > 1 && (
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+              {gallery.slice(1).map((url, i) => (
+                <button
+                  type="button"
+                  key={i}
+                  onClick={() => setLightboxIndex(i + 1)}
+                  className="aspect-square overflow-hidden cursor-zoom-in"
+                  data-testid={`nieuws-detail-thumb-${i + 1}`}
+                >
+                  <img
+                    src={url}
+                    alt={`${t('news.gallery_photo_alt')} ${i + 2}`}
+                    className="w-full h-full object-cover hover:scale-[1.05] transition-transform duration-300"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+      )}
+
+      {lightboxIndex !== null && (
+        <Lightbox
+          photos={gallery}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
       )}
 
       <p className="flex items-center gap-3 text-xs uppercase tracking-widest mb-4">
