@@ -1,0 +1,20 @@
+inlimbo.brussels, www.inlimbo.brussels {
+    @og_bots {
+        path /aanbieding/*
+        header_regexp User-Agent "(?i)(whatsapp|facebookexternalhit|facebot|twitterbot|linkedinbot|telegrambot|slackbot|discordbot|pinterest)"
+    }
+    handle @og_bots {
+        # /aanbieding/{slug}  →  /api/og/aanbieding/{slug}
+        rewrite /aanbieding/* /api/og/aanbieding{path.1}
+        reverse_proxy backend:8000
+    }
+    
+
+    reverse_proxy frontend:80
+}
+ntfy.inlimbo.brussels {
+    reverse_proxy ntfy:80
+}
+stats.inlimbo.brussels {
+    reverse_proxy umami:3000
+}
