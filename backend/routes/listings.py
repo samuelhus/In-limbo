@@ -42,6 +42,7 @@ def _public_listing_view(listing: dict, viewer: dict | None) -> dict:
         return lst
     return {
         "id": lst["id"],
+        "slug": lst.get("slug"),
         "title": lst["title"],
         "material": lst["material"],
         "status": lst["status"],
