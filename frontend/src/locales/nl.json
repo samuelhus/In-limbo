@@ -108,6 +108,10 @@
   "auth": {
     "login_title": "Inloggen",
     "login_subtitle": "Welkom terug.",
+    "login_banner_existing_title": "Al eerder partner geweest?",
+    "login_banner_existing_text": "Op deze vernieuwde website maak je een nieuw profiel aan. We valideren elk profiel manueel — zodra dat gebeurd is, kan je het platform gebruiken.",
+    "login_banner_new_title": "Nieuwe partner?",
+    "login_banner_new_text": "Je registratie wordt pas afgerond na een kennismakingsgesprek. Dat is mogelijk zodra het magazijn opnieuw opent.",
     "email": "E-mailadres",
     "password": "Wachtwoord",
     "login_btn": "Inloggen →",
@@ -498,8 +502,6 @@
     "category_nieuws": "Nieuws",
     "category_helpende_handen": "Helpende handen",
     "category_opleiding": "Opleiding",
-    "category_giveaway": "Giveaway",
-    "gallery_photo_alt": "Foto",
     "not_available_in_language": "Dit bericht is niet beschikbaar in het Nederlands.",
     "language_nl": "NL",
     "language_fr": "FR"

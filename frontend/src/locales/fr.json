@@ -108,6 +108,10 @@
   "auth": {
     "login_title": "Connexion",
     "login_subtitle": "Bienvenu.",
+    "login_banner_existing_title": "Vous étiez déjà partenaire ?",
+    "login_banner_existing_text": "Sur ce site renouvelé, vous devez créer un nouveau profil. Nous validons chaque profil manuellement — une fois validé, vous pourrez utiliser la plateforme.",
+    "login_banner_new_title": "Nouveau partenaire ?",
+    "login_banner_new_text": "Votre inscription ne sera finalisée qu'après un entretien de rencontre. Celui-ci est possible dès la réouverture de l'entrepôt.",
     "email": "Adresse e-mail",
     "password": "Mot de passe",
     "login_btn": "Se connecter →",
@@ -508,8 +512,6 @@
     "category_nieuws": "Actualité",
     "category_helpende_handen": "Coup de main",
     "category_opleiding": "Formation",
-    "category_giveaway": "Giveaway",
-    "gallery_photo_alt": "Photo",
     "not_available_in_language": "Cet article n'est pas disponible en français.",
     "language_nl": "NL",
     "language_fr": "FR"

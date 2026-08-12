@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Info } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
@@ -33,6 +34,26 @@ export default function Login() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16" data-testid="login-page">
       <div className="w-full max-w-md">
+        <div
+          className="bg-[#ADEBB3] border border-border px-4 py-4 mb-8 space-y-3 text-sm text-foreground"
+          data-testid="login-info-banner"
+        >
+          <div className="flex gap-2.5">
+            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+            <p>
+              <strong>{t('auth.login_banner_existing_title')}</strong>{' '}
+              {t('auth.login_banner_existing_text')}
+            </p>
+          </div>
+          <div className="flex gap-2.5">
+            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+            <p>
+              <strong>{t('auth.login_banner_new_title')}</strong>{' '}
+              {t('auth.login_banner_new_text')}
+            </p>
+          </div>
+        </div>
+
         <p className="overline mb-4">{t('auth.login_title')}</p>
         <h1 className="text-4xl font-bold tracking-tight mb-10">
           {t('auth.login_subtitle')}
