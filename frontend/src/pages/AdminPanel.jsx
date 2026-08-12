@@ -849,6 +849,7 @@ function AdminGebruikers() {
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState('');
   const [filterOrg, setFilterOrg] = useState('');
+  const [filterValue, setFilterValue] = useState(''); // '' | 'status:validated' | 'status:pending' | 'role:admin' | 'role:user' | 'role:donateur'
   const [orgOptions, setOrgOptions] = useState([]);
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -866,10 +867,15 @@ function AdminGebruikers() {
       .catch(() => {});
   }, []);
 
-  const load = (query = '', orgId = filterOrg, currentPage = 0) => {
+  const load = (query = '', orgId = filterOrg, filterVal = filterValue, currentPage = 0) => {
     const params = { skip: currentPage * LIMIT, limit: LIMIT };
     if (query.length >= 2) params.q = query;
     if (orgId) params.organisation_id = orgId;
+    if (filterVal) {
+      const [kind, value] = filterVal.split(':');
+      if (kind === 'status') params.status = value;
+      if (kind === 'role') params.role = value;
+    }
     api.get('/admin/users', { params })
       .then(({ data }) => {
         setUsers(data.items);
@@ -878,12 +884,12 @@ function AdminGebruikers() {
       .catch(() => {});
   };
 
-  useEffect(() => { load(q, filterOrg, page); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(q, filterOrg, filterValue, page); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     setPage(0);
-    const t = setTimeout(() => load(q, filterOrg, 0), 300);
+    const t = setTimeout(() => load(q, filterOrg, filterValue, 0), 300);
     return () => clearTimeout(t);
-  }, [q, filterOrg]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q, filterOrg, filterValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteUser = async (userId) => {
     if (!window.confirm('Gebruiker definitief verwijderen? Hun aanbiedingen worden gearchiveerd.')) return;
@@ -930,6 +936,27 @@ function AdminGebruikers() {
           <button
             className="text-xs text-muted-foreground hover:underline"
             onClick={() => setFilterOrg('')}
+          >
+            ✕ Filter wissen
+          </button>
+        )}
+        <select
+          className="input-flat"
+          value={filterValue}
+          onChange={(e) => setFilterValue(e.target.value)}
+          data-testid="admin-gebruikers-filter-status"
+        >
+          <option value="">Alle statussen</option>
+          <option value="status:validated">Gevalideerd</option>
+          <option value="status:pending">In afwachting</option>
+          <option value="role:admin">Admin</option>
+          <option value="role:user">User</option>
+          <option value="role:donateur">Donateur</option>
+        </select>
+        {filterValue && (
+          <button
+            className="text-xs text-muted-foreground hover:underline"
+            onClick={() => setFilterValue('')}
           >
             ✕ Filter wissen
           </button>

@@ -127,6 +127,8 @@ async def admin_decide_org(
 async def admin_list_users(
     q: str | None = Query(None),
     organisation_id: str | None = Query(None),
+    status: str | None = Query(None),
+    role: str | None = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     admin: dict = Depends(get_admin_user)
@@ -140,6 +142,10 @@ async def admin_list_users(
         ]
     if organisation_id:
         filt["organisationId"] = organisation_id
+    if status:
+        filt["status"] = status
+    if role:
+        filt["role"] = role
     total = await db.users.count_documents(filt)
     users = await db.users.find(filt, {"_id": 0, "passwordHash": 0}).skip(skip).limit(limit).to_list(limit)
     org_ids = [u["organisationId"] for u in users if u.get("organisationId")]
