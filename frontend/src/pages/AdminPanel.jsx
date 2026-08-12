@@ -848,29 +848,16 @@ const ORG_STATUSES = ['pending', 'active', 'inactive', 'rejected'];
 function AdminGebruikers() {
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState('');
-  const [filterOrg, setFilterOrg] = useState('');
   const [filterValue, setFilterValue] = useState(''); // '' | 'status:validated' | 'status:pending' | 'role:admin' | 'role:user' | 'role:donateur'
-  const [orgOptions, setOrgOptions] = useState([]);
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const LIMIT = 50;
 
-  // Load all organisations once for the dropdown
-  useEffect(() => {
-    api.get('/admin/organisations')
-      .then(({ data }) => {
-        const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name, 'nl'));
-        setOrgOptions(sorted);
-      })
-      .catch(() => {});
-  }, []);
-
-  const load = (query = '', orgId = filterOrg, filterVal = filterValue, currentPage = 0) => {
+  const load = (query = '', filterVal = filterValue, currentPage = 0) => {
     const params = { skip: currentPage * LIMIT, limit: LIMIT };
     if (query.length >= 2) params.q = query;
-    if (orgId) params.organisation_id = orgId;
     if (filterVal) {
       const [kind, value] = filterVal.split(':');
       if (kind === 'status') params.status = value;
@@ -884,12 +871,12 @@ function AdminGebruikers() {
       .catch(() => {});
   };
 
-  useEffect(() => { load(q, filterOrg, filterValue, page); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(q, filterValue, page); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     setPage(0);
-    const t = setTimeout(() => load(q, filterOrg, filterValue, 0), 300);
+    const t = setTimeout(() => load(q, filterValue, 0), 300);
     return () => clearTimeout(t);
-  }, [q, filterOrg, filterValue]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q, filterValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteUser = async (userId) => {
     if (!window.confirm('Gebruiker definitief verwijderen? Hun aanbiedingen worden gearchiveerd.')) return;
@@ -921,25 +908,6 @@ function AdminGebruikers() {
           onChange={(e) => setQ(e.target.value)}
           data-testid="admin-gebruikers-search"
         />
-        <select
-          className="input-flat"
-          value={filterOrg}
-          onChange={(e) => setFilterOrg(e.target.value)}
-          data-testid="admin-gebruikers-filter-org"
-        >
-          <option value="">Alle organisaties</option>
-          {orgOptions.map((org) => (
-            <option key={org.id} value={org.id}>{org.name}</option>
-          ))}
-        </select>
-        {filterOrg && (
-          <button
-            className="text-xs text-muted-foreground hover:underline"
-            onClick={() => setFilterOrg('')}
-          >
-            ✕ Filter wissen
-          </button>
-        )}
         <select
           className="input-flat"
           value={filterValue}
