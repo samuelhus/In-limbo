@@ -4,9 +4,6 @@ inlimbo.brussels, www.inlimbo.brussels {
         header_regexp User-Agent "(?i)(whatsapp|facebookexternalhit|facebot|twitterbot|linkedinbot|telegrambot|slackbot|discordbot|pinterest)"
     }
     handle @og_bots {
-        # /aanbieding/{slug}  →  /api/og/aanbieding/{slug}
-        # {re.og_slug.1} = de eerste capture-groep uit path_regexp hierboven,
-        # dus alles na "/aanbieding/" (bv. "television-1990s-2000s").
         rewrite * /api/og/aanbieding/{re.og_slug.1}
         reverse_proxy backend:8000
     }
