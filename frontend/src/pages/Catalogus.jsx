@@ -45,12 +45,16 @@ function ListingTile({ item, isValidated, isAdmin }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
+  const [readyFile, setReadyFile] = useState(null); // voorbereid bestand, wacht op de "verse" deel-tik
   const exportRef = useRef(null);
 
-  const handleExport = async (e) => {
+  // Tik 1: bereidt de afbeelding voor (html2canvas + toBlob zijn async). Roept
+  // bewust GEEN navigator.share() aan — elke await hiervoor zou de "directe
+  // gebruikersactie" doorbreken die Safari op iOS vereist voor de Share API.
+  const handlePrepare = async (e) => {
     e.stopPropagation();
     e.preventDefault();
-    if (exporting || !item.photos?.[0]) return;
+    if (exporting || readyFile || !item.photos?.[0]) return;
     setExporting(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 150));
@@ -63,44 +67,46 @@ function ListingTile({ item, isValidated, isAdmin }) {
         backgroundColor: null,
       });
       const fileName = `${item.title.replace(/\s+/g, '-').toLowerCase()}-inlimbo.png`;
-
-      // Safari op iOS ondersteunt het 'download'-attribuut van een link niet
-      // betrouwbaar (zeker niet voor grote data:-URL's zoals hier) — een klik
-      // op zo'n link doet daar vaak zichtbaar niets. De Web Share API opent op
-      // iOS wél het native deelvenster, met "Bewaar afbeelding" als standaard
-      // optie — dat is de gangbare, betrouwbare manier om dit daar op te lossen.
-      // canvas.toBlob (i.p.v. toDataURL) geeft ons een echt bestand dat we
-      // zowel aan de Share API als aan de download-terugvaloptie kunnen geven.
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
       const file = new File([blob], fileName, { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: item.title,
-          });
-        } catch (shareErr) {
-          // AbortError = gebruiker heeft het deelvenster zelf gesloten/geannuleerd
-          // — dat is geen echte fout, gewoon niks doen in dat geval.
-          if (shareErr?.name !== 'AbortError') {
-            console.error('Delen mislukt:', shareErr);
-          }
-        }
+        // Klaar, maar nog niet delen — toon nu de "Deel"-knop en wacht op een
+        // verse tik. Dát is de tik die navigator.share() rechtstreeks aanroept.
+        setReadyFile(file);
+        setExporting(false);
       } else {
-        // Terugvaloptie voor browsers zonder Share API-ondersteuning
-        // (desktop Chrome/Firefox/Safari, oudere Android-browsers, ...)
+        // Geen Share API-ondersteuning (desktop) — hier speelt de
+        // gebruikersactie-vereiste niet, dus meteen downloaden zonder tweede tik.
         const link = document.createElement('a');
         link.download = fileName;
         link.href = URL.createObjectURL(blob);
         link.click();
         URL.revokeObjectURL(link.href);
+        setExporting(false);
       }
     } catch (err) {
       console.error('Export mislukt:', err);
-    } finally {
       setExporting(false);
     }
+  };
+
+  // Tik 2: dit is een verse, directe gebruikersactie zonder enige await
+  // ervoor — dat is precies wat Safari op iOS vereist om navigator.share()
+  // toe te staan. De await's hieronder gebeuren pas NA de aanroep.
+  const handleShareTap = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!readyFile) return;
+    const file = readyFile;
+    navigator.share({ files: [file], title: item.title })
+      .catch((shareErr) => {
+        // AbortError = gebruiker heeft het deelvenster zelf gesloten — geen echte fout.
+        if (shareErr?.name !== 'AbortError') {
+          console.error('Delen mislukt:', shareErr);
+        }
+      })
+      .finally(() => setReadyFile(null));
   };
 
   const photo = item.photos?.[0];
@@ -136,13 +142,21 @@ function ListingTile({ item, isValidated, isAdmin }) {
         <div className="absolute top-3 left-3"><StatusBadge status={item.status} /></div>
         {isAdmin && item.photos?.[0] && (
           <button
-            onClick={handleExport}
+            onClick={readyFile ? handleShareTap : handlePrepare}
             disabled={exporting}
-            title="Exporteer als Instagram afbeelding"
-            data-testid={`export-instagram-btn-${item.id}`}
-            className="absolute top-3 right-3 bg-black/50 hover:bg-black/80 text-white w-8 h-8 flex items-center justify-center transition-colors disabled:opacity-50 z-10 text-base"
+            title={readyFile ? 'Delen' : 'Exporteer als Instagram afbeelding'}
+            data-testid={readyFile ? `share-instagram-btn-${item.id}` : `export-instagram-btn-${item.id}`}
+            className={`absolute top-3 right-3 text-white w-8 h-8 flex items-center justify-center transition-colors disabled:opacity-50 z-10 text-base ${
+              readyFile ? 'bg-primary hover:bg-primary/80 animate-pulse' : 'bg-black/50 hover:bg-black/80'
+            }`}
           >
-            {exporting ? '…' : '↓'}
+            {exporting ? (
+              <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : readyFile ? (
+              '⇧'
+            ) : (
+              '↓'
+            )}
           </button>
         )}
         {item.isRecurrent && (
