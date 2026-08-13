@@ -62,10 +62,40 @@ function ListingTile({ item, isValidated, isAdmin }) {
         height: 1350,
         backgroundColor: null,
       });
-      const link = document.createElement('a');
-      link.download = `${item.title.replace(/\s+/g, '-').toLowerCase()}-inlimbo.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const fileName = `${item.title.replace(/\s+/g, '-').toLowerCase()}-inlimbo.png`;
+
+      // Safari op iOS ondersteunt het 'download'-attribuut van een link niet
+      // betrouwbaar (zeker niet voor grote data:-URL's zoals hier) — een klik
+      // op zo'n link doet daar vaak zichtbaar niets. De Web Share API opent op
+      // iOS wél het native deelvenster, met "Bewaar afbeelding" als standaard
+      // optie — dat is de gangbare, betrouwbare manier om dit daar op te lossen.
+      // canvas.toBlob (i.p.v. toDataURL) geeft ons een echt bestand dat we
+      // zowel aan de Share API als aan de download-terugvaloptie kunnen geven.
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: item.title,
+          });
+        } catch (shareErr) {
+          // AbortError = gebruiker heeft het deelvenster zelf gesloten/geannuleerd
+          // — dat is geen echte fout, gewoon niks doen in dat geval.
+          if (shareErr?.name !== 'AbortError') {
+            console.error('Delen mislukt:', shareErr);
+          }
+        }
+      } else {
+        // Terugvaloptie voor browsers zonder Share API-ondersteuning
+        // (desktop Chrome/Firefox/Safari, oudere Android-browsers, ...)
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
     } catch (err) {
       console.error('Export mislukt:', err);
     } finally {
