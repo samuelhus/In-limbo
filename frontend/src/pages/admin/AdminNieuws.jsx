@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, formatApiError } from '@/lib/api';
 import { uploadToCloudinary } from '@/lib/cloudinary';
-import { formatDateNL } from './Nieuws';
+import { formatDateNL } from '../Nieuws';
 import RichTextEditor from '@/components/RichTextEditor';
 import { stripHtml } from '@/lib/richtext';
 
