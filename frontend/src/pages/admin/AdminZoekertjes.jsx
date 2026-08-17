@@ -154,7 +154,7 @@ function ProjectDetail({ id, onBack }) {
             <ul className="divide-y divide-border border-y border-border">
               {(sr.materials || []).map((m, i) => (
                 <li key={i} className="py-3">
-                  <p className="text-sm font-medium">{catLabel(m.hoofdcategorie)} — {subLabel(m.hoofdcategorie, m.subcategorie)}</p>
+                  <p className="text-sm font-medium">{catLabel(m.hoofdcategorie)}: {subLabel(m.hoofdcategorie, m.subcategorie)}</p>
                   {m.opmerking && <p className="text-xs text-muted-foreground mt-0.5">{m.opmerking}</p>}
                 </li>
               ))}
@@ -162,7 +162,7 @@ function ProjectDetail({ id, onBack }) {
           </div>
 
           <p className="text-xs text-muted-foreground border-t border-border pt-4">
-            Neem zelf contact op met de indiener buiten het platform — er wordt hier niets bijgehouden over of dat al gebeurd is.
+            Neem zelf contact op met de indiener buiten het platform. Er wordt hier niets bijgehouden over of dat al gebeurd is.
           </p>
         </div>
       )}
@@ -237,7 +237,7 @@ function MatchTool({ onSelect }) {
                   data-testid={`match-result-${r.id}`}
                   className="w-full text-left py-4 px-2 hover:bg-[#ADEBB3]/40 transition-colors"
                 >
-                  <p className="font-medium">{r.projectName || '(geen projectnaam)'} <span className="text-sm text-muted-foreground font-normal">— {r.organisation?.name}</span></p>
+                  <p className="font-medium">{r.projectName || '(geen projectnaam)'} <span className="text-sm text-muted-foreground font-normal">· {r.organisation?.name}</span></p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Deadline: {r.deadline ? new Date(r.deadline).toLocaleDateString('nl-BE') : '—'}
                   </p>

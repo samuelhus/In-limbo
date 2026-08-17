@@ -833,7 +833,7 @@
     "wizard_publish": "Zoekertje plaatsen",
     "wizard_save_edit": "Wijzigingen opslaan",
 
-    "intro_text": "Vertel ons welk materiaal je zoekt voor je project. Ons team bekijkt manueel welke andere partners of donateurs mogelijk iets voor jou in petto hebben, en neemt zelf contact met je op — je zoekertje is dus niet zichtbaar voor andere partners, enkel voor het In Limbo-team.\n\nJe zoekertje blijft actief tot de deadline die je opgeeft, of tot je het zelf afsluit.\n\nMaak eerst een lijstje met de benodigde materialen die je in gedachten hebt voordat je aan deze aanvraag begint, zodat de aanvraag vlot kan verlopen. Doe deze aanvraag zo snel mogelijk in het proces. Aarzel ook niet om naar het magazijn te komen — zo kunnen we je project technisch evalueren en eventueel alternatieve materialen aanbieden die wel voorhanden zijn.",
+    "intro_text": "Vertel ons welk materiaal je zoekt voor je project. Ons team bekijkt manueel welke andere partners of donateurs mogelijk iets voor jou in petto hebben, en neemt zelf contact met je op. Je zoekertje is dus niet zichtbaar voor andere partners, enkel voor het In Limbo-team.\n\nJe zoekertje blijft actief tot de deadline die je opgeeft, of tot je het zelf afsluit.\n\nMaak eerst een lijstje met de benodigde materialen die je in gedachten hebt voordat je aan deze aanvraag begint, zodat de aanvraag vlot kan verlopen. Doe deze aanvraag zo snel mogelijk in het proces. Aarzel ook niet om naar het magazijn te komen: zo kunnen we je project technisch evalueren en eventueel alternatieve materialen aanbieden die wel voorhanden zijn.",
 
     "field_project_name": "Projectnaam",
     "field_location": "Locatie",
@@ -856,7 +856,7 @@
 
     "material_grid_label": "Kies een hoofdcategorie",
     "general_option": "algemeen",
-    "note_placeholder": "Intentie, afmetingen, hoeveelheid, kleur, ... — optioneel",
+    "note_placeholder": "Intentie, afmetingen, hoeveelheid, kleur, ... (optioneel)",
     "add_material": "Materiaal toevoegen",
     "upload_failed": "Upload mislukt. Probeer opnieuw.",
 

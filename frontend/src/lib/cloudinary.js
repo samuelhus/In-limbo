@@ -8,9 +8,21 @@ const COMPRESSION_OPTS = {
   fileType: 'image/jpeg',
 };
 
+function isHeic(file) {
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  return type === 'image/heic' || type === 'image/heif'
+    || name.endsWith('.heic') || name.endsWith('.heif');
+}
+
 export async function compressImage(file) {
   if (!file) return file;
-  if (file.size <= COMPRESSION_OPTS.maxSizeMB * 1024 * 1024) return file;
+  // HEIC/HEIF (het formaat van iPhone-foto's) kan door zo goed als geen enkele
+  // browser rechtstreeks als <img> getoond worden. Zulke bestanden zijn vaak al
+  // klein (HEIC comprimeert zelf goed), waardoor ze anders de onderstaande
+  // groottedrempel niet zouden halen en ONgeconverteerd geüpload zouden worden —
+  // vandaar dat we voor HEIC/HEIF altijd converteren, los van de bestandsgrootte.
+  if (!isHeic(file) && file.size <= COMPRESSION_OPTS.maxSizeMB * 1024 * 1024) return file;
   try {
     return await imageCompression(file, COMPRESSION_OPTS);
   } catch (e) {

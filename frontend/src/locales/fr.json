@@ -843,7 +843,7 @@
     "wizard_publish": "Publier la petite annonce",
     "wizard_save_edit": "Enregistrer les modifications",
 
-    "intro_text": "Dites-nous quel matériau vous recherchez pour votre projet. Notre équipe examine manuellement quels autres partenaires ou donateurs pourraient avoir ce qu'il vous faut, et vous contacte elle-même — votre petite annonce n'est donc pas visible pour les autres partenaires, uniquement pour l'équipe d'In Limbo.\n\nVotre petite annonce reste active jusqu'à la date limite que vous indiquez, ou jusqu'à ce que vous la clôturiez vous-même.\n\nDressez d'abord une liste des matériaux dont vous avez besoin avant de commencer cette demande, afin qu'elle se déroule sans accroc. Faites cette demande le plus tôt possible dans votre processus. N'hésitez pas non plus à passer à l'entrepôt : nous pourrons ainsi évaluer techniquement votre projet et vous proposer d'éventuels matériaux alternatifs disponibles.",
+    "intro_text": "Dites-nous quel matériau vous recherchez pour votre projet. Notre équipe examine ensuite, manuellement, si d'autres partenaires ou donateurs pourraient avoir ce qu'il vous faut, et reprend elle-même contact avec vous. Votre petite annonce n'est donc visible que par l'équipe d'In Limbo, pas par les autres partenaires.\n\nElle reste active jusqu'à la date limite que vous indiquez, ou jusqu'à ce que vous la clôturiez vous-même.\n\nAvant de commencer cette demande, dressez d'abord une petite liste des matériaux dont vous avez besoin : cela permettra à la demande de se dérouler sans accroc. Faites-la le plus tôt possible dans votre processus, et n'hésitez surtout pas à passer à l'entrepôt : nous pourrons y évaluer votre projet sur le plan technique et vous proposer, le cas échéant, des matériaux alternatifs disponibles sur place.",
 
     "field_project_name": "Nom du projet",
     "field_location": "Lieu",
@@ -866,7 +866,7 @@
 
     "material_grid_label": "Choisissez une catégorie principale",
     "general_option": "général",
-    "note_placeholder": "Intention, dimensions, quantité, couleur, ... — facultatif",
+    "note_placeholder": "Intention, dimensions, quantité, couleur, ... (facultatif)",
     "add_material": "Ajouter le matériau",
     "upload_failed": "Échec du téléchargement. Réessayez.",
 

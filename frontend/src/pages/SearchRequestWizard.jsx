@@ -238,6 +238,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-16" data-testid="search-request-wizard-page">
+      <div ref={stepContentRef} />
       <p className="overline mb-3">
         {editMode ? t('search_request.wizard_edit_title') : t('search_request.wizard_title')}
       </p>
@@ -255,8 +256,6 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
         ))}
         <span className="overline ml-3">{stepIndex}/{TOTAL_STEPS}</span>
       </div>
-
-      <div ref={stepContentRef} />
 
       {/* STEP 0 (admin only): organisatie + gebruiker kiezen */}
       {adminMode && step === 0 && (
@@ -425,7 +424,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
                 return (
                   <li key={i} className="py-3 flex items-start justify-between gap-4" data-testid={`wizard-material-row-${i}`}>
                     <div>
-                      <p className="font-medium text-sm">{cat ? catLabel(cat) : m.hoofdcategorie} — {label}</p>
+                      <p className="font-medium text-sm">{cat ? catLabel(cat) : m.hoofdcategorie}: {label}</p>
                       {m.opmerking && <p className="text-xs text-muted-foreground mt-0.5">{m.opmerking}</p>}
                     </div>
                     <button
@@ -504,7 +503,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
               <p className="label-overline">
                 {catLabel(matMainCat)}
                 {matSubCat && matSubCat !== matMainCat.key && (
-                  <> — {subLabel(matMainCat.subcategories.find((s) => s.key === matSubCat))}</>
+                  <>: {subLabel(matMainCat.subcategories.find((s) => s.key === matSubCat))}</>
                 )}
               </p>
               <textarea
@@ -546,7 +545,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
                   const sub = cat?.subcategories.find((s) => s.key === m.subcategorie);
                   return (
                     <li key={i} className="py-3">
-                      <p className="text-sm font-medium">{cat ? catLabel(cat) : m.hoofdcategorie}{sub ? ` — ${subLabel(sub)}` : ''}</p>
+                      <p className="text-sm font-medium">{cat ? catLabel(cat) : m.hoofdcategorie}{sub ? `: ${subLabel(sub)}` : ''}</p>
                       {m.opmerking && <p className="text-xs text-muted-foreground mt-0.5">{m.opmerking}</p>}
                     </li>
                   );
