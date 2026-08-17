@@ -451,9 +451,9 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
                     type="button"
                     onClick={() => openMainCat(cat)}
                     data-testid={`wizard-category-${cat.key}`}
-                    className="flex flex-col items-center gap-2 p-3 border border-border bg-surface hover:border-foreground transition-colors text-center"
+                    className="flex flex-col items-center gap-2 p-4 border border-border bg-surface hover:border-foreground transition-colors text-center"
                   >
-                    <img src={cat.icon} alt="" className="w-10 h-10 object-contain" loading="lazy" />
+                    <img src={cat.icon} alt="" className="w-16 h-16 sm:w-[4.5rem] sm:h-[4.5rem] object-contain" loading="lazy" />
                     <span className="text-xs leading-tight">{catLabel(cat)}</span>
                   </button>
                 ))}
