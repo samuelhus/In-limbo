@@ -18,12 +18,15 @@ function pickField(post, base, lang) {
   return primary || fallback || '';
 }
 
-function InspiratieCard({ post, t, i18n }) {
+function InspiratieCard({ post, t, i18n, allTags }) {
   const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
   const color = INSPIRATIE_CATEGORY_COLORS[post.category] || INSPIRATIE_CATEGORY_COLORS.artikel;
   const label = t(`inspiratie.category_${post.category}`);
   const title = pickField(post, 'title', lang);
   const cover = post.photo || (post.photos && post.photos[0]);
+  const postTags = (post.tags || [])
+    .map((tid) => allTags.find((tag) => tag.id === tid))
+    .filter(Boolean);
 
   return (
     <Link
@@ -55,6 +58,18 @@ function InspiratieCard({ post, t, i18n }) {
         <p className="mt-3 text-xs text-muted-foreground">
           {formatDateNL(post.createdAt)}
         </p>
+        {postTags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5" data-testid={`inspiratie-card-tags-${post.id}`}>
+            {postTags.map((tag) => (
+              <span
+                key={tag.id}
+                className="px-2 py-0.5 text-[11px] uppercase tracking-wide border border-border text-muted-foreground"
+              >
+                {lang === 'fr' ? tag.nameFr : tag.nameNl}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </Link>
   );
@@ -101,7 +116,7 @@ function TagFilter({ tagsInUse, activeTag, setActiveTag, i18n }) {
         onChange={(e) => setActiveTag(e.target.value || null)}
         data-testid="inspiratie-tag-select"
       >
-        <option value="">Alle tags</option>
+        <option value="">Onderwerp/Medium</option>
         {tagsInUse.map((tag) => (
           <option key={tag.id} value={tag.id}>
             {lang === 'fr' ? tag.nameFr : tag.nameNl}
@@ -178,7 +193,7 @@ export default function Inspiratie() {
       {filteredPosts && filteredPosts.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPosts.map((p) => (
-            <InspiratieCard key={p.id} post={p} t={t} i18n={i18n} />
+            <InspiratieCard key={p.id} post={p} t={t} i18n={i18n} allTags={allTags} />
           ))}
         </div>
       )}

@@ -19,12 +19,16 @@ export default function InspiratieDetail() {
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [allTags, setAllTags] = useState([]);
   const contentRef = useRef(null);
 
   useEffect(() => {
     api.get(`/news/${id}`)
       .then(({ data }) => setPost(data))
       .catch((e) => setError(formatApiError(e)));
+    api.get('/tags')
+      .then(({ data }) => setAllTags(data))
+      .catch(() => {}); // niet kritiek — tags tonen zich dan gewoon niet
   }, [id]);
 
   const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
@@ -53,6 +57,9 @@ export default function InspiratieDetail() {
   const label = t(`inspiratie.category_${post.category}`);
   const title = pickField(post, 'title', lang);
   const gallery = post.photos && post.photos.length > 0 ? post.photos : (post.photo ? [post.photo] : []);
+  const postTags = (post.tags || [])
+    .map((tid) => allTags.find((tag) => tag.id === tid))
+    .filter(Boolean);
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12" data-testid="inspiratie-detail-page">
@@ -119,9 +126,22 @@ export default function InspiratieDetail() {
         </span>
       </p>
 
-      <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05] mb-10">
+      <h1 className={`text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05] ${postTags.length > 0 ? 'mb-6' : 'mb-10'}`}>
         {title}
       </h1>
+
+      {postTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-10" data-testid="inspiratie-detail-tags">
+          {postTags.map((tag) => (
+            <span
+              key={tag.id}
+              className="px-2.5 py-1 text-xs uppercase tracking-wide border border-border text-muted-foreground"
+            >
+              {lang === 'fr' ? tag.nameFr : tag.nameNl}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div
         ref={contentRef}
