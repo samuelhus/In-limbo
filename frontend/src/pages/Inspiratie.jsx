@@ -104,7 +104,7 @@ function CategoryFilter({ active, setActive, t }) {
   );
 }
 
-function TagFilter({ tagsInUse, activeTag, setActiveTag, i18n }) {
+function TagFilter({ tagsInUse, activeTag, setActiveTag, i18n, t }) {
   const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
   if (tagsInUse.length === 0) return null;
 
@@ -116,7 +116,7 @@ function TagFilter({ tagsInUse, activeTag, setActiveTag, i18n }) {
         onChange={(e) => setActiveTag(e.target.value || null)}
         data-testid="inspiratie-tag-select"
       >
-        <option value="">Onderwerp/Medium</option>
+        <option value="">{t('inspiratie.tag_filter_placeholder')}</option>
         {tagsInUse.map((tag) => (
           <option key={tag.id} value={tag.id}>
             {lang === 'fr' ? tag.nameFr : tag.nameNl}
@@ -175,7 +175,7 @@ export default function Inspiratie() {
       )}
 
       {posts && posts.length > 0 && (
-        <TagFilter tagsInUse={tagsInUse} activeTag={activeTag} setActiveTag={setActiveTag} i18n={i18n} />
+        <TagFilter tagsInUse={tagsInUse} activeTag={activeTag} setActiveTag={setActiveTag} i18n={i18n} t={t} />
       )}
 
       {posts && posts.length === 0 && (
