@@ -21,10 +21,9 @@ from models import (
 
 router = APIRouter()
 
-MIN_DEADLINE_DAYS = 1        # minimum = morgen (§5)
-MAX_DEADLINE_MONTHS = 12     # maximum = 12 maanden vanaf vandaag (§5)
-DEFAULT_DEADLINE_MONTHS_USER = 6   # auto-invullen indien leeg (gebruiker, zie §3-tabel)
-DEFAULT_DEADLINE_MONTHS_ADMIN = 12  # auto-invullen indien leeg (admin, zie §5)
+MIN_DEADLINE_DAYS = 1        # minimum = morgen (voor zowel gebruiker als admin)
+MAX_DEADLINE_MONTHS_USER = 12       # maximum voor gebruikers = 12 maanden vanaf vandaag
+DEFAULT_DEADLINE_MONTHS_ADMIN = 12  # admin: auto-invullen indien leeg
 
 
 def _today() -> datetime:
@@ -46,22 +45,25 @@ def _require_not_donateur(user: dict) -> None:
 
 
 def _validate_and_clamp_deadline(deadline: str | None, is_admin: bool) -> str:
-    """Vult een lege deadline automatisch in en valideert de grenzen (§5).
-    Bij admin-aanmaak is de default 12 maanden i.p.v. 6."""
+    """Deadline is verplicht voor gebruikers (geen auto-default meer). Admin mag
+    het veld leeg laten (dan 12 maanden default) en mag, in tegenstelling tot
+    gebruikers, ook verder dan 12 maanden vooruit plannen (geen bovengrens)."""
     today = _today()
     if not deadline:
-        months = DEFAULT_DEADLINE_MONTHS_ADMIN if is_admin else DEFAULT_DEADLINE_MONTHS_USER
-        return _add_months(today, months).date().isoformat()
+        if not is_admin:
+            raise HTTPException(400, "Deadline is verplicht")
+        return _add_months(today, DEFAULT_DEADLINE_MONTHS_ADMIN).date().isoformat()
     try:
         parsed = datetime.fromisoformat(deadline).replace(tzinfo=timezone.utc)
     except ValueError:
         raise HTTPException(400, "Ongeldige deadline-datum")
     min_date = today + timedelta(days=MIN_DEADLINE_DAYS)
-    max_date = _add_months(today, MAX_DEADLINE_MONTHS)
     if parsed < min_date:
         raise HTTPException(400, "Deadline moet minstens morgen zijn")
-    if parsed > max_date:
-        raise HTTPException(400, f"Deadline mag maximaal {MAX_DEADLINE_MONTHS} maanden vooruit liggen")
+    if not is_admin:
+        max_date = _add_months(today, MAX_DEADLINE_MONTHS_USER)
+        if parsed > max_date:
+            raise HTTPException(400, f"Deadline mag maximaal {MAX_DEADLINE_MONTHS_USER} maanden vooruit liggen")
     return parsed.date().isoformat()
 
 

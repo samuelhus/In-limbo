@@ -189,9 +189,16 @@ const isLoggedIn = user && typeof user === 'object';
                 {t('landing.explore_catalogus')}
               </Link>
               {isLoggedIn ? (
-                <Link to="/aanbieding/nieuw" className="btn-primary" data-testid="hero-new-listing-btn">
-                  {t('nav.new_listing')} →
-                </Link>
+                <>
+                  <Link to="/aanbieding/nieuw" className="btn-primary" data-testid="hero-new-listing-btn">
+                    {t('nav.new_listing')} →
+                  </Link>
+                  {user.role !== 'donateur' && (
+                    <Link to="/zoekertje/nieuw" className="btn-primary" data-testid="hero-new-search-request-btn">
+                      {t('nav.new_search_request')} →
+                    </Link>
+                  )}
+                </>
               ) : (
                 <>
                   <Link to="/registreer" className="btn-secondary" data-testid="hero-register-btn">

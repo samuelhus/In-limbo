@@ -52,6 +52,18 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
   const [matSubCat, setMatSubCat] = useState(null);
   const [matNote, setMatNote] = useState('');
   const [uploading, setUploading] = useState(false);
+  const stepContentRef = React.useRef(null);
+
+  // Bij elke overgang binnen de materiaal-substap (raster -> subcategorie -> notitie
+  // en terug) naar het begin van de inhoud scrollen — anders sta je, als je een
+  // categorie onderaan het raster koos, plots (te ver naar beneden gescrold) middenin
+  // de volgende substap.
+  useEffect(() => {
+    stepContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [matSubStep]);
+  useEffect(() => {
+    stepContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [step]);
 
   useEffect(() => {
     if (!editMode || !searchRequestId) return;
@@ -167,7 +179,15 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
   };
 
   const next = () => setStep((s) => s + 1);
-  const back = () => setStep((s) => Math.max(adminMode ? 0 : 1, s - 1));
+  const back = () => {
+    // Zit je in de materiaal-substap (subcategorie of notitie), dan brengt "Terug"
+    // je terug naar het categorieraster — niet naar de vorige wizard-stap (projectgegevens).
+    if (step === 3 && matSubStep !== MAT_STEP_GRID) {
+      cancelMaterialSubFlow();
+      return;
+    }
+    setStep((s) => Math.max(adminMode ? 0 : 1, s - 1));
+  };
 
   const submit = async () => {
     setSubmitting(true);
@@ -235,6 +255,8 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
         ))}
         <span className="overline ml-3">{stepIndex}/{TOTAL_STEPS}</span>
       </div>
+
+      <div ref={stepContentRef} />
 
       {/* STEP 0 (admin only): organisatie + gebruiker kiezen */}
       {adminMode && step === 0 && (
@@ -512,7 +534,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
             {data.location && <Row label={t('search_request.field_location')} value={data.location} />}
             <Row label={t('search_request.field_project_type')} value={data.projectType ? t(`search_request.project_type_${data.projectType}`) : '—'} />
             {data.shortDescription && <Row label={t('search_request.field_short_description')} value={data.shortDescription} />}
-            <Row label={t('search_request.field_deadline')} value={data.deadline || t('search_request.deadline_auto_hint')} />
+            <Row label={t('search_request.field_deadline')} value={data.deadline || (adminMode ? t('search_request.deadline_auto_hint') : '—')} />
             <Row label={t('search_request.field_photos')} value={t('search_request.summary_photos_count', { count: data.photos.length })} />
           </dl>
           {data.materials.length > 0 && (
@@ -537,7 +559,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
       )}
 
       <div className="mt-12 flex justify-between border-t border-border pt-6">
-        <button onClick={back} disabled={step === (adminMode ? 0 : 1)} className="btn-ghost disabled:opacity-30" data-testid="wizard-back-btn">
+        <button onClick={back} disabled={step === (adminMode ? 0 : 1)} className="btn-secondary disabled:opacity-30" data-testid="wizard-back-btn">
           ← {t('common.back')}
         </button>
         {step < 4 && (

@@ -194,10 +194,10 @@ export default function Header() {
                       to="/aanbieding/nieuw"
                       data-testid="nav-new-listing"
                       className={({ isActive }) =>
-                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                        `block px-4 py-3 text-sm font-semibold text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'bg-[#ADEBB3]' : ''}`
                       }
                     >
-                      {t('nav.new_listing')}
+                      → {t('nav.new_listing')}
                     </NavLink>
                   )}
                   {canCreateListings && (
@@ -227,10 +227,10 @@ export default function Header() {
                       to="/zoekertje/nieuw"
                       data-testid="nav-new-search-request"
                       className={({ isActive }) =>
-                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                        `block px-4 py-3 text-sm font-semibold text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'bg-[#ADEBB3]' : ''}`
                       }
                     >
-                      {t('nav.new_search_request')}
+                      → {t('nav.new_search_request')}
                     </NavLink>
                   )}
                   {isValidated && (
@@ -438,7 +438,7 @@ export default function Header() {
                           to="/aanbieding/nieuw"
                           data-testid="mobile-nav-new-listing"
                           onClick={() => setMobileOpen(false)}
-                          className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                          className={({ isActive }) => `${mobileSubItemClass} font-semibold text-foreground ${isActive ? 'bg-[#ADEBB3]' : ''}`}
                         >
                           → {t('nav.new_listing')}
                         </NavLink>
@@ -468,7 +468,7 @@ export default function Header() {
                           to="/zoekertje/nieuw"
                           data-testid="mobile-nav-new-search-request"
                           onClick={() => setMobileOpen(false)}
-                          className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                          className={({ isActive }) => `${mobileSubItemClass} font-semibold text-foreground ${isActive ? 'bg-[#ADEBB3]' : ''}`}
                         >
                           → {t('nav.new_search_request')}
                         </NavLink>
