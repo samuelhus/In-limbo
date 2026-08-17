@@ -31,6 +31,7 @@ const EMPTY = {
   contentFr: '',
   photos: [],
   link: '',
+  tags: [],
 };
 
 export default function AdminNieuws() {
@@ -40,6 +41,20 @@ export default function AdminNieuws() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [allTags, setAllTags] = useState([]);
+  const [tagToAdd, setTagToAdd] = useState('');
+  const [tagsModalOpen, setTagsModalOpen] = useState(false);
+
+  const loadTags = async () => {
+    try {
+      const { data } = await api.get('/tags');
+      setAllTags(data);
+    } catch (e) {
+      // Stil falen — tags zijn niet kritiek voor de rest van het scherm.
+      // eslint-disable-next-line no-console
+      console.error('Tags laden mislukt:', e);
+    }
+  };
 
   const load = async () => {
     try {
@@ -50,7 +65,7 @@ export default function AdminNieuws() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadTags(); }, []);
 
   const startNew = () => { setForm(EMPTY); setEditing('new'); setError(''); };
 
@@ -66,6 +81,7 @@ export default function AdminNieuws() {
       contentFr: p.contentFr || '',
       photos: p.photos || [],
       link: p.link || '',
+      tags: p.tags || [],
     });
     setEditing(p);
     setError('');
@@ -120,6 +136,27 @@ export default function AdminNieuws() {
     setForm((f) => ({ ...f, photos: f.photos.filter((p) => p !== url) }));
   };
 
+  const addTagToForm = () => {
+    if (!tagToAdd) return;
+    if (form.tags.includes(tagToAdd)) { setTagToAdd(''); return; }
+    setForm((f) => ({ ...f, tags: [...f.tags, tagToAdd] }));
+    setTagToAdd('');
+  };
+
+  const removeTagFromForm = (tagId) => {
+    setForm((f) => ({ ...f, tags: f.tags.filter((t) => t !== tagId) }));
+  };
+
+  const tagLabel = (tagId) => {
+    const tag = allTags.find((t) => t.id === tagId);
+    return tag ? `${tag.nameNl} / ${tag.nameFr}` : tagId;
+  };
+
+  // Tags die nog niet aan de huidige post gekoppeld zijn — enkel die tonen
+  // we in de "toevoegen"-dropdown, anders zou je dezelfde tag dubbel kunnen
+  // selecteren.
+  const availableTagsToAdd = allTags.filter((t) => !form.tags.includes(t.id));
+
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true); setError('');
@@ -164,6 +201,7 @@ export default function AdminNieuws() {
           titleFr: form.titleFr.trim(),
           contentNl: form.contentNl.trim(),
           contentFr: form.contentFr.trim(),
+          tags: form.tags,
         };
         if (GALLERY_CATEGORIES.includes(form.category)) {
           payload.photos = form.photos;
@@ -228,6 +266,16 @@ export default function AdminNieuws() {
               >
                 Inspiratie
               </button>
+              {form.postType === 'inspiratie' && (
+                <button
+                  type="button"
+                  onClick={() => setTagsModalOpen(true)}
+                  className="px-4 py-2 text-sm border border-border text-foreground/70 hover:border-foreground"
+                  data-testid="admin-nieuws-manage-tags-btn"
+                >
+                  🏷 Tags beheren
+                </button>
+              )}
             </div>
           </div>
 
@@ -392,6 +440,60 @@ export default function AdminNieuws() {
                 />
               </div>
 
+              <div>
+                <label className="label-overline">
+                  Tags <span className="text-muted-foreground normal-case">(optioneel, geen limiet)</span>
+                </label>
+                {form.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {form.tags.map((tagId) => (
+                      <span
+                        key={tagId}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-secondary border border-border"
+                        data-testid={`admin-inspiratie-tag-chip-${tagId}`}
+                      >
+                        {tagLabel(tagId)}
+                        <button
+                          type="button"
+                          onClick={() => removeTagFromForm(tagId)}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label="Tag verwijderen"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <select
+                    className="input-flat flex-1"
+                    value={tagToAdd}
+                    onChange={(e) => setTagToAdd(e.target.value)}
+                    data-testid="admin-inspiratie-tag-select"
+                  >
+                    <option value="">— Kies een tag —</option>
+                    {availableTagsToAdd.map((t) => (
+                      <option key={t.id} value={t.id}>{t.nameNl} / {t.nameFr}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={addTagToForm}
+                    disabled={!tagToAdd}
+                    className="btn-secondary !py-2 px-4 text-xs disabled:opacity-40"
+                    data-testid="admin-inspiratie-tag-add"
+                  >
+                    Toevoegen
+                  </button>
+                </div>
+                {allTags.length === 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Nog geen tags aangemaakt. Klik op "🏷 Tags beheren" hierboven om er een aan te maken.
+                  </p>
+                )}
+              </div>
+
               {GALLERY_CATEGORIES.includes(form.category) && (
                 <div>
                   <label className="label-overline">
@@ -531,6 +633,194 @@ export default function AdminNieuws() {
           );
         })}
       </ul>
+
+      {tagsModalOpen && (
+        <AdminTagsModal
+          tags={allTags}
+          onClose={() => setTagsModalOpen(false)}
+          onChanged={loadTags}
+        />
+      )}
     </section>
+  );
+}
+
+function AdminTagsModal({ tags, onClose, onChanged }) {
+  const [newNl, setNewNl] = useState('');
+  const [newFr, setNewFr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editNl, setEditNl] = useState('');
+  const [editFr, setEditFr] = useState('');
+
+  const createTag = async (e) => {
+    e.preventDefault();
+    if (!newNl.trim() || !newFr.trim()) return;
+    setBusy(true); setErr('');
+    try {
+      await api.post('/admin/tags', { nameNl: newNl.trim(), nameFr: newFr.trim() });
+      setNewNl(''); setNewFr('');
+      await onChanged();
+    } catch (e2) {
+      setErr(formatApiError(e2));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const startEditTag = (t) => {
+    setEditingId(t.id);
+    setEditNl(t.nameNl);
+    setEditFr(t.nameFr);
+  };
+
+  const saveEditTag = async (tagId) => {
+    if (!editNl.trim() || !editFr.trim()) return;
+    setBusy(true); setErr('');
+    try {
+      await api.patch(`/admin/tags/${tagId}`, { nameNl: editNl.trim(), nameFr: editFr.trim() });
+      setEditingId(null);
+      await onChanged();
+    } catch (e2) {
+      setErr(formatApiError(e2));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteTag = async (tag) => {
+    if (!window.confirm(`Tag "${tag.nameNl} / ${tag.nameFr}" verwijderen? Dit haalt de tag ook weg bij alle posts die hem gebruiken.`)) return;
+    setBusy(true); setErr('');
+    try {
+      await api.delete(`/admin/tags/${tag.id}`);
+      await onChanged();
+    } catch (e2) {
+      setErr(formatApiError(e2));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" data-testid="admin-tags-modal">
+      <div className="bg-background border border-border p-8 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-start">
+          <p className="overline">Tags beheren</p>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-2xl leading-none" aria-label="Sluiten">×</button>
+        </div>
+
+        {err && (
+          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/40 px-3 py-2" data-testid="admin-tags-error">
+            {err}
+          </p>
+        )}
+
+        <ul className="divide-y divide-border border-y border-border">
+          {tags.length === 0 && (
+            <li className="py-4 text-sm text-muted-foreground">Nog geen tags aangemaakt.</li>
+          )}
+          {tags.map((t) => (
+            <li key={t.id} className="py-3" data-testid={`admin-tag-row-${t.id}`}>
+              {editingId === t.id ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <input
+                      className="input-flat flex-1"
+                      value={editNl}
+                      onChange={(e) => setEditNl(e.target.value)}
+                      placeholder="NL"
+                      maxLength={50}
+                    />
+                    <input
+                      className="input-flat flex-1"
+                      value={editFr}
+                      onChange={(e) => setEditFr(e.target.value)}
+                      placeholder="FR"
+                      maxLength={50}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => saveEditTag(t.id)}
+                      disabled={busy}
+                      className="btn-primary !py-1 px-3 text-xs"
+                      data-testid={`admin-tag-save-${t.id}`}
+                    >
+                      Opslaan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="btn-secondary !py-1 px-3 text-xs"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm">{t.nameNl} <span className="text-muted-foreground">/ {t.nameFr}</span></span>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => startEditTag(t)}
+                      className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                      data-testid={`admin-tag-edit-${t.id}`}
+                    >
+                      Hernoemen
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteTag(t)}
+                      disabled={busy}
+                      className="text-xs text-destructive hover:underline disabled:opacity-50"
+                      data-testid={`admin-tag-delete-${t.id}`}
+                    >
+                      Verwijderen
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <form onSubmit={createTag} className="space-y-2 pt-2">
+          <p className="label-overline">Nieuwe tag</p>
+          <div className="flex gap-2">
+            <input
+              className="input-flat flex-1"
+              value={newNl}
+              onChange={(e) => setNewNl(e.target.value)}
+              placeholder="Naam (NL) — bv. Spel"
+              maxLength={50}
+              data-testid="admin-tag-new-nl"
+            />
+            <input
+              className="input-flat flex-1"
+              value={newFr}
+              onChange={(e) => setNewFr(e.target.value)}
+              placeholder="Naam (FR) — bv. Jeu"
+              maxLength={50}
+              data-testid="admin-tag-new-fr"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={busy || !newNl.trim() || !newFr.trim()}
+            className="btn-primary !py-2 text-xs disabled:opacity-40"
+            data-testid="admin-tag-create-btn"
+          >
+            + Tag aanmaken
+          </button>
+        </form>
+
+        <div className="pt-2">
+          <button onClick={onClose} className="btn-secondary w-full">Sluiten</button>
+        </div>
+      </div>
+    </div>
   );
 }

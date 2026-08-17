@@ -13,7 +13,7 @@ router = APIRouter()
 
 FIELDS = [
     "postType", "category", "languages", "photo",
-    "titleNl", "titleFr", "contentNl", "contentFr", "photos", "link",
+    "titleNl", "titleFr", "contentNl", "contentFr", "photos", "link", "tags",
 ]
 
 

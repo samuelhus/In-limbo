@@ -52,6 +52,7 @@ from routes.contact import router as contact_router
 from routes.impact import router as impact_router
 from routes.og import router as og_router
 from routes.search_requests import router as search_requests_router
+from routes.tags import router as tags_router
 
 
 cloudinary.config(
@@ -197,6 +198,7 @@ api.include_router(contact_router)
 api.include_router(impact_router)
 api.include_router(og_router)
 api.include_router(search_requests_router)
+api.include_router(tags_router)
 
 app.include_router(api)
 

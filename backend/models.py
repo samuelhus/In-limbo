@@ -254,6 +254,10 @@ class NewsPostBase(BaseModel):
     # ---- inspiratie-only fields ----
     photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
     link: Optional[str] = None
+    # Lijst van tag-ID's (verwijzen naar de aparte 'tags'-collectie). Enkel
+    # relevant voor inspiratie-posts — bij nieuws-posts blijft dit gewoon
+    # leeg/genegeerd. Geen limiet op aantal (zie afspraak met Samuel).
+    tags: Optional[List[str]] = None
 
     @model_validator(mode='after')
     def _validate_by_type(self):
@@ -298,6 +302,7 @@ class NewsPostUpdate(BaseModel):
     contentFr: Optional[str] = Field(None, max_length=20000)
     photos: Optional[List[str]] = Field(default=None, max_length=MAX_GALLERY_PHOTOS)
     link: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 
 class NewsPostPublic(NewsPostBase):
@@ -476,4 +481,23 @@ class SearchRequestUpdate(BaseModel):
     photos: Optional[List[str]] = Field(None, max_length=5)
     materials: Optional[List[SearchRequestMaterialItem]] = None
     closed: Optional[bool] = None  # gebruiker sluit het zoekertje handmatig af (§5)
+
+
+# ---------- Inspiratie-tags ----------
+# Losstaande, herbruikbare tags voor inspiratie-posts (bv. "Spel"/"Jeu",
+# "Hergebruik"/"Réemploi"). Elke tag heeft verplicht een NL- en FR-naam.
+# Posts verwijzen enkel naar het tag-ID (zie NewsPostBase.tags) — zo werkt
+# een hernoem/verwijder door de admin automatisch overal door, zonder
+# verouderde gekopieerde tekst in elke post.
+class TagCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    nameNl: str = Field(..., min_length=1, max_length=50)
+    nameFr: str = Field(..., min_length=1, max_length=50)
+
+
+class TagUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    nameNl: Optional[str] = Field(None, min_length=1, max_length=50)
+    nameFr: Optional[str] = Field(None, min_length=1, max_length=50)
+
 

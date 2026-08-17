@@ -89,23 +89,63 @@ function CategoryFilter({ active, setActive, t }) {
   );
 }
 
+function TagFilter({ tagsInUse, activeTag, setActiveTag, i18n }) {
+  const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
+  if (tagsInUse.length === 0) return null;
+
+  return (
+    <div className="mb-10" data-testid="inspiratie-tag-filter">
+      <select
+        className="input-flat max-w-xs"
+        value={activeTag || ''}
+        onChange={(e) => setActiveTag(e.target.value || null)}
+        data-testid="inspiratie-tag-select"
+      >
+        <option value="">Alle tags</option>
+        {tagsInUse.map((tag) => (
+          <option key={tag.id} value={tag.id}>
+            {lang === 'fr' ? tag.nameFr : tag.nameNl}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function Inspiratie() {
   const { t, i18n } = useTranslation();
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState('');
   const [activeCategory, setActiveCategory] = useState(null);
+  const [allTags, setAllTags] = useState([]);
+  const [activeTag, setActiveTag] = useState(null);
 
   useEffect(() => {
     api.get('/news', { params: { postType: 'inspiratie' } })
       .then(({ data }) => setPosts(data))
       .catch(() => setError('Kon inspiratie niet laden.'));
+    api.get('/tags')
+      .then(({ data }) => setAllTags(data))
+      .catch(() => {}); // niet kritiek — filter toont zich dan gewoon niet
   }, []);
+
+  // Enkel tags tonen die effectief door minstens 1 (zichtbare) inspiratie-post
+  // gebruikt worden — een lege/ongebruikte tag in de dropdown zou enkel
+  // verwarren (levert toch altijd 0 resultaten op).
+  const tagsInUse = useMemo(() => {
+    if (!posts) return [];
+    const usedIds = new Set();
+    posts.forEach((p) => (p.tags || []).forEach((tid) => usedIds.add(tid)));
+    return allTags.filter((tag) => usedIds.has(tag.id));
+  }, [posts, allTags]);
 
   const filteredPosts = useMemo(() => {
     if (!posts) return posts;
-    if (!activeCategory) return posts;
-    return posts.filter((p) => p.category === activeCategory);
-  }, [posts, activeCategory]);
+    let result = posts;
+    if (activeCategory) result = result.filter((p) => p.category === activeCategory);
+    if (activeTag) result = result.filter((p) => (p.tags || []).includes(activeTag));
+    return result;
+  }, [posts, activeCategory, activeTag]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16" data-testid="inspiratie-page">
@@ -117,6 +157,10 @@ export default function Inspiratie() {
 
       {posts && posts.length > 0 && (
         <CategoryFilter active={activeCategory} setActive={setActiveCategory} t={t} />
+      )}
+
+      {posts && posts.length > 0 && (
+        <TagFilter tagsInUse={tagsInUse} activeTag={activeTag} setActiveTag={setActiveTag} i18n={i18n} />
       )}
 
       {posts && posts.length === 0 && (
