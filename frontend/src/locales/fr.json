@@ -869,6 +869,7 @@
     "general_option": "général",
     "note_placeholder": "Intention, dimensions, quantité, couleur, ... (facultatif)",
     "add_material": "Ajouter le matériau",
+    "save_material_edit": "Enregistrer la modification",
     "upload_failed": "Échec du téléchargement. Réessayez.",
 
     "admin_org_label": "Organisation",

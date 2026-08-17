@@ -93,6 +93,7 @@ function ProjectList({ onSelect }) {
 function ProjectDetail({ id, onBack }) {
   const [sr, setSr] = useState(null);
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api.get(`/admin/search-requests/${id}`)
@@ -112,6 +113,18 @@ function ProjectDetail({ id, onBack }) {
     return sub ? sub.nl : subKey;
   };
 
+  const deleteRequest = async () => {
+    if (!window.confirm('Dit zoekertje definitief verwijderen? Dit kan niet ongedaan gemaakt worden.')) return;
+    setBusy(true);
+    try {
+      await api.delete(`/search-requests/${id}`);
+      onBack();
+    } catch (e) {
+      alert(formatApiError(e));
+      setBusy(false);
+    }
+  };
+
   return (
     <div data-testid="admin-zoekertje-detail">
       <button onClick={onBack} className="text-sm text-muted-foreground hover:underline mb-6" data-testid="admin-zoekertje-detail-back">
@@ -121,11 +134,26 @@ function ProjectDetail({ id, onBack }) {
       {!sr && !error && <p className="text-muted-foreground">Laden…</p>}
       {sr && (
         <div className="max-w-2xl space-y-8">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">{sr.projectName || '(geen projectnaam)'}</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Status: <em>{sr.status}</em> · Deadline: {sr.deadline ? new Date(sr.deadline).toLocaleDateString('nl-BE') : '—'}
-            </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">{sr.projectName || '(geen projectnaam)'}</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Status: <em>{sr.status}</em> · Deadline: {sr.deadline ? new Date(sr.deadline).toLocaleDateString('nl-BE') : '—'}
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Link to={`/admin/zoekertje/${sr.id}/bewerken`} className="btn-secondary !py-2" data-testid="admin-zoekertje-edit-btn">
+                Bewerken
+              </Link>
+              <button
+                onClick={deleteRequest}
+                disabled={busy}
+                className="btn-ghost !py-2 text-sm text-destructive hover:underline"
+                data-testid="admin-zoekertje-delete-btn"
+              >
+                Verwijderen
+              </button>
+            </div>
           </div>
 
           <dl className="border-t border-border divide-y divide-border">

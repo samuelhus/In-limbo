@@ -29,7 +29,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
   const { id: searchRequestId } = useParams();
   const { user } = useAuth();
 
-  const [step, setStep] = useState(adminMode ? 0 : 1); // stap 0 = admin org-keuze (enkel adminMode)
+  const [step, setStep] = useState(adminMode && !editMode ? 0 : (adminMode ? 2 : 1)); // stap 0 = admin org-keuze, enkel bij nieuw aanmaken; bij bewerken ligt de organisatie al vast
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [loadingExisting, setLoadingExisting] = useState(editMode);
@@ -51,6 +51,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
   const [matMainCat, setMatMainCat] = useState(null);
   const [matSubCat, setMatSubCat] = useState(null);
   const [matNote, setMatNote] = useState('');
+  const [editingMaterialIndex, setEditingMaterialIndex] = useState(null); // null = nieuw materiaal, anders index van bestaand item
   const [uploading, setUploading] = useState(false);
   const stepContentRef = React.useRef(null);
 
@@ -127,6 +128,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
     setMatMainCat(cat);
     setMatSubCat(null);
     setMatNote('');
+    setEditingMaterialIndex(null);
     if (cat.subcategories.length > 0) {
       setMatSubStep(MAT_STEP_SUBCAT);
     } else {
@@ -138,19 +140,37 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
     setMatSubCat(subKey);
     setMatSubStep(MAT_STEP_NOTE);
   };
+  // Bestaand materiaal bewerken: enkel de opmerking is aanpasbaar, categorie/subcategorie
+  // blijven ongewijzigd — je springt dus meteen naar de notitie-substap.
+  const startEditMaterial = (idx) => {
+    const item = data.materials[idx];
+    const cat = findCat(item.hoofdcategorie);
+    if (!cat) return;
+    setMatMainCat(cat);
+    setMatSubCat(item.subcategorie);
+    setMatNote(item.opmerking || '');
+    setEditingMaterialIndex(idx);
+    setMatSubStep(MAT_STEP_NOTE);
+  };
   const confirmMaterial = () => {
-    setData((d) => ({
-      ...d,
-      materials: [...d.materials, {
+    setData((d) => {
+      const newItem = {
         hoofdcategorie: matMainCat.key,
         subcategorie: matSubCat,
         opmerking: matNote.trim() || null,
-      }],
-    }));
+      };
+      if (editingMaterialIndex !== null) {
+        const materials = [...d.materials];
+        materials[editingMaterialIndex] = newItem;
+        return { ...d, materials };
+      }
+      return { ...d, materials: [...d.materials, newItem] };
+    });
     setMatSubStep(MAT_STEP_GRID);
     setMatMainCat(null);
     setMatSubCat(null);
     setMatNote('');
+    setEditingMaterialIndex(null);
   };
   const removeMaterial = (idx) => setData((d) => ({ ...d, materials: d.materials.filter((_, i) => i !== idx) }));
   const cancelMaterialSubFlow = () => {
@@ -158,6 +178,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
     setMatMainCat(null);
     setMatSubCat(null);
     setMatNote('');
+    setEditingMaterialIndex(null);
   };
 
   const catLabel = (cat) => (lang === 'fr' ? cat.fr : cat.nl);
@@ -186,7 +207,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
       cancelMaterialSubFlow();
       return;
     }
-    setStep((s) => Math.max(adminMode ? 0 : 1, s - 1));
+    setStep((s) => Math.max(adminMode && !editMode ? 0 : (adminMode ? 2 : 1), s - 1));
   };
 
   const submit = async () => {
@@ -427,14 +448,24 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
                       <p className="font-medium text-sm">{cat ? catLabel(cat) : m.hoofdcategorie}: {label}</p>
                       {m.opmerking && <p className="text-xs text-muted-foreground mt-0.5">{m.opmerking}</p>}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeMaterial(i)}
-                      className="text-xs text-muted-foreground hover:text-destructive shrink-0"
-                      data-testid={`wizard-remove-material-${i}`}
-                    >
-                      ✕ {t('common.remove')}
-                    </button>
+                    <div className="flex gap-3 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => startEditMaterial(i)}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                        data-testid={`wizard-edit-material-${i}`}
+                      >
+                        {t('common.edit')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeMaterial(i)}
+                        className="text-xs text-muted-foreground hover:text-destructive"
+                        data-testid={`wizard-remove-material-${i}`}
+                      >
+                        ✕ {t('common.remove')}
+                      </button>
+                    </div>
                   </li>
                 );
               })}
@@ -495,7 +526,13 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
             <div data-testid="wizard-note-step" className="space-y-4">
               <button
                 type="button"
-                onClick={() => setMatSubStep(matMainCat.subcategories.length > 0 ? MAT_STEP_SUBCAT : MAT_STEP_GRID)}
+                onClick={() => {
+                  if (editingMaterialIndex !== null) {
+                    cancelMaterialSubFlow(); // bewerken: terug naar de lijst, categorie ligt al vast
+                  } else {
+                    setMatSubStep(matMainCat.subcategories.length > 0 ? MAT_STEP_SUBCAT : MAT_STEP_GRID);
+                  }
+                }}
                 className="text-sm text-muted-foreground hover:underline"
               >
                 ← {t('common.back')}
@@ -517,7 +554,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
                 autoFocus
               />
               <button type="button" onClick={confirmMaterial} className="btn-primary" data-testid="wizard-confirm-material-btn">
-                {t('search_request.add_material')}
+                {editingMaterialIndex !== null ? t('search_request.save_material_edit') : t('search_request.add_material')}
               </button>
             </div>
           )}
@@ -558,7 +595,7 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
       )}
 
       <div className="mt-12 flex justify-between border-t border-border pt-6">
-        <button onClick={back} disabled={step === (adminMode ? 0 : 1)} className="btn-secondary disabled:opacity-30" data-testid="wizard-back-btn">
+        <button onClick={back} disabled={step === (adminMode && !editMode ? 0 : (adminMode ? 2 : 1))} className="btn-secondary disabled:opacity-30" data-testid="wizard-back-btn">
           ← {t('common.back')}
         </button>
         {step < 4 && (

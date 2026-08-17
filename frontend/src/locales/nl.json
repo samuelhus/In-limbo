@@ -859,6 +859,7 @@
     "general_option": "algemeen",
     "note_placeholder": "Intentie, afmetingen, hoeveelheid, kleur, ... (optioneel)",
     "add_material": "Materiaal toevoegen",
+    "save_material_edit": "Wijziging opslaan",
     "upload_failed": "Upload mislukt. Probeer opnieuw.",
 
     "admin_org_label": "Organisatie",
