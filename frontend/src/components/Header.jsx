@@ -216,10 +216,32 @@ export default function Header() {
                       to="/aanvragen"
                       data-testid="nav-aanvragen"
                       className={({ isActive }) =>
-                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
                       }
                     >
                       {t('nav.my_applications')}
+                    </NavLink>
+                  )}
+                  {isValidated && (
+                    <NavLink
+                      to="/zoekertje/nieuw"
+                      data-testid="nav-new-search-request"
+                      className={({ isActive }) =>
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors border-b border-border ${isActive ? 'text-foreground font-medium' : ''}`
+                      }
+                    >
+                      {t('nav.new_search_request')}
+                    </NavLink>
+                  )}
+                  {isValidated && (
+                    <NavLink
+                      to="/mijn-zoekertjes"
+                      data-testid="nav-mijn-zoekertjes"
+                      className={({ isActive }) =>
+                        `block px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-[#ADEBB3] transition-colors ${isActive ? 'text-foreground font-medium' : ''}`
+                      }
+                    >
+                      {t('nav.my_search_requests')}
                     </NavLink>
                   )}
                 </div>
@@ -439,6 +461,26 @@ export default function Header() {
                           className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
                         >
                           → {t('nav.my_applications')}
+                        </NavLink>
+                      )}
+                      {isValidated && (
+                        <NavLink
+                          to="/zoekertje/nieuw"
+                          data-testid="mobile-nav-new-search-request"
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                        >
+                          → {t('nav.new_search_request')}
+                        </NavLink>
+                      )}
+                      {isValidated && (
+                        <NavLink
+                          to="/mijn-zoekertjes"
+                          data-testid="mobile-nav-mijn-zoekertjes"
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) => `${mobileSubItemClass} ${isActive ? 'text-foreground font-medium' : ''}`}
+                        >
+                          → {t('nav.my_search_requests')}
                         </NavLink>
                       )}
                     </>

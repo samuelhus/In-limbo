@@ -398,3 +398,82 @@ class AdminOrgUpdate(BaseModel):
     status: Optional[Literal["pending", "validated", "active", "inactive", "rejected"]] = None
     photos: Optional[List[str]] = None
     slug: Optional[str] = None
+
+
+# ---------- Zoekertjes (search_requests) ----------
+import json as _json
+import os as _os
+
+_CATEGORIES_PATH = _os.path.join(_os.path.dirname(__file__), "material_categories.json")
+with open(_CATEGORIES_PATH, "r", encoding="utf-8") as _f:
+    MATERIAL_CATEGORIES: list[dict] = _json.load(_f)
+
+# hoofdcategorie-sleutel -> set van geldige (sub)categorie-sleutels, waarbij de
+# hoofdcategorie zelf ook een geldige "subcategorie"-keuze is (zie PRD §4 stap 2)
+MATERIAL_SUBCATEGORY_MAP: dict[str, set[str]] = {
+    c["key"]: {c["key"]} | {s["key"] for s in c["subcategories"]}
+    for c in MATERIAL_CATEGORIES
+}
+MATERIAL_MAIN_CATEGORY_KEYS: set[str] = set(MATERIAL_SUBCATEGORY_MAP.keys())
+
+SearchRequestProjectType = Literal[
+    "verbouwing", "workshop", "kunst", "scenografie", "voorstelling", "infrastructuur", "ander",
+]
+SEARCH_REQUEST_PROJECT_TYPES = {
+    "verbouwing", "workshop", "kunst", "scenografie", "voorstelling", "infrastructuur", "ander",
+}
+SearchRequestStatus = Literal["actief", "verlopen"]
+
+
+class SearchRequestMaterialItem(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    hoofdcategorie: str
+    subcategorie: str
+    opmerking: Optional[str] = Field(None, max_length=500)
+
+    @model_validator(mode="after")
+    def _validate_categories(self):
+        if self.hoofdcategorie not in MATERIAL_MAIN_CATEGORY_KEYS:
+            raise ValueError(f"Onbekende hoofdcategorie: {self.hoofdcategorie}")
+        valid_subs = MATERIAL_SUBCATEGORY_MAP[self.hoofdcategorie]
+        if self.subcategorie not in valid_subs:
+            raise ValueError(f"Ongeldige subcategorie '{self.subcategorie}' voor hoofdcategorie '{self.hoofdcategorie}'")
+        return self
+
+
+class SearchRequestBase(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    projectName: Optional[str] = Field(None, max_length=100)
+    location: Optional[str] = Field(None, max_length=200)
+    projectType: Optional[SearchRequestProjectType] = None
+    shortDescription: Optional[str] = Field(None, max_length=500)
+    deadline: Optional[str] = None  # ISO-datum
+    photos: List[str] = Field(default_factory=list, max_length=5)
+    materials: List[SearchRequestMaterialItem] = Field(default_factory=list)
+
+
+class SearchRequestCreateBody(SearchRequestBase):
+    """Body for POST /api/search-requests (gevalideerde gebruiker).
+    Server valideert de user-verplichte velden na ontvangst (zie route),
+    zodat dezelfde body-vorm ook voor de admin-variant hergebruikt kan worden."""
+    pass
+
+
+class SearchRequestAdminCreateBody(SearchRequestBase):
+    """Body for POST /api/admin/search-requests (admin, namens een organisatie/gebruiker).
+    Geen enkel veld is technisch verplicht — zie PRD §5."""
+    organisationId: str
+    createdByUserId: Optional[str] = None
+
+
+class SearchRequestUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    projectName: Optional[str] = Field(None, max_length=100)
+    location: Optional[str] = Field(None, max_length=200)
+    projectType: Optional[SearchRequestProjectType] = None
+    shortDescription: Optional[str] = Field(None, max_length=500)
+    deadline: Optional[str] = None
+    photos: Optional[List[str]] = Field(None, max_length=5)
+    materials: Optional[List[SearchRequestMaterialItem]] = None
+    closed: Optional[bool] = None  # gebruiker sluit het zoekertje handmatig af (§5)
+

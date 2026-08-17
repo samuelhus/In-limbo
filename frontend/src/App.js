@@ -19,6 +19,8 @@ import Rejected from '@/pages/Rejected';
 import Catalogus from '@/pages/Catalogus';
 import ListingDetail from '@/pages/ListingDetail';
 import ListingWizard from '@/pages/ListingWizard';
+import SearchRequestWizard from '@/pages/SearchRequestWizard';
+import MijnZoekertjes from '@/pages/MijnZoekertjes';
 import OrganisationPage from '@/pages/OrganisationPage';
 import Profiel from '@/pages/Profiel';
 import MijnOrganisatie from '@/pages/MijnOrganisatie';
@@ -168,6 +170,30 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/zoekertje/nieuw"
+                element={
+                  <ProtectedRoute>
+                    <SearchRequestWizard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/zoekertje/:id/bewerken"
+                element={
+                  <ProtectedRoute>
+                    <SearchRequestWizard editMode />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mijn-zoekertjes"
+                element={
+                  <ProtectedRoute>
+                    <MijnZoekertjes />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/admin"
@@ -183,6 +209,23 @@ export default function App() {
                 element={
                   <ProtectedRoute requireAdmin requireValidated={false}>
                     <AdminDonateurListings />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/zoekertje/nieuw"
+                element={
+                  <ProtectedRoute requireAdmin requireValidated={false}>
+                    <SearchRequestWizard adminMode />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/zoekertje/:id/bewerken"
+                element={
+                  <ProtectedRoute requireAdmin requireValidated={false}>
+                    <SearchRequestWizard adminMode editMode />
                   </ProtectedRoute>
                 }
               />

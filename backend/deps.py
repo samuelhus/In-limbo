@@ -96,6 +96,24 @@ async def generate_unique_listing_slug(db, title: str, listing_id: str | None = 
         counter += 1
 
 
+async def generate_unique_search_request_slug(db, project_name: str | None, search_request_id: str | None = None) -> str:
+    """Genereert een unieke slug voor een zoekertje, op basis van de projectnaam
+    (zelfde patroon als listings/organisaties). Admin-aangemaakte zoekertjes hebben
+    soms geen projectnaam, vandaar de fallback."""
+    base = slugify(project_name) if project_name else "zoekertje"
+    slug = base
+    counter = 2
+    while True:
+        query = {"slug": slug}
+        if search_request_id:
+            query["id"] = {"$ne": search_request_id}
+        existing = await db.search_requests.find_one(query, {"_id": 0, "id": 1})
+        if not existing:
+            return slug
+        slug = f"{base}-{counter}"
+        counter += 1
+
+
 DEFAULT_EMAIL_PREFS = {
     "new_application": True,
     "selected_as_receiver": True,

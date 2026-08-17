@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import AdminNieuws from './admin/AdminNieuws';
@@ -6,12 +7,14 @@ import AdminTransacties from './admin/AdminTransacties';
 import Statistieken from './admin/Statistieken';
 import AdminGebruikers from './admin/AdminGebruikers';
 import AdminOrganisaties from './admin/AdminOrganisaties';
+import AdminZoekertjes from './admin/AdminZoekertjes';
 
 const SECTIONS = [
   { key: 'validatie', label: 'Validatie' },
   { key: 'gebruikers', label: 'Gebruikers' },
   { key: 'organisaties', label: 'Organisaties' },
   { key: 'nieuws', label: 'Nieuws' },
+  { key: 'zoekertjes', label: 'Zoekertjes' },
   { key: 'statistieken', label: 'Statistieken' },
   { key: 'transacties', label: 'Transacties' },
   { key: 'meldingen', label: 'Meldingen' },
@@ -23,6 +26,7 @@ const SECTION_TITLES = {
   gebruikers: 'Gebruikers',
   organisaties: 'Organisaties',
   nieuws: 'Nieuws',
+  zoekertjes: 'Zoekertjes',
   statistieken: 'Statistieken',
   transacties: 'Transacties',
   meldingen: 'Meldingen',
@@ -168,6 +172,11 @@ export default function AdminPanel() {
               Onderhoud uitvoeren
             </button>
           )}
+          {section === 'zoekertjes' && (
+            <Link to="/admin/zoekertje/nieuw" className="btn-primary" data-testid="admin-zoekertjes-new-btn">
+              Nieuw zoekertje →
+            </Link>
+          )}
         </div>
 
         {err && <p className="text-destructive mb-6" data-testid="admin-error">{err}</p>}
@@ -301,6 +310,8 @@ export default function AdminPanel() {
         {section === 'organisaties' && <AdminOrganisaties />}
 
         {section === 'nieuws' && <AdminNieuws />}
+
+        {section === 'zoekertjes' && <AdminZoekertjes />}
 
         {section === 'statistieken' && <Statistieken />}
 
