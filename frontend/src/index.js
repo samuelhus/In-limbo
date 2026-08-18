@@ -11,6 +11,14 @@ Sentry.init({
   integrations: [Sentry.browserTracingIntegration()],
   tracesSampleRate: 0.2,
   sendDefaultPii: false,
+  // Ruis van in-app-browsers (Facebook/Instagram/LinkedIn e.d. op Android) —
+  // hun eigen WebView-performance-logger crasht soms intern, los van onze code.
+  // Zie: https://github.com/exercism/website/issues/9028 (ongerelateerd project,
+  // exact dezelfde foutmelding, bevestigt dat dit een generiek Android-fenomeen is).
+  ignoreErrors: [
+    "Java object is gone",
+    /iabjs:\/\//,
+  ],
 });
 
 // Umami-analytics: enkel activeren als beide env-vars effectief gezet zijn
