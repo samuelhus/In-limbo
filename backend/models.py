@@ -162,8 +162,17 @@ class RegisterDonateur(BaseModel):
     username: str
     email: EmailStr
     password: str = Field(..., min_length=8)
+    firstName: str = Field(..., min_length=1, max_length=100)
+    donorType: Literal["particulier", "bedrijf"]
+    companyName: Optional[str] = Field(None, max_length=150)
     acceptedTerms: bool
     preferredLanguage: Literal["nl", "fr"] = "nl"
+
+    @model_validator(mode="after")
+    def _validate_company_name(self):
+        if self.donorType == "bedrijf" and not (self.companyName and self.companyName.strip()):
+            raise ValueError("Bedrijfsnaam is verplicht wanneer donorType 'bedrijf' is")
+        return self
 
 
 class AdminDecision(BaseModel):
@@ -194,6 +203,11 @@ class UserUpdate(BaseModel):
     password: Optional[str] = Field(None, min_length=8)
     username: Optional[str] = None
     preferredLanguage: Optional[Literal["nl", "fr"]] = None
+    # Enkel relevant voor donateur-accounts. Bestaande donateurs (van vóór
+    # deze feature) vullen dit vrijwillig aan via hun profiel — vandaar
+    # optioneel, i.t.t. bij nieuwe registraties waar het verplicht is.
+    donorType: Optional[Literal["particulier", "bedrijf"]] = None
+    companyName: Optional[str] = Field(None, max_length=150)
 
 
 class OrgUpdate(BaseModel):

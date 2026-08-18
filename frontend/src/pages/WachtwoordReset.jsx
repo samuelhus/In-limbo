@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function WachtwoordReset() {
   const { t } = useTranslation();
@@ -63,8 +64,7 @@ export default function WachtwoordReset() {
       </p>
 
       <div className="space-y-4">
-        <input
-          type="password"
+        <PasswordInput
           className="input-flat w-full"
           placeholder={t('auth.new_password')}
           value={password}
@@ -72,8 +72,7 @@ export default function WachtwoordReset() {
           data-testid="reset-password-input"
           autoFocus
         />
-        <input
-          type="password"
+        <PasswordInput
           className="input-flat w-full"
           placeholder={t('auth.confirm_password')}
           value={confirm}

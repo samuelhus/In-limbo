@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import PasswordInput from '@/components/PasswordInput';
 
 function StepIndicator({ step, max }) {
   return (
@@ -26,7 +27,7 @@ export default function DonateurRegister() {
 
   const [step, setStep] = useState(1);
   const [terms, setTerms] = useState(false);
-  const [form, setForm] = useState({ username: '', email: '', password: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '', firstName: '', donorType: 'particulier', companyName: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,7 +35,9 @@ export default function DonateurRegister() {
   const back = () => setStep((s) => Math.max(1, s - 1));
 
   const canNext1 = terms;
-  const canNext2 = form.username.trim() && form.email.trim() && form.password.length >= 8;
+  const canNext2 = form.username.trim() && form.email.trim() && form.password.length >= 8
+    && form.firstName.trim()
+    && (form.donorType === 'particulier' || form.companyName.trim());
 
   const submit = async () => {
     setSubmitting(true);
@@ -111,6 +114,53 @@ export default function DonateurRegister() {
             />
           </div>
           <div>
+            <label className="label-overline">{t('auth.donateur_first_name_label')}</label>
+            <input
+              className="input-flat"
+              data-testid="donateur-firstname"
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label-overline">{t('auth.donateur_type_question')}</label>
+            <div className="flex gap-4 mt-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="donorType"
+                  value="particulier"
+                  checked={form.donorType === 'particulier'}
+                  onChange={() => setForm({ ...form, donorType: 'particulier', companyName: '' })}
+                  data-testid="donateur-type-particulier"
+                />
+                <span className="text-sm">{t('auth.donateur_type_particulier')}</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="donorType"
+                  value="bedrijf"
+                  checked={form.donorType === 'bedrijf'}
+                  onChange={() => setForm({ ...form, donorType: 'bedrijf' })}
+                  data-testid="donateur-type-bedrijf"
+                />
+                <span className="text-sm">{t('auth.donateur_type_bedrijf')}</span>
+              </label>
+            </div>
+          </div>
+          {form.donorType === 'bedrijf' && (
+            <div>
+              <label className="label-overline">{t('auth.donateur_company_name_label')}</label>
+              <input
+                className="input-flat"
+                data-testid="donateur-companyname"
+                value={form.companyName}
+                onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+              />
+            </div>
+          )}
+          <div>
             <label className="label-overline">{t('auth.email')}</label>
             <input
               type="email"
@@ -124,8 +174,7 @@ export default function DonateurRegister() {
             <label className="label-overline">
               {t('auth.password')} <span className="text-muted-foreground normal-case">{t('auth.donateur_password_hint')}</span>
             </label>
-            <input
-              type="password"
+            <PasswordInput
               className="input-flat"
               data-testid="donateur-password"
               value={form.password}
@@ -151,12 +200,24 @@ export default function DonateurRegister() {
               <dd className="text-foreground/85">{form.username}</dd>
             </div>
             <div className="flex items-start gap-6 py-3">
+              <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.donateur_first_name_label')}</dt>
+              <dd className="text-foreground/85">{form.firstName}</dd>
+            </div>
+            <div className="flex items-start gap-6 py-3">
               <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.donateur_confirm_email_label')}</dt>
               <dd className="text-foreground/85">{form.email}</dd>
             </div>
             <div className="flex items-start gap-6 py-3">
               <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.donateur_type_label')}</dt>
               <dd className="text-foreground/85">{t('auth.donateur_type_value')}</dd>
+            </div>
+            <div className="flex items-start gap-6 py-3">
+              <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.donateur_donor_type_label')}</dt>
+              <dd className="text-foreground/85">
+                {form.donorType === 'bedrijf'
+                  ? `${t('auth.donateur_type_bedrijf')} — ${form.companyName}`
+                  : t('auth.donateur_type_particulier')}
+              </dd>
             </div>
           </dl>
 

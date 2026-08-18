@@ -196,7 +196,7 @@ async def register_donateur(request: Request, body: RegisterDonateur = Body(...)
         "email": email,
         "passwordHash": hash_password(body.password),
         "username": body.username,
-        "firstName": None,
+        "firstName": body.firstName,
         "lastName": None,
         "phone": None,
         "role": "donateur",
@@ -206,6 +206,8 @@ async def register_donateur(request: Request, body: RegisterDonateur = Body(...)
         "dateLastLogin": None,
         "createdAt": now,
         "preferredLanguage": body.preferredLanguage,
+        "donorType": body.donorType,
+        "companyName": body.companyName,
     })
     token = create_access_token(user_id, email, "donateur")
     set_auth_cookie(response, token)

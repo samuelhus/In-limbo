@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Info } from 'lucide-react';
+import PasswordInput from '@/components/PasswordInput';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
@@ -75,9 +76,8 @@ export default function Login() {
           </div>
           <div>
             <label className="label-overline" htmlFor="password">{t('auth.password')}</label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               required
               autoComplete="current-password"
               value={password}

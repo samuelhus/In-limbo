@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
 import InfoHint from '@/components/InfoHint';
+import PasswordInput from '@/components/PasswordInput';
 
 const ORG_CATEGORY_KEYS = [
   'beeldende_kunsten', 'jeugdwerk', 'podiumkunsten', 'noodopvang',
@@ -228,7 +229,7 @@ export default function Register() {
           </div>
           <div>
             <label className="label-overline">{t('register.password')} <span className="text-muted-foreground normal-case">({t('register.password_hint')})</span></label>
-            <input type="password" className="input-flat" data-testid="register-password" value={user.password}
+            <PasswordInput className="input-flat" data-testid="register-password" value={user.password}
               onChange={(e) => setUser({...user, password: e.target.value})} />
           </div>
           <div className="flex justify-between">

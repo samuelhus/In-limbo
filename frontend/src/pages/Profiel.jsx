@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatApiError } from '@/lib/api';
+import PasswordInput from '@/components/PasswordInput';
 
 const EMAIL_PREF_LABELS = [
   { key: 'new_application', labelKey: 'profile.pref_new_application' },
@@ -25,6 +26,8 @@ export default function Profiel() {
     phone: user.phone || '',
     password: '',
     preferredLanguage: user.preferredLanguage || 'nl',
+    donorType: user.donorType || 'particulier',
+    companyName: user.companyName || '',
   });
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -45,8 +48,12 @@ export default function Profiel() {
       .then(({ data }) => setPrefs(data))
       .catch(() => setPrefs({}));
 
-    if (!isDonateur && user.organisationId) {
-      api.get('/organisations/me/stats/available-years')
+    const reportEndpoint = isDonateur
+      ? '/donateur/me/stats/available-years'
+      : (user.organisationId ? '/organisations/me/stats/available-years' : null);
+
+    if (reportEndpoint) {
+      api.get(reportEndpoint)
         .then(({ data }) => {
           const currentYear = String(new Date().getFullYear());
           const years = (data?.years && data.years.length > 0)
@@ -68,7 +75,8 @@ export default function Profiel() {
     setReportBusy(true);
     try {
       const lang = 'nl';
-      const response = await api.get('/organisations/me/stats/report', {
+      const endpoint = isDonateur ? '/donateur/me/stats/report' : '/organisations/me/stats/report';
+      const response = await api.get(endpoint, {
         params: { year: reportYear, lang },
         responseType: 'blob',
       });
@@ -110,11 +118,12 @@ export default function Profiel() {
       const payload = { ...form };
       if (!payload.password) delete payload.password;
       if (isDonateur) {
-        delete payload.firstName;
         delete payload.lastName;
         delete payload.phone;
       } else {
         delete payload.username;
+        delete payload.donorType;
+        delete payload.companyName;
       }
       await api.patch('/users/me', payload);
       await refresh();
@@ -150,18 +159,73 @@ export default function Profiel() {
 
       <form onSubmit={save} className="space-y-5">
         {isDonateur ? (
-          <div>
-            <label className="label-overline">{t('profile.username_label')}</label>
-            <input
-              className="input-flat"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              data-testid="profiel-username"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('profile.username_public_hint')}
-            </p>
-          </div>
+          <>
+            <div>
+              <label className="label-overline">{t('profile.username_label')}</label>
+              <input
+                className="input-flat"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                data-testid="profiel-username"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('profile.username_public_hint')}
+              </p>
+            </div>
+            <div>
+              <label className="label-overline">{t('auth.donateur_first_name_label')}</label>
+              <input
+                className="input-flat"
+                value={form.firstName}
+                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                data-testid="profiel-firstname"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('profile.donateur_first_name_hint')}
+              </p>
+            </div>
+            <div>
+              <label className="label-overline">{t('auth.donateur_type_question')}</label>
+              <div className="flex gap-4 mt-1">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="donorType"
+                    value="particulier"
+                    checked={form.donorType === 'particulier'}
+                    onChange={() => setForm({ ...form, donorType: 'particulier' })}
+                    data-testid="profiel-donortype-particulier"
+                  />
+                  <span className="text-sm">{t('auth.donateur_type_particulier')}</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="donorType"
+                    value="bedrijf"
+                    checked={form.donorType === 'bedrijf'}
+                    onChange={() => setForm({ ...form, donorType: 'bedrijf' })}
+                    data-testid="profiel-donortype-bedrijf"
+                  />
+                  <span className="text-sm">{t('auth.donateur_type_bedrijf')}</span>
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('profile.donateur_donor_type_hint')}
+              </p>
+            </div>
+            {form.donorType === 'bedrijf' && (
+              <div>
+                <label className="label-overline">{t('auth.donateur_company_name_label')}</label>
+                <input
+                  className="input-flat"
+                  value={form.companyName}
+                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                  data-testid="profiel-companyname"
+                />
+              </div>
+            )}
+          </>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -198,7 +262,7 @@ export default function Profiel() {
         </div>
         <div>
           <label className="label-overline">{t('profile.new_password')}</label>
-          <input type="password" className="input-flat" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} data-testid="profiel-password" />
+          <PasswordInput className="input-flat" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} data-testid="profiel-password" />
         </div>
 
         {msg && <p className="text-sm bg-green-50 border border-green-300 text-green-900 px-3 py-2" data-testid="profiel-success">{msg}</p>}
@@ -218,35 +282,35 @@ export default function Profiel() {
           <Link to="/organisatie" className="btn-primary inline-block" data-testid="profiel-organisatie-link">
             {t('profile.my_organisation_link')}
           </Link>
+        </div>
+      )}
 
-          {user.organisationId && (
-            <div className="mt-6 border-t border-border pt-6" data-testid="profiel-report-section">
-              <p className="overline mb-1">{t('profile.report_title')}</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t('profile.report_subtitle')}
-              </p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <select
-                  value={reportYear}
-                  onChange={(e) => setReportYear(e.target.value)}
-                  className="input-flat"
-                  data-testid="profiel-report-year-select"
-                >
-                  {reportYears.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={downloadReport}
-                  disabled={reportBusy || !reportYear}
-                  className="btn-secondary"
-                  data-testid="profiel-report-download-btn"
-                >
-                  {reportBusy ? t('profile.report_downloading') : t('profile.report_download_btn')}
-                </button>
-              </div>
-            </div>
-          )}
+      {(isDonateur || user.organisationId) && (
+        <div className="mt-16 border-t border-border pt-6" data-testid="profiel-report-section">
+          <p className="overline mb-1">{t('profile.report_title')}</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {isDonateur ? t('profile.report_subtitle_donateur') : t('profile.report_subtitle')}
+          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={reportYear}
+              onChange={(e) => setReportYear(e.target.value)}
+              className="input-flat"
+              data-testid="profiel-report-year-select"
+            >
+              {reportYears.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <button
+              onClick={downloadReport}
+              disabled={reportBusy || !reportYear}
+              className="btn-secondary"
+              data-testid="profiel-report-download-btn"
+            >
+              {reportBusy ? t('profile.report_downloading') : t('profile.report_download_btn')}
+            </button>
+          </div>
         </div>
       )}
 
