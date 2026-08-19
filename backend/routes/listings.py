@@ -368,8 +368,15 @@ async def create_listing(body: ListingCreateBody, user: dict = Depends(get_donat
         if doc.get("organisationId"):
             org = await db.organisations.find_one({"id": doc["organisationId"]})
             offerer_label = org["name"] if org else None
+        elif is_donateur:
+            # Bedrijfs-donateur: voornaam van het bedrijf (bv. "Jan van Acme bvba").
+            # Particuliere donateur: username, want die heeft geen organisatienaam.
+            if user.get("donorType") == "bedrijf" and user.get("companyName"):
+                offerer_label = f'{user.get("firstName") or ""} van {user["companyName"]}'.strip()
+            else:
+                offerer_label = user.get("username")
         if not offerer_label:
-            offerer_label = f'{user.get("firstName", "")} {user.get("lastName", "")}'.strip() or "Iemand"
+            offerer_label = f'{user.get("firstName") or ""} {user.get("lastName") or ""}'.strip() or "Iemand"
         await notify_ntfy(
             title="Nieuwe aanbieding",
             message=f'{offerer_label} plaatste "{body.title}" ({body.material}).',
