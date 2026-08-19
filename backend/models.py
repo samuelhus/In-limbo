@@ -246,6 +246,10 @@ NIEUWS_CATEGORIES = {'nieuws', 'helpende_handen', 'opleiding', 'giveaway'}
 INSPIRATIE_CATEGORIES = {'artikel', 'partner_project', 'documentatie'}
 INSPIRATIE_GALLERY_CATEGORIES = {'artikel', 'partner_project', 'documentatie'}
 MAX_GALLERY_PHOTOS = 10
+# Categorieën die een evenement beschrijven (helpende handen, giveaway,
+# opleiding) hebben een verplichte evenementdatum, die op de site prominent
+# getoond wordt i.p.v. de publicatiedatum.
+EVENT_DATE_CATEGORIES = {'helpende_handen', 'giveaway', 'opleiding'}
 
 
 class NewsPostBase(BaseModel):
@@ -256,6 +260,10 @@ class NewsPostBase(BaseModel):
     # ---- nieuws: gekozen taal/talen (checkbox NL en/of FR) ----
     languages: Optional[List[PostLanguage]] = None
     photo: Optional[str] = None
+
+    # ---- nieuws, enkel categorieën in EVENT_DATE_CATEGORIES: datum van het
+    # evenement zelf (ISO-datum "YYYY-MM-DD"), i.p.v. de publicatiedatum ----
+    eventDate: Optional[str] = None
 
     # ---- gedeeld: titel/inhoud per taal ----
     # nieuws: enkel de gekozen taal/talen (uit 'languages') verplicht in te vullen
@@ -286,6 +294,8 @@ class NewsPostBase(BaseModel):
                 raise ValueError("Titel en inhoud in NL zijn verplicht wanneer NL is aangevinkt")
             if 'fr' in self.languages and (not self.titleFr or not self.contentFr):
                 raise ValueError("Titel en inhoud in FR zijn verplicht wanneer FR is aangevinkt")
+            if self.category in EVENT_DATE_CATEGORIES and not self.eventDate:
+                raise ValueError("Datum van het evenement is verplicht voor deze categorie")
             if self.photos and len(self.photos) > MAX_GALLERY_PHOTOS:
                 raise ValueError(f"Maximaal {MAX_GALLERY_PHOTOS} foto's toegelaten")
         else:
@@ -310,6 +320,7 @@ class NewsPostUpdate(BaseModel):
     category: Optional[str] = None
     languages: Optional[List[PostLanguage]] = None
     photo: Optional[str] = None
+    eventDate: Optional[str] = None
     titleNl: Optional[str] = Field(None, max_length=100)
     titleFr: Optional[str] = Field(None, max_length=100)
     contentNl: Optional[str] = Field(None, max_length=20000)

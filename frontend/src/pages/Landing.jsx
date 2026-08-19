@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
+import { CATEGORY_COLORS, formatDateNL, displayDateFor } from './Nieuws';
 import { INSPIRATIE_CATEGORY_COLORS } from './Inspiratie';
 
 const HERO_BG =
@@ -333,13 +333,16 @@ const isLoggedIn = user && typeof user === 'object';
             {landingPosts.map((p) => {
               const isInspiratie = p.postType === 'inspiratie';
               const lang = i18n.language?.startsWith('fr') ? 'fr' : 'nl';
-              const title = isInspiratie ? (p[`title${lang === 'fr' ? 'Fr' : 'Nl'}`] || p.titleNl || p.titleFr) : p.title;
+              const title = lang === 'fr' ? (p.titleFr || p.titleNl) : (p.titleNl || p.titleFr);
               const color = isInspiratie
                 ? (INSPIRATIE_CATEGORY_COLORS[p.category] || INSPIRATIE_CATEGORY_COLORS.artikel)
                 : (CATEGORY_COLORS[p.category] || CATEGORY_COLORS.nieuws);
               const label = isInspiratie ? t(`inspiratie.category_${p.category}`) : t(`news.category_${p.category}`);
               const cover = p.photo || (p.photos && p.photos[0]);
               const href = isInspiratie ? `/inspiratie/${p.id}` : `/nieuws/${p.id}`;
+              // EVENT_DATE_CATEGORIES bevat enkel nieuws-categorieën, dus dit
+              // valt voor inspiratie-posts vanzelf terug op createdAt.
+              const { date, isEventDate } = displayDateFor(p);
               return (
                 <MotionLink
                   key={p.id}
@@ -370,7 +373,8 @@ const isLoggedIn = user && typeof user === 'object';
                       {title}
                     </h3>
                     <p className="mt-3 text-xs text-muted-foreground">
-                      {formatDateNL(p.createdAt)}
+                      {isEventDate && <span className="font-medium text-foreground/70">{t('news.event_date_label')}: </span>}
+                      {formatDateNL(date)}
                     </p>
                   </div>
                 </MotionLink>

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
-import { CATEGORY_COLORS, formatDateNL } from './Nieuws';
+import { CATEGORY_COLORS, formatDateNL, displayDateFor } from './Nieuws';
 import Lightbox from '@/components/Lightbox';
 import { sanitizeRichText, legacyContentToHtml, hydrateRichTextEmbeds } from '@/lib/richtext';
 
@@ -54,6 +54,7 @@ export default function NieuwsDetail() {
   const label = t(`news.category_${post.category}`);
   const title = lang === 'fr' ? (post.titleFr || post.titleNl) : (post.titleNl || post.titleFr);
   const gallery = post.photos && post.photos.length > 0 ? post.photos : (post.photo ? [post.photo] : []);
+  const { date, isEventDate } = displayDateFor(post);
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12" data-testid="nieuws-detail-page">
@@ -116,7 +117,8 @@ export default function NieuwsDetail() {
         </span>
         <span className="w-1 h-1 rounded-full bg-muted-foreground" />
         <span className="text-muted-foreground" data-testid="nieuws-detail-date">
-          {formatDateNL(post.createdAt)}
+          {isEventDate && <span className="font-medium text-foreground/70">{t('news.event_date_label')}: </span>}
+          {formatDateNL(date)}
         </span>
       </p>
 

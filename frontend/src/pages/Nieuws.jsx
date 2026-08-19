@@ -10,6 +10,11 @@ export const CATEGORY_COLORS = {
   giveaway: '#34D399',
 };
 
+// Categorieën die een evenement beschrijven: hier tonen we prominent de
+// (verplichte) evenementdatum i.p.v. de publicatiedatum, want die laatste
+// is bij dit soort posts verwarrend (zie backend EVENT_DATE_CATEGORIES).
+export const EVENT_DATE_CATEGORIES = ['helpende_handen', 'giveaway', 'opleiding'];
+
 export function formatDateNL(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -18,11 +23,21 @@ export function formatDateNL(iso) {
   });
 }
 
+// Geeft de datum terug die voor deze post getoond moet worden, en of het om
+// een evenementdatum gaat (i.p.v. de publicatiedatum).
+export function displayDateFor(post) {
+  if (EVENT_DATE_CATEGORIES.includes(post.category) && post.eventDate) {
+    return { date: post.eventDate, isEventDate: true };
+  }
+  return { date: post.createdAt, isEventDate: false };
+}
+
 function NieuwsCard({ post, t, lang }) {
   const color = CATEGORY_COLORS[post.category] || CATEGORY_COLORS.nieuws;
   const label = t(`news.category_${post.category}`);
   const title = lang === 'fr' ? (post.titleFr || post.titleNl) : (post.titleNl || post.titleFr);
   const thumbnail = post.photo || (post.photos && post.photos[0]);
+  const { date, isEventDate } = displayDateFor(post);
   return (
     <Link
       to={`/nieuws/${post.id}`}
@@ -51,7 +66,8 @@ function NieuwsCard({ post, t, lang }) {
           {title}
         </h3>
         <p className="mt-3 text-xs text-muted-foreground">
-          {formatDateNL(post.createdAt)}
+          {isEventDate && <span className="font-medium text-foreground/70">{t('news.event_date_label')}: </span>}
+          {formatDateNL(date)}
         </p>
       </div>
     </Link>

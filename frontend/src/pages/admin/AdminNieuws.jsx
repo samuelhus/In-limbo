@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, formatApiError } from '@/lib/api';
 import { uploadToCloudinary } from '@/lib/cloudinary';
-import { formatDateNL } from '../Nieuws';
+import { formatDateNL, EVENT_DATE_CATEGORIES } from '../Nieuws';
 import RichTextEditor from '@/components/RichTextEditor';
 import { stripHtml } from '@/lib/richtext';
 
@@ -25,6 +25,7 @@ const EMPTY = {
   category: 'nieuws',
   languages: ['nl'],
   photo: '',
+  eventDate: '',
   titleNl: '',
   titleFr: '',
   contentNl: '',
@@ -75,6 +76,7 @@ export default function AdminNieuws() {
       category: p.category,
       languages: p.languages && p.languages.length ? p.languages : ['nl'],
       photo: p.photo || '',
+      eventDate: p.eventDate || '',
       titleNl: p.titleNl || '',
       titleFr: p.titleFr || '',
       contentNl: p.contentNl || '',
@@ -172,12 +174,16 @@ export default function AdminNieuws() {
         if (form.languages.includes('fr') && !stripHtml(form.contentFr)) {
           throw new Error('Inhoud (FR) mag niet leeg zijn.');
         }
+        if (EVENT_DATE_CATEGORIES.includes(form.category) && !form.eventDate) {
+          throw new Error('Datum van het evenement is verplicht voor deze categorie.');
+        }
         payload = {
           postType: 'nieuws',
           category: form.category,
           languages: form.languages,
           photo: form.photos[0] || null,
           photos: form.photos,
+          eventDate: EVENT_DATE_CATEGORIES.includes(form.category) ? form.eventDate : null,
         };
         if (form.languages.includes('nl')) {
           payload.titleNl = form.titleNl.trim();
@@ -292,6 +298,22 @@ export default function AdminNieuws() {
               ))}
             </select>
           </div>
+
+          {form.postType === 'nieuws' && EVENT_DATE_CATEGORIES.includes(form.category) && (
+            <div>
+              <label className="label-overline">
+                Datum evenement <span className="text-muted-foreground normal-case">(verplicht voor deze categorie — wordt op de site getoond i.p.v. de publicatiedatum)</span>
+              </label>
+              <input
+                type="date"
+                className="input-flat"
+                value={form.eventDate}
+                onChange={(e) => setForm({ ...form, eventDate: e.target.value })}
+                required
+                data-testid="admin-nieuws-event-date"
+              />
+            </div>
+          )}
 
           {form.postType === 'nieuws' ? (
             <>
@@ -610,6 +632,7 @@ export default function AdminNieuws() {
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
                   {typeLabel} · {CATEGORY_LABELS[p.category]} · {formatDateNL(p.createdAt)}
                   {langLabel ? ` · ${langLabel}` : ''}
+                  {EVENT_DATE_CATEGORIES.includes(p.category) && p.eventDate ? ` · Evenement: ${formatDateNL(p.eventDate)}` : ''}
                 </p>
               </div>
               <div className="md:col-span-4 flex flex-wrap gap-2 md:justify-end">

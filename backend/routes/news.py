@@ -6,13 +6,13 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 
 from deps import db, now_iso
-from models import NewsPostCreate, NewsPostUpdate
+from models import NewsPostCreate, NewsPostUpdate, EVENT_DATE_CATEGORIES
 from auth import get_admin_user
 
 router = APIRouter()
 
 FIELDS = [
-    "postType", "category", "languages", "photo",
+    "postType", "category", "languages", "photo", "eventDate",
     "titleNl", "titleFr", "contentNl", "contentFr", "photos", "link", "tags",
 ]
 
@@ -79,6 +79,19 @@ async def update_news(post_id: str, body: NewsPostUpdate, admin: dict = Depends(
             if isinstance(val, str):
                 val = val.strip() or None
             update[f] = val
+
+    # NewsPostUpdate valideert (net als titel/inhoud) niet zelf de
+    # verplichte-eventDate-regel, want dat hangt af van de resulterende
+    # (mogelijk deels ongewijzigde) categorie. Check dat hier op de
+    # samengevoegde toestand, zodat een bewerking de datum niet stilletjes
+    # kan laten verdwijnen voor categorieën die ze verplicht stellen.
+    finalPostType = update.get("postType", doc.get("postType"))
+    finalCategory = update.get("category", doc.get("category"))
+    if finalPostType == "nieuws" and finalCategory in EVENT_DATE_CATEGORIES:
+        finalEventDate = update["eventDate"] if "eventDate" in update else doc.get("eventDate")
+        if not finalEventDate:
+            raise HTTPException(422, "Datum van het evenement is verplicht voor deze categorie")
+
     await db.news.update_one({"id": post_id}, {"$set": update})
     updated = await db.news.find_one({"id": post_id})
     return _serialize_news(updated)
