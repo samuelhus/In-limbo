@@ -1,25 +1,44 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { api, formatApiError } from '@/lib/api';
 
 export default function ApplyModal({ listing, onClose, onSubmitted }) {
   const { t } = useTranslation();
   const [motivation, setMotivation] = useState('');
-  const [requestedQuantity, setRequestedQuantity] = useState(1);
+  // Als string bijgehouden zodat je tijdens het typen (bv. backspacen naar leeg
+  // om "1" te vervangen door "5") niet meteen teruggeklampt wordt naar 1 — dat
+  // gebeurt pas bij onBlur en bij het effectief indienen.
+  const [requestedQuantity, setRequestedQuantity] = useState('1');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const remaining = listing.remainingQuantity ?? listing.quantity ?? 1;
   const showQuantityField = remaining > 1;
 
+  const clamp = (v) => Math.min(Math.max(v, 1), remaining);
+
+  const commitQuantity = () => {
+    const parsed = parseInt(requestedQuantity, 10);
+    setRequestedQuantity(String(isNaN(parsed) ? 1 : clamp(parsed)));
+  };
+
+  const step = (delta) => {
+    const parsed = parseInt(requestedQuantity, 10);
+    const current = isNaN(parsed) ? 1 : parsed;
+    setRequestedQuantity(String(clamp(current + delta)));
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError('');
     try {
+      const parsed = parseInt(requestedQuantity, 10);
+      const finalQuantity = showQuantityField ? clamp(isNaN(parsed) ? 1 : parsed) : 1;
       const { data } = await api.post(`/listings/${listing.id}/apply`, {
         motivation: motivation.trim(),
-        requestedQuantity: showQuantityField ? requestedQuantity : 1,
+        requestedQuantity: finalQuantity,
       });
       onSubmitted?.(data);
     } catch (er) {
@@ -55,20 +74,50 @@ export default function ApplyModal({ listing, onClose, onSubmitted }) {
                 {t('listing.apply_quantity_label')}
                 <span className="text-muted-foreground normal-case"> ({t('listing.apply_quantity_available', { count: remaining })})</span>
               </label>
-              <input
-                type="number"
-                min="1"
-                max={remaining}
-                step="1"
-                required
-                value={requestedQuantity}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  setRequestedQuantity(isNaN(v) ? 1 : Math.min(Math.max(v, 1), remaining));
-                }}
-                className="input-flat text-lg"
-                data-testid="apply-quantity-input"
-              />
+              <div className="relative w-32">
+                <input
+                  type="number"
+                  min="1"
+                  max={remaining}
+                  step="1"
+                  required
+                  value={requestedQuantity}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    // Enkel lege string of louter cijfers toelaten — geen clamping
+                    // hier, anders kun je "1" nooit wegbackspacen om iets anders
+                    // in te typen. Clamping gebeurt in commitQuantity (onBlur).
+                    if (raw === '' || /^\d+$/.test(raw)) {
+                      setRequestedQuantity(raw);
+                    }
+                  }}
+                  onBlur={commitQuantity}
+                  className="input-flat text-lg pr-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  data-testid="apply-quantity-input"
+                />
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col">
+                  <button
+                    type="button"
+                    onClick={() => step(1)}
+                    disabled={parseInt(requestedQuantity, 10) >= remaining}
+                    className="h-4 w-6 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground"
+                    aria-label={t('listing.apply_quantity_up')}
+                    data-testid="apply-quantity-up"
+                  >
+                    <ChevronUp size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => step(-1)}
+                    disabled={parseInt(requestedQuantity, 10) <= 1}
+                    className="h-4 w-6 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground"
+                    aria-label={t('listing.apply_quantity_down')}
+                    data-testid="apply-quantity-down"
+                  >
+                    <ChevronDown size={14} />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

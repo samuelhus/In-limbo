@@ -279,6 +279,8 @@
     "applied_on": "Demande envoyée le",
     "motivation": "Motivation",
     "apply_quantity_label": "Quantité souhaitée",
+    "apply_quantity_up": "Augmenter la quantité",
+    "apply_quantity_down": "Diminuer la quantité",
     "apply_quantity_available": "{{count}} disponible(s)",
     "apply_modal_title": "Soumettre une demande",
     "apply_modal_subtitle": "Expliquez brièvement pourquoi vous souhaitez recevoir ces matériaux.",

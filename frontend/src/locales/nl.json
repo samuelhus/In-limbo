@@ -253,6 +253,8 @@
     "applied_on": "Aangevraagd op",
     "motivation": "Motivatie",
     "apply_quantity_label": "Gewenst aantal",
+    "apply_quantity_up": "Aantal verhogen",
+    "apply_quantity_down": "Aantal verlagen",
     "apply_quantity_available": "{{count}} beschikbaar",
     "apply_modal_title": "Aanvraag indienen",
     "apply_modal_subtitle": "Schrijf kort waarom je deze materialen wil ontvangen.",
