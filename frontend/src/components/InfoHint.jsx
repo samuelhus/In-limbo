@@ -16,7 +16,11 @@ export default function InfoHint({ text, testId }) {
         <TooltipTrigger asChild>
           <button
             type="button"
-            tabIndex={0}
+            // tabIndex=-1: dit info-icoontje mag niet in de Tab-volgorde
+            // van het formulier zitten (het onderbreekt anders de logische
+            // sprong van het ene invoerveld naar het volgende) — het blijft
+            // wel gewoon bereikbaar via hover/klik/tap.
+            tabIndex={-1}
             aria-label={text}
             data-testid={testId}
             className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors align-middle ml-1"
