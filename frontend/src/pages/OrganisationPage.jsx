@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
 import { cloudinaryThumb } from '@/lib/cloudinary';
+import Lightbox from '@/components/Lightbox';
 
 export default function OrganisationPage() {
   const { t } = useTranslation();
@@ -11,6 +12,7 @@ export default function OrganisationPage() {
   const [org, setOrg] = useState(null);
   const [listings, setListings] = useState([]);
   const [impact, setImpact] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   useEffect(() => {
     api.get(`/organisations/${id}`).then(({ data }) => setOrg(data)).catch(() => setOrg(false));
@@ -23,17 +25,24 @@ export default function OrganisationPage() {
 
   const herbestemd = listings.filter((l) => l.status === 'herbestemd');
   const active = listings.filter((l) => l.status !== 'herbestemd' && l.status !== 'gearchiveerd');
+  // Eerste foto = banner bovenaan, de rest komt als galerij onderaan de info.
+  const galleryPhotos = org.photos?.slice(1) || [];
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-12" data-testid="organisation-page">
-      
+
       <h1 className="text-5xl font-bold tracking-tight">{org.name}</h1>
       <p className="text-3xl font-bold tracking-tight">-{t(`org_categories.${org.category}`)}-</p>
 
       {org.photos?.[0] && (
-        <div className="mt-10 aspect-[21/9] overflow-hidden bg-muted">
-          <img src={cloudinaryThumb(org.photos[0], 1600, 700)} alt={org.name} className="w-full h-full object-cover" />
-        </div>
+        <button
+          type="button"
+          onClick={() => setLightboxIndex(0)}
+          className="mt-10 block w-full aspect-[21/9] overflow-hidden bg-muted cursor-zoom-in"
+          data-testid="org-banner-button"
+        >
+          <img src={cloudinaryThumb(org.photos[0], 1600, 700)} alt={org.name} className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-300" />
+        </button>
       )}
 
       <div className="mt-12 grid grid-cols-1 md:grid-cols-12 gap-10">
@@ -62,9 +71,41 @@ export default function OrganisationPage() {
               </a>
             </div>
           )}
-          
+
         </aside>
       </div>
+
+      {galleryPhotos.length > 0 && (
+        <div className="mt-10" data-testid="org-gallery">
+          <p className="overline mb-3">{t('organisation.more_photos')}</p>
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+            {galleryPhotos.map((url, i) => (
+              <button
+                type="button"
+                key={url}
+                onClick={() => setLightboxIndex(i + 1)}
+                className="aspect-square overflow-hidden cursor-zoom-in bg-muted"
+                data-testid={`org-gallery-thumb-${i}`}
+              >
+                <img
+                  src={cloudinaryThumb(url, 400, 400)}
+                  alt={`${org.name} ${i + 2}`}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {lightboxIndex !== null && (
+        <Lightbox
+          photos={org.photos}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
+      )}
 
       {impact && (impact.totalWeightKg > 0 || impact.totalCo2Kg > 0) && (
         <section
