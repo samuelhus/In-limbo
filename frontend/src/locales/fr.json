@@ -454,6 +454,7 @@
     "upload_failed": "Échec du téléchargement",
     "add_photo": "+ Photo",
     "remove_photo": "Supprimer",
+    "max_photos_reached": "Maximum {{count}} photos autorisées.",
     "saving": "Enregistrement…",
     "update_success": "Organisation mise à jour."
   },

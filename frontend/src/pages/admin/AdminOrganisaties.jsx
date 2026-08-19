@@ -10,6 +10,7 @@ const ORG_CATEGORIES = [
   'sociaal_werk', 'sport', 'noodopvang', 'ander',
 ];
 const ORG_STATUSES = ['pending', 'active', 'inactive', 'rejected'];
+const MAX_ORG_PHOTOS = 10;
 
 export default function AdminOrganisaties() {
   const { t } = useTranslation();
@@ -323,7 +324,7 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
   const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const room = 5 - form.photos.length;
+    const room = MAX_ORG_PHOTOS - form.photos.length;
     if (files.length > room) {
       setUploadErr(`Je kan nog maximaal ${room} foto('s) toevoegen.`);
       return;
@@ -396,7 +397,7 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
           </select>
         </div>
         <div>
-          <label className="label-overline">Foto's</label>
+          <label className="label-overline">Foto's ({form.photos.length}/{MAX_ORG_PHOTOS})</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {form.photos.map((url, i) => (
               <div key={i} className="relative">
@@ -408,7 +409,7 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
               </div>
             ))}
           </div>
-          {form.photos.length < 5 && (
+          {form.photos.length < MAX_ORG_PHOTOS && (
             <label className="btn-secondary !py-1 px-3 text-xs cursor-pointer inline-block">
               {uploading ? 'Uploaden…' : '+ Foto toevoegen'}
               <input type="file" accept="image/*" multiple hidden

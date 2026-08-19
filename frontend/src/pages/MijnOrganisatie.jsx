@@ -9,6 +9,7 @@ const CATS = [
   'beeldende_kunsten', 'jeugdwerk', 'podiumkunsten', 'noodopvang',
   'sociaal_werk', 'sport', 'educatie', 'ander',
 ];
+const MAX_PHOTOS = 10;
 
 export default function MijnOrganisatie() {
   const { t } = useTranslation();
@@ -43,6 +44,11 @@ export default function MijnOrganisatie() {
   const onPhotoPick = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (form.photos.length >= MAX_PHOTOS) {
+      setErr(t('organisation.max_photos_reached', { count: MAX_PHOTOS }));
+      e.target.value = '';
+      return;
+    }
     setUploading(true); setErr('');
     try {
       const url = await uploadToCloudinary(file);
@@ -119,7 +125,9 @@ export default function MijnOrganisatie() {
         </label>
 
         <div>
-          <label className="label-overline">{t('organisation.photos')}</label>
+          <label className="label-overline">
+            {t('organisation.photos')} <span className="text-muted-foreground normal-case">({form.photos.length}/{MAX_PHOTOS})</span>
+          </label>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
             {form.photos.map((url, i) => (
               <div key={i} className="aspect-square relative bg-muted overflow-hidden group">
@@ -129,10 +137,12 @@ export default function MijnOrganisatie() {
                 </button>
               </div>
             ))}
-            <label className="aspect-square border-2 border-dashed border-border flex items-center justify-center text-xs text-muted-foreground cursor-pointer hover:border-foreground p-2 text-center">
-              <input type="file" accept="image/*" className="hidden" onChange={onPhotoPick} data-testid="org-photo-input" />
-              {uploading ? t('organisation.uploading') : t('organisation.add_photo')}
-            </label>
+            {form.photos.length < MAX_PHOTOS && (
+              <label className="aspect-square border-2 border-dashed border-border flex items-center justify-center text-xs text-muted-foreground cursor-pointer hover:border-foreground p-2 text-center">
+                <input type="file" accept="image/*" className="hidden" onChange={onPhotoPick} data-testid="org-photo-input" />
+                {uploading ? t('organisation.uploading') : t('organisation.add_photo')}
+              </label>
+            )}
           </div>
         </div>
 

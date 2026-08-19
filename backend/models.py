@@ -60,13 +60,16 @@ class UserInDB(UserPublic):
 
 
 # ---------- Organisation ----------
+MAX_ORG_PHOTOS = 10
+
+
 class OrgBase(BaseModel):
     name: str
     description: str
     category: OrgCategory
     address: Optional[str] = None
     website: Optional[str] = None
-    photos: List[str] = Field(default_factory=list)
+    photos: List[str] = Field(default_factory=list, max_length=MAX_ORG_PHOTOS)
 
 
 class OrgPublic(OrgBase):
@@ -224,7 +227,7 @@ class OrgUpdate(BaseModel):
     category: Optional[OrgCategory] = None
     address: Optional[str] = None
     website: Optional[str] = None
-    photos: Optional[List[str]] = None
+    photos: Optional[List[str]] = Field(None, max_length=MAX_ORG_PHOTOS)
 
 
 class ListingUpdate(BaseModel):
@@ -444,7 +447,7 @@ class AdminOrgUpdate(BaseModel):
     address: Optional[str] = None
     website: Optional[str] = None
     status: Optional[Literal["pending", "validated", "active", "inactive", "rejected"]] = None
-    photos: Optional[List[str]] = None
+    photos: Optional[List[str]] = Field(None, max_length=MAX_ORG_PHOTOS)
     slug: Optional[str] = None
 
 

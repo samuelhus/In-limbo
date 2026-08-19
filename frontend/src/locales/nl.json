@@ -444,6 +444,7 @@
     "upload_failed": "Upload mislukt",
     "add_photo": "+ Foto",
     "remove_photo": "Verwijder",
+    "max_photos_reached": "Maximaal {{count}} foto's toegelaten.",
     "saving": "Opslaan…",
     "update_success": "Organisatie bijgewerkt."
   },
