@@ -135,7 +135,15 @@ async def send_photo_reminders(db) -> int:
     - Bij een platform-overdracht kennen we de ontvanger-gebruiker rechtstreeks
       (receiverUserId). Bij checkout is er geen gebruiker gekend (publiek endpoint) —
       we mailen dan de laatst actieve gebruiker (hoogste dateLastLogin) van de
-      ontvangende organisatie.
+      ontvangende organisatie, of de expliciet gekozen gebruiker (pickedUserId)
+      wanneer die op de checkout staat.
+    - Studenten-checkouts (checkout.studentEmail gezet — enkel mogelijk bij
+      organisaties met studentCheckout aan, zie routes/checkout.py) vallen
+      BUITEN de organisatie-brede maandlimiet/clustering hierboven: elke
+      student krijgt zijn eigen, onafhankelijke maandlimiet + 30-dagen-cluster
+      (bijgehouden per (organisatie, studentEmail) i.p.v. per organisatie),
+      en de herinnering gaat rechtstreeks naar het opgegeven e-mailadres — de
+      gebruiker van de organisatie (leerkracht) krijgt daar geen mail van.
     """
     now = datetime.now(timezone.utc)
     cutoff_iso = (now - timedelta(days=90)).isoformat()
@@ -146,20 +154,47 @@ async def send_photo_reminders(db) -> int:
         (r["txType"], r["txId"])
         async for r in db.photo_reminders.find({}, {"_id": 0, "txType": 1, "txId": 1})
     }
+    # Org-brede maandlimiet/clustering (platform-overdrachten + gewone
+    # checkouts) — 'studentEmail: None' matcht zowel expliciet None als
+    # (bij oudere records) een ontbrekend veld, dus legacy-records tellen
+    # hier gewoon mee zoals voorheen.
     orgs_reminded_this_month = {
         r["organisationId"]
-        async for r in db.photo_reminders.find({"monthKey": month_key}, {"_id": 0, "organisationId": 1})
+        async for r in db.photo_reminders.find(
+            {"monthKey": month_key, "studentEmail": None}, {"_id": 0, "organisationId": 1},
+        )
     }
-    # Reeds behandelde (herinnerd of onderdrukt) checkout-tijdstippen per org —
-    # gebruikt om te bepalen of een checkout binnen hetzelfde 30-dagen-cluster valt.
     handled_checkout_times: dict = {}
-    async for r in db.photo_reminders.find({"txType": "checkout"}, {"_id": 0, "organisationId": 1, "createdAt": 1}):
+    async for r in db.photo_reminders.find(
+        {"txType": "checkout", "studentEmail": None}, {"_id": 0, "organisationId": 1, "createdAt": 1},
+    ):
         handled_checkout_times.setdefault(r["organisationId"], []).append(
             datetime.fromisoformat(r["createdAt"])
         )
 
-    # Per organisatie houden we enkel de OUDSTE nog niet-herinnerde, nog niet
-    # foto-ontvangen transactie bij — dat is degene die deze maand-run herinnerd wordt.
+    # Zelfde twee mechanismen, maar losstaand per (organisatie, student).
+    students_reminded_this_month = {
+        (r["organisationId"], r["studentEmail"])
+        async for r in db.photo_reminders.find(
+            {"monthKey": month_key, "studentEmail": {"$ne": None}},
+            {"_id": 0, "organisationId": 1, "studentEmail": 1},
+        )
+    }
+    handled_student_checkout_times: dict = {}
+    async for r in db.photo_reminders.find(
+        {"txType": "checkout", "studentEmail": {"$ne": None}},
+        {"_id": 0, "organisationId": 1, "studentEmail": 1, "createdAt": 1},
+    ):
+        key = (r["organisationId"], r["studentEmail"])
+        handled_student_checkout_times.setdefault(key, []).append(
+            datetime.fromisoformat(r["createdAt"])
+        )
+
+    # Kandidaten-key is org_id voor platform-overdrachten en gewone checkouts
+    # (die delen dus dezelfde maand-'slot', zoals voorheen), en (org_id,
+    # studentEmail) voor student-checkouts — dat is hun eigen, onafhankelijke
+    # slot. We houden per key enkel de OUDSTE nog niet-herinnerde transactie
+    # bij — dat is degene die deze maand-run herinnerd wordt.
     candidates: dict = {}
 
     async for tr in db.platform_transfers.find(
@@ -190,50 +225,94 @@ async def send_photo_reminders(db) -> int:
         org_id = c.get("organisationId")
         if not org_id:
             continue
+        student_email = c.get("studentEmail")
         c_dt = datetime.fromisoformat(c["createdAt"])
-        # Valt deze checkout binnen 30 dagen van een reeds herinnerde/onderdrukte
-        # checkout van dezelfde org? Dan permanent onderdrukken, ongeacht maand-cap.
-        prior_times = handled_checkout_times.get(org_id, [])
-        if any(abs(c_dt - t) <= cluster_window for t in prior_times):
-            await db.photo_reminders.insert_one({
-                "id": str(uuid.uuid4()),
-                "organisationId": org_id,
-                "txType": "checkout",
-                "txId": c["id"],
-                "monthKey": month_key,
-                "sentAt": None,
-                "suppressed": True,
-            })
-            reminded_ids.add(("checkout", c["id"]))
-            continue
-        if org_id in orgs_reminded_this_month:
-            continue
-        existing = candidates.get(org_id)
+
+        if student_email:
+            cand_key = (org_id, student_email)
+            prior_times = handled_student_checkout_times.get(cand_key, [])
+            if any(abs(c_dt - t) <= cluster_window for t in prior_times):
+                await db.photo_reminders.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "organisationId": org_id,
+                    "txType": "checkout",
+                    "txId": c["id"],
+                    "monthKey": month_key,
+                    "sentAt": None,
+                    "suppressed": True,
+                    "studentEmail": student_email,
+                })
+                reminded_ids.add(("checkout", c["id"]))
+                continue
+            if cand_key in students_reminded_this_month:
+                continue
+        else:
+            cand_key = org_id
+            # Valt deze checkout binnen 30 dagen van een reeds herinnerde/onderdrukte
+            # checkout van dezelfde org? Dan permanent onderdrukken, ongeacht maand-cap.
+            prior_times = handled_checkout_times.get(org_id, [])
+            if any(abs(c_dt - t) <= cluster_window for t in prior_times):
+                await db.photo_reminders.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "organisationId": org_id,
+                    "txType": "checkout",
+                    "txId": c["id"],
+                    "monthKey": month_key,
+                    "sentAt": None,
+                    "suppressed": True,
+                    "studentEmail": None,
+                })
+                reminded_ids.add(("checkout", c["id"]))
+                continue
+            if org_id in orgs_reminded_this_month:
+                continue
+
+        existing = candidates.get(cand_key)
         if not existing or c["createdAt"] < existing["createdAt"]:
-            candidates[org_id] = {
+            candidates[cand_key] = {
                 "txType": "checkout",
                 "txId": c["id"],
                 "organisationId": org_id,
                 "createdAt": c["createdAt"],
+                "studentEmail": student_email,
+                "pickedUserId": c.get("pickedUserId"),
             }
 
     sent = 0
-    for org_id, cand in candidates.items():
-        recipient = None
-        if cand.get("receiverUserId"):
-            recipient = await db.users.find_one({"id": cand["receiverUserId"]})
-        if not recipient:
-            # Checkout (of oude transfer zonder receiverUserId): laatst actieve gebruiker van de org.
-            recipient = await db.users.find_one(
-                {"organisationId": org_id, "status": "validated"}, sort=[("dateLastLogin", -1)],
-            )
-        if not recipient:
-            recipient = await db.users.find_one({"organisationId": org_id}, sort=[("createdAt", -1)])
-        if not recipient or not recipient.get("email"):
-            continue
+    for cand in candidates.values():
+        org_id = cand["organisationId"]
+        recipient_email = None
+        recipient_lang = "nl"
+        recipient_user_id = None
+
+        if cand.get("studentEmail"):
+            # Rechtstreeks naar de student — de gebruiker van de organisatie
+            # (leerkracht) krijgt hier bewust geen mail van.
+            recipient_email = cand["studentEmail"]
+            recipient_user_id = f"student:{cand['studentEmail']}"
+        else:
+            recipient = None
+            if cand.get("receiverUserId"):
+                recipient = await db.users.find_one({"id": cand["receiverUserId"]})
+            elif cand.get("pickedUserId"):
+                # Expliciet gekozen bij checkout ('bestaande gebruiker') — betrouwbaarder
+                # dan de 'laatst actieve gebruiker'-gok hieronder.
+                recipient = await db.users.find_one({"id": cand["pickedUserId"]})
+            if not recipient:
+                # Checkout (of oude transfer zonder receiverUserId): laatst actieve gebruiker van de org.
+                recipient = await db.users.find_one(
+                    {"organisationId": org_id, "status": "validated"}, sort=[("dateLastLogin", -1)],
+                )
+            if not recipient:
+                recipient = await db.users.find_one({"organisationId": org_id}, sort=[("createdAt", -1)])
+            if not recipient or not recipient.get("email"):
+                continue
+            recipient_email = recipient["email"]
+            recipient_lang = recipient.get("preferredLanguage") or "nl"
+            recipient_user_id = recipient["id"]
 
         created_dt = datetime.fromisoformat(cand["createdAt"])
-        lang = recipient.get("preferredLanguage") or "nl"
+        lang = recipient_lang
         cta_text, cta_url = None, None
         if lang == "fr":
             email_title = "Partagez une photo du résultat"
@@ -270,7 +349,7 @@ async def send_photo_reminders(db) -> int:
 
         html = render_email(email_title, body_lines, cta_text=cta_text, cta_url=cta_url)
         await maybe_send_email(
-            db, recipient["id"], "photo_reminder", recipient.get("email"),
+            db, recipient_user_id, "photo_reminder", recipient_email,
             subject, html,
         )
         await db.photo_reminders.insert_one({
@@ -281,6 +360,7 @@ async def send_photo_reminders(db) -> int:
             "monthKey": month_key,
             "sentAt": now.isoformat(),
             "suppressed": False,
+            "studentEmail": cand.get("studentEmail"),
         })
         sent += 1
 

@@ -276,6 +276,8 @@ async def admin_update_organisation(org_id: str, body: AdminOrgUpdate, admin: di
         update["status"] = body.status
     if body.photos is not None:
         update["photos"] = body.photos
+    if body.studentCheckout is not None:
+        update["studentCheckout"] = body.studentCheckout
     if body.slug is not None:
         desired = slugify(body.slug) if body.slug.strip() else await generate_unique_org_slug(db, existing["name"], org_id)
         if desired != existing.get("slug"):
@@ -681,6 +683,11 @@ async def admin_list_transactions(
                 "canDelete": True,
                 "needsPhoto": True,
                 "photoReceived": bool(c.get("photoReceived", False)),
+                # Enkel gezet bij organisaties met studentCheckout aan (zie
+                # routes/checkout.py) — geeft de admin zicht op wie de
+                # checkout precies deed.
+                "checkoutBy": c.get("checkoutBy"),
+                "studentEmail": c.get("studentEmail"),
             })
 
     rows.sort(key=lambda r: r.get("createdAt") or "", reverse=True)

@@ -577,7 +577,15 @@
     "summary_org": "Organisatie",
     "per_material": "Per materiaal",
     "total": "Totaal",
-    "in_progress": "Bezig…"
+    "in_progress": "Bezig…",
+    "checkout_by_label": "Wie komt dit ophalen?",
+    "checkout_by_student": "Student",
+    "checkout_by_user": "Bestaande gebruiker",
+    "student_email_label": "E-mailadres van de student",
+    "student_email_placeholder": "naam@school.be",
+    "pick_user_label": "Kies de gebruiker",
+    "pick_user_placeholder": "— Kies een gebruiker —",
+    "no_org_users": "Geen gebruikers gevonden voor deze organisatie."
   },
   "overons": {
     "wie_zijn_we": "Wie zijn we",

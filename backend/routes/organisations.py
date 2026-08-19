@@ -154,9 +154,34 @@ async def search_organisations(q: str = Query(..., min_length=2), includeInactiv
     regex = {"$regex": q, "$options": "i"}
     docs = await db.organisations.find(
         {"name": regex, "status": {"$in": statuses}},
-        {"_id": 0, "id": 1, "name": 1, "category": 1},
+        # studentCheckout wordt meegestuurd zodat de (publieke) checkout-pagina
+        # meteen weet of ze de student/bestaande-gebruiker-keuze moet tonen,
+        # zonder een extra call.
+        {"_id": 0, "id": 1, "name": 1, "category": 1, "studentCheckout": 1},
     ).limit(10).to_list(10)
     return docs
+
+
+@router.get("/organisations/{org_id}/checkout-users")
+async def list_organisation_checkout_users(org_id: str):
+    """Publieke (naam-only, geen e-mail) ledenlijst van een organisatie —
+    enkel gevuld voor organisaties met studentCheckout aan. Gebruikt op de
+    (publieke) checkout-pagina om een 'bestaande gebruiker' te kunnen kiezen
+    i.p.v. altijd de gok 'laatst actieve gebruiker' te maken (zie
+    tasks.send_photo_reminders). Bewust leeg voor niet-gemarkeerde
+    organisaties, zodat dit endpoint geen ledenlijst van eender welke
+    organisatie kan lekken."""
+    org = await db.organisations.find_one({"id": org_id}, {"_id": 0, "studentCheckout": 1})
+    if not org or not org.get("studentCheckout"):
+        return []
+    users = []
+    async for u in db.users.find(
+        {"organisationId": org_id, "status": "validated"},
+        {"_id": 0, "id": 1, "firstName": 1, "lastName": 1, "username": 1},
+    ):
+        name = f"{u.get('firstName') or ''} {u.get('lastName') or ''}".strip() or u.get("username") or "—"
+        users.append({"id": u["id"], "name": name})
+    return users
 
 
 @router.get("/organisations/{org_id}")

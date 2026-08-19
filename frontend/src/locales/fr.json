@@ -587,7 +587,15 @@
     "summary_org": "Organisation",
     "per_material": "Par matériel",
     "total": "Total",
-    "in_progress": "En cours…"
+    "in_progress": "En cours…",
+    "checkout_by_label": "Qui vient chercher ceci ?",
+    "checkout_by_student": "Étudiant",
+    "checkout_by_user": "Utilisateur existant",
+    "student_email_label": "Adresse e-mail de l'étudiant",
+    "student_email_placeholder": "nom@ecole.be",
+    "pick_user_label": "Choisissez l'utilisateur",
+    "pick_user_placeholder": "— Choisissez un utilisateur —",
+    "no_org_users": "Aucun utilisateur trouvé pour cette organisation."
   },
   "overons": {
     "wie_zijn_we": "Qui sommes nous",

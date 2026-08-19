@@ -165,7 +165,15 @@ export default function AdminTransacties() {
                     </span>
                   </td>
                   <td className="py-2 pr-3">{row.fromOrgName || '—'}</td>
-                  <td className="py-2 pr-3">{row.toOrgName || '—'}</td>
+                  <td className="py-2 pr-3">
+                    {row.toOrgName || '—'}
+                    {row.checkoutBy === 'student' && (
+                      <span className="block text-xs text-muted-foreground">student · {row.studentEmail}</span>
+                    )}
+                    {row.checkoutBy === 'user' && (
+                      <span className="block text-xs text-muted-foreground">bestaande gebruiker</span>
+                    )}
+                  </td>
                   <td className="py-2 pr-3">
                     {row.material || '—'}
                     {row.listingTitle && (

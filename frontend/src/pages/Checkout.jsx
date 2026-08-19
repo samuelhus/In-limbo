@@ -55,6 +55,12 @@ export default function Checkout() {
   const [error, setError] = useState('');
   const [confirmedTotal, setConfirmedTotal] = useState(0);
 
+  // Enkel relevant voor organisaties met studentCheckout aan (zie admin).
+  const [checkoutBy, setCheckoutBy] = useState(null); // null | 'student' | 'user'
+  const [studentEmail, setStudentEmail] = useState('');
+  const [orgUsers, setOrgUsers] = useState([]);
+  const [pickedUserId, setPickedUserId] = useState('');
+
   useEffect(() => {
     if (selectedOrg || query.trim().length < 2) {
       setSuggestions([]);
@@ -66,6 +72,18 @@ export default function Checkout() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [query, selectedOrg]);
+
+  useEffect(() => {
+    if (!selectedOrg?.studentCheckout) {
+      setOrgUsers([]);
+      return;
+    }
+    let cancelled = false;
+    api.get(`/organisations/${selectedOrg.id}/checkout-users`)
+      .then(({ data }) => { if (!cancelled) setOrgUsers(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [selectedOrg]);
 
   useEffect(() => {
   if (step === 2) setTimeout(() => materialSelectRef.current?.focus(), 0);
@@ -94,6 +112,8 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
       const { data } = await api.post('/checkout', {
         organisationId: selectedOrg.id,
         items: items,
+        ...(checkoutBy === 'student' ? { checkoutBy: 'student', studentEmail: studentEmail.trim() } : {}),
+        ...(checkoutBy === 'user' ? { checkoutBy: 'user', pickedUserId } : {}),
       });
       setConfirmedTotal(data.totalWeightKg);
       setStep(4);
@@ -102,6 +122,14 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
     } finally {
       setBusy(false);
     }
+  };
+
+  const clearOrg = () => {
+    setSelectedOrg(null);
+    setQuery('');
+    setCheckoutBy(null);
+    setStudentEmail('');
+    setPickedUserId('');
   };
 
   const resetAll = () => {
@@ -114,7 +142,17 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
     setCurrentWeight('');
     setConfirmedTotal(0);
     setError('');
+    setCheckoutBy(null);
+    setStudentEmail('');
+    setPickedUserId('');
   };
+
+  // Voor organisaties met studentCheckout aan moet de keuze afgerond zijn
+  // vóór er verdergegaan kan worden: student -> geldig e-mailadres, bestaande
+  // gebruiker -> een gekozen gebruiker.
+  const studentFlowResolved = !selectedOrg?.studentCheckout
+    || (checkoutBy === 'student' && /\S+@\S+\.\S+/.test(studentEmail.trim()))
+    || (checkoutBy === 'user' && !!pickedUserId);
 
   return (
     <div className="min-h-screen bg-background" data-testid="checkout-page">
@@ -139,7 +177,7 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                 >
                   <span className="font-medium">{selectedOrg.name}</span>
                   <button
-                    onClick={() => { setSelectedOrg(null); setQuery(''); }}
+                    onClick={clearOrg}
                     className="text-muted-foreground hover:text-foreground w-8 h-8 inline-flex items-center justify-center text-xl -mr-1"
                     data-testid="checkout-clear-org"
                   >
@@ -178,9 +216,68 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                 </>
               )}
             </div>
+
+            {selectedOrg?.studentCheckout && (
+              <div data-testid="checkout-student-flow">
+                <label className="label-overline">{t('checkout.checkout_by_label')}</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutBy('student')}
+                    className={`px-4 py-2 text-sm border ${checkoutBy === 'student' ? 'bg-foreground text-background border-foreground' : 'border-border text-foreground/70'}`}
+                    data-testid="checkout-by-student"
+                  >
+                    {t('checkout.checkout_by_student')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutBy('user')}
+                    className={`px-4 py-2 text-sm border ${checkoutBy === 'user' ? 'bg-foreground text-background border-foreground' : 'border-border text-foreground/70'}`}
+                    data-testid="checkout-by-user"
+                  >
+                    {t('checkout.checkout_by_user')}
+                  </button>
+                </div>
+
+                {checkoutBy === 'student' && (
+                  <div className="mt-4">
+                    <label className="label-overline">{t('checkout.student_email_label')}</label>
+                    <input
+                      type="email"
+                      className="input-flat"
+                      placeholder={t('checkout.student_email_placeholder')}
+                      value={studentEmail}
+                      onChange={(e) => setStudentEmail(e.target.value)}
+                      data-testid="checkout-student-email-input"
+                    />
+                  </div>
+                )}
+
+                {checkoutBy === 'user' && (
+                  <div className="mt-4">
+                    <label className="label-overline">{t('checkout.pick_user_label')}</label>
+                    <select
+                      className="input-flat"
+                      value={pickedUserId}
+                      onChange={(e) => setPickedUserId(e.target.value)}
+                      data-testid="checkout-pick-user-select"
+                    >
+                      <option value="">{t('checkout.pick_user_placeholder')}</option>
+                      {orgUsers.map((u) => (
+                        <option key={u.id} value={u.id}>{u.name}</option>
+                      ))}
+                    </select>
+                    {orgUsers.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-2">{t('checkout.no_org_users')}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={() => setStep(2)}
-              disabled={!selectedOrg}
+              disabled={!selectedOrg || !studentFlowResolved}
               className="btn-primary"
               data-testid="checkout-step1-next"
             >
@@ -278,6 +375,16 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
             <div>
               <p className="overline mb-1">{t('checkout.summary_org')}</p>
               <p className="text-lg font-medium" data-testid="checkout-summary-org">{selectedOrg.name}</p>
+              {checkoutBy === 'student' && (
+                <p className="text-sm text-muted-foreground mt-1" data-testid="checkout-summary-student">
+                  {t('checkout.checkout_by_student')}: {studentEmail.trim()}
+                </p>
+              )}
+              {checkoutBy === 'user' && pickedUserId && (
+                <p className="text-sm text-muted-foreground mt-1" data-testid="checkout-summary-picked-user">
+                  {orgUsers.find((u) => u.id === pickedUserId)?.name}
+                </p>
+              )}
             </div>
 
             <div>

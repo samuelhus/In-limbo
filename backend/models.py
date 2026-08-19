@@ -70,6 +70,11 @@ class OrgBase(BaseModel):
     address: Optional[str] = None
     website: Optional[str] = None
     photos: List[str] = Field(default_factory=list, max_length=MAX_ORG_PHOTOS)
+    # Enkel door een admin instelbaar (zie AdminOrgUpdate) — niet via het
+    # zelf-bedieningsformulier van de organisatie. Scholen die dit aanvinken
+    # krijgen bij checkout de keuze 'student' (met e-mail) of 'bestaande
+    # gebruiker' (zie routes/checkout.py + tasks.send_photo_reminders).
+    studentCheckout: bool = False
 
 
 class OrgPublic(OrgBase):
@@ -357,6 +362,19 @@ class CheckoutItem(BaseModel):
 class CheckoutCreate(BaseModel):
     organisationId: str
     items: List[CheckoutItem] = Field(..., min_length=1)
+    # Enkel relevant/toegelaten wanneer de gekozen organisatie studentCheckout
+    # heeft aanstaan (zie routes/checkout.py, dat dit ook serverzijdig checkt).
+    checkoutBy: Optional[Literal["student", "user"]] = None
+    studentEmail: Optional[EmailStr] = None
+    pickedUserId: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _validate_checkout_by(self):
+        if self.checkoutBy == "student" and not self.studentEmail:
+            raise ValueError("E-mailadres van de student is verplicht")
+        if self.checkoutBy == "user" and not self.pickedUserId:
+            raise ValueError("Kies een bestaande gebruiker")
+        return self
 
 
 # ---------- Magazijn checkin ----------
@@ -448,6 +466,7 @@ class AdminOrgUpdate(BaseModel):
     website: Optional[str] = None
     status: Optional[Literal["pending", "validated", "active", "inactive", "rejected"]] = None
     photos: Optional[List[str]] = Field(None, max_length=MAX_ORG_PHOTOS)
+    studentCheckout: Optional[bool] = None
     slug: Optional[str] = None
 
 

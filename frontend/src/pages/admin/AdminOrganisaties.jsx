@@ -317,6 +317,7 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
     status: org.status || 'pending',
     photos: org.photos || [],
     slug: org.slug || '',
+    studentCheckout: org.studentCheckout || false,
   });
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState('');
@@ -396,6 +397,21 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
             {ORG_STATUSES.map((s) => <option key={s} value={s}>{t(`status.${s}`, { defaultValue: s })}</option>)}
           </select>
         </div>
+        <label className="flex items-start gap-2 cursor-pointer" data-testid="admin-org-student-checkout-label">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={form.studentCheckout}
+            onChange={(e) => setForm({ ...form, studentCheckout: e.target.checked })}
+            data-testid="admin-org-student-checkout-checkbox"
+          />
+          <span className="text-sm">
+            <span className="block">Studenten</span>
+            <span className="block text-xs text-muted-foreground mt-0.5">
+              Bij checkout kan gekozen worden voor 'student' (e-mail voor foto-herinnering) of een bestaande gebruiker van deze organisatie.
+            </span>
+          </span>
+        </label>
         <div>
           <label className="label-overline">Foto's ({form.photos.length}/{MAX_ORG_PHOTOS})</label>
           <div className="flex flex-wrap gap-2 mb-2">

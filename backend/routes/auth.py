@@ -96,6 +96,9 @@ async def register_new_org(request: Request, body: RegisterNewOrg = Body(...), r
         "website": body.orgWebsite,
         "visibleOnPartnerPage": body.orgVisibleOnPartnerPage,
         "photos": [],
+        # Enkel een admin kan dit nadien aanzetten (zie AdminOrgUpdate) —
+        # elke nieuwe registratie start hier dus expliciet uitgevinkt.
+        "studentCheckout": False,
         "status": "pending",
         "rejectionReason": None,
         "createdAt": now,
