@@ -1,4 +1,4 @@
-// Canonieke 28-categorieen materiaaldata (icoon-URLs, NL/FR-namen).
+// Canonieke 29-categorieen materiaaldata (icoon-URLs, NL/FR-namen).
 // Zelfde bron als backend/material_categories.json — hou beide gesynchroniseerd.
 export const MATERIAL_CATEGORIES = [
   {
@@ -805,5 +805,12 @@ export const MATERIAL_CATEGORIES = [
         "fr": "Flight-case"
       }
     ]
+  },
+  {
+    "key": "verf",
+    "nl": "Verf",
+    "fr": "Peinture",
+    "icon": "https://res.cloudinary.com/dbjizykvb/image/upload/v1787177963/verf_uhpb2i.png",
+    "subcategories": []
   }
 ];

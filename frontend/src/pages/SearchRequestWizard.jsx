@@ -18,7 +18,7 @@ function isoDate(d) {
 }
 
 // Sub-stappen binnen de materiaalselectie (§4 stap 2)
-const MAT_STEP_GRID = 'grid';       // raster met 28 hoofdcategorieën
+const MAT_STEP_GRID = 'grid';       // raster met 29 hoofdcategorieën
 const MAT_STEP_SUBCAT = 'subcat';   // lijst subcategorieën (indien aanwezig)
 const MAT_STEP_NOTE = 'note';       // opmerking-veld
 

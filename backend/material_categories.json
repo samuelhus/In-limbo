@@ -803,5 +803,12 @@
         "fr": "Flight-case"
       }
     ]
+  },
+  {
+    "key": "verf",
+    "nl": "Verf",
+    "fr": "Peinture",
+    "icon": "https://res.cloudinary.com/dbjizykvb/image/upload/v1787177963/verf_uhpb2i.png",
+    "subcategories": []
   }
 ]
