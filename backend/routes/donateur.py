@@ -1,9 +1,13 @@
 """Jaarverslag voor donateur-accounts.
 
-Donateurs hebben geen organisationId en dus geen magazijn-checkins/-checkouts
-(dat vereist een organisatie). Zij geven materiaal enkel rechtstreeks weg via
-aanbiedingen (listings) op het platform. Dit jaarverslag is dus beperkt tot
-'via platform herbestemd' — er is bewust geen checkin/checkout-sectie, in
+Donateurs hebben geen organisationId en dus geen magazijn-checkouts (dat
+vereist een organisatie — checkouts zijn materiaal dat een organisatie uit
+het magazijn meeneemt, geen rol die een donateur speelt). Ze geven materiaal
+weg op twee manieren: rechtstreeks via aanbiedingen (listings) op het
+platform, of — enkel bedrijfs-donateurs (donorType == 'bedrijf') — door het
+zelf naar het magazijn te brengen via een checkin (zie routes/checkin.py,
+CheckinCreate.donateurUserId). Dit jaarverslag combineert dus 'via platform
+herbestemd' met eventuele checkins; er is bewust geen checkout-sectie, in
 tegenstelling tot het organisatie-jaarverslag.
 
 De PDF-opbouw hergebruikt dezelfde tekenfuncties (_draw_header, _draw_summary_grid,
@@ -29,6 +33,7 @@ from routes.organisations import (
     _draw_header,
     _draw_summary_grid,
     _draw_co2_highlight,
+    _draw_checkin_detail,
     _draw_transfer_detail,
     _draw_footer,
 )
@@ -53,16 +58,19 @@ async def _own_listing_ids(user_id: str) -> list[str]:
 
 @router.get("/donateur/me/stats/available-years")
 async def donateur_available_years(user: dict = Depends(get_current_user)):
-    """Jaren waarin deze donateur minstens 1 herbestemming via het platform had."""
+    """Jaren waarin deze donateur minstens 1 herbestemming via het platform
+    had, en/of (voor bedrijfs-donateurs) minstens 1 magazijn-checkin."""
     if user.get("role") != "donateur":
         raise HTTPException(403, "Enkel voor donateur-accounts")
-    listing_ids = await _own_listing_ids(user["id"])
-    if not listing_ids:
-        return {"years": []}
     years: set[str] = set()
-    async for doc in db.platform_transfers.find(
-        {"listingId": {"$in": listing_ids}}, {"createdAt": 1},
-    ):
+    listing_ids = await _own_listing_ids(user["id"])
+    if listing_ids:
+        async for doc in db.platform_transfers.find(
+            {"listingId": {"$in": listing_ids}}, {"createdAt": 1},
+        ):
+            if doc.get("createdAt"):
+                years.add(doc["createdAt"][:4])
+    async for doc in db.checkins.find({"donateurUserId": user["id"]}, {"createdAt": 1}):
         if doc.get("createdAt"):
             years.add(doc["createdAt"][:4])
     return {"years": sorted(years, reverse=True)}
@@ -89,6 +97,13 @@ async def download_donateur_report(
             {"listingId": {"$in": listing_ids}, "createdAt": date_filter},
         ).to_list(2000)
 
+    # Enkel bedrijfs-donateurs kunnen een checkin op hun naam hebben (zie
+    # CheckinCreate.donateurUserId) — voor particuliere donateurs blijft dit
+    # gewoon leeg.
+    checkins = await db.checkins.find(
+        {"donateurUserId": user["id"], "createdAt": date_filter},
+    ).sort("createdAt", 1).to_list(2000)
+
     # Enrich legacy transfers zonder listingTitle (zelfde patroon als het
     # organisatie-jaarverslag).
     missing_ids = list({
@@ -110,12 +125,16 @@ async def download_donateur_report(
         "platform_given_count": len(platform_given),
         "platform_received_kg": 0,
         "platform_received_count": 0,
-        "checkin_kg": 0,
-        "checkin_count": 0,
+        "checkin_kg": round(sum(c.get("totalWeightKg", 0) for c in checkins), 2),
+        "checkin_count": len(checkins),
         "checkout_kg": 0,
         "checkout_count": 0,
     }
-    stats["co2_kg"] = impact_calc.summarize_flat(platform_given)["totalCo2Kg"]
+    impact_combined = impact_calc.combine(
+        impact_calc.summarize_flat(platform_given),
+        impact_calc.summarize_nested(checkins),
+    )
+    stats["co2_kg"] = impact_combined["totalCo2Kg"]
 
     def build(target_pages: int) -> bytes:
         buf = io.BytesIO()
@@ -125,6 +144,9 @@ async def download_donateur_report(
         y = _draw_summary_grid(c, y, t, stats)
         y = _draw_co2_highlight(c, y, t, stats["co2_kg"])
         total_holder = [target_pages]
+        if checkins:
+            page_num, y = _draw_checkin_detail(c, y, t, year, report_name,
+                                               page_num, checkins, total_holder)
         if platform_given:
             page_num, y = _draw_transfer_detail(
                 c, y, t, year, report_name, page_num, platform_given,

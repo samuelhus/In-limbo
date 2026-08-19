@@ -356,8 +356,18 @@ class CheckinItem(BaseModel):
 
 
 class CheckinCreate(BaseModel):
-    organisationId: str
+    # Een checkin komt binnen namens ofwel een organisatie, ofwel een
+    # bedrijfs-donateur (particuliere donateurs brengen geen materiaal naar
+    # het magazijn) — exact één van beide moet ingevuld zijn.
+    organisationId: Optional[str] = None
+    donateurUserId: Optional[str] = None
     items: List[CheckinItem] = Field(..., min_length=1)
+
+    @model_validator(mode="after")
+    def _validate_target(self):
+        if bool(self.organisationId) == bool(self.donateurUserId):
+            raise ValueError("Kies exact één doel voor de checkin: organisatie of donateur")
+        return self
 
 
 # ---------- Notifications ----------

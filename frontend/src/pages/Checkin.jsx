@@ -43,9 +43,13 @@ function StepIndicator({ step }) {
 export default function Checkin() {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
+  // 'org' = organisatie brengt materiaal binnen (bestaand gedrag), 'donateur'
+  // = een bedrijfs-donateur (particuliere donateurs komen niet fysiek langs
+  // met materiaal, dus enkel bedrijven zijn hier zoekbaar).
+  const [targetType, setTargetType] = useState('org');
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
-  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [selectedTarget, setSelectedTarget] = useState(null); // { id, name }
   const [items, setItems] = useState([]);
   const [currentMaterial, setCurrentMaterial] = useState('Hout');
   const [currentWeight, setCurrentWeight] = useState('');
@@ -56,17 +60,29 @@ export default function Checkin() {
   const [error, setError] = useState('');
   const [confirmedTotal, setConfirmedTotal] = useState(0);
 
+  const switchTargetType = (type) => {
+    setTargetType(type);
+    setQuery('');
+    setSuggestions([]);
+    setSelectedTarget(null);
+  };
+
   useEffect(() => {
-    if (selectedOrg || query.trim().length < 2) {
+    if (selectedTarget || query.trim().length < 2) {
       setSuggestions([]);
       return;
     }
     let cancelled = false;
-    api.get('/organisations/search', { params: { q: query.trim() } })
-      .then(({ data }) => { if (!cancelled) setSuggestions(data); })
+    const request = targetType === 'org'
+      ? api.get('/organisations/search', { params: { q: query.trim() } })
+        .then(({ data }) => data.map((o) => ({ id: o.id, name: o.name, category: o.category })))
+      : api.get('/admin/donateurs/search', { params: { q: query.trim() } })
+        .then(({ data }) => data.map((d) => ({ id: d.id, name: d.companyName })));
+    request
+      .then((mapped) => { if (!cancelled) setSuggestions(mapped); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [query, selectedOrg]);
+  }, [query, selectedTarget, targetType]);
 
   useEffect(() => {
     if (step === 2) setTimeout(() => materialSelectRef.current?.focus(), 0);
@@ -95,7 +111,9 @@ export default function Checkin() {
     setBusy(true); setError('');
     try {
       const { data } = await api.post('/checkin', {
-        organisationId: selectedOrg.id,
+        ...(targetType === 'org'
+          ? { organisationId: selectedTarget.id }
+          : { donateurUserId: selectedTarget.id }),
         items: items,
       });
       setConfirmedTotal(data.totalWeightKg);
@@ -109,9 +127,10 @@ export default function Checkin() {
 
   const resetAll = () => {
     setStep(1);
+    setTargetType('org');
     setQuery('');
     setSuggestions([]);
-    setSelectedOrg(null);
+    setSelectedTarget(null);
     setItems([]);
     setCurrentMaterial('Hout');
     setCurrentWeight('');
@@ -131,21 +150,46 @@ export default function Checkin() {
 
         {step !== 4 && <StepIndicator step={step} />}
 
-        {/* STEP 1: organisatie kiezen */}
+        {/* STEP 1: organisatie of donateur kiezen */}
         {step === 1 && (
           <section className="space-y-6" data-testid="checkin-step-1">
+            {!selectedTarget && (
+              <div>
+                <label className="label-overline">{t('checkin.target_type_label')}</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => switchTargetType('org')}
+                    className={`px-4 py-2 text-sm border ${targetType === 'org' ? 'bg-foreground text-background border-foreground' : 'border-border text-foreground/70'}`}
+                    data-testid="checkin-target-type-org"
+                  >
+                    {t('checkin.target_type_org')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchTargetType('donateur')}
+                    className={`px-4 py-2 text-sm border ${targetType === 'donateur' ? 'bg-foreground text-background border-foreground' : 'border-border text-foreground/70'}`}
+                    data-testid="checkin-target-type-donateur"
+                  >
+                    {t('checkin.target_type_donateur')}
+                  </button>
+                </div>
+              </div>
+            )}
             <div>
-              <label className="label-overline">{t('checkin.find_org')}</label>
-              {selectedOrg ? (
+              <label className="label-overline">
+                {targetType === 'org' ? t('checkin.find_org') : t('checkin.find_donateur')}
+              </label>
+              {selectedTarget ? (
                 <div
                   className="inline-flex items-center gap-2 border border-foreground bg-surface px-4 py-2"
-                  data-testid="checkin-selected-org"
+                  data-testid="checkin-selected-target"
                 >
-                  <span className="font-medium">{selectedOrg.name}</span>
+                  <span className="font-medium">{selectedTarget.name}</span>
                   <button
-                    onClick={() => { setSelectedOrg(null); setQuery(''); }}
+                    onClick={() => { setSelectedTarget(null); setQuery(''); }}
                     className="text-muted-foreground hover:text-foreground w-8 h-8 inline-flex items-center justify-center text-xl -mr-1"
-                    data-testid="checkin-clear-org"
+                    data-testid="checkin-clear-target"
                   >
                     ×
                   </button>
@@ -155,22 +199,24 @@ export default function Checkin() {
                   <input
                     type="text"
                     className="input-flat"
-                    placeholder={t('checkin.type_org_name')}
+                    placeholder={targetType === 'org' ? t('checkin.type_org_name') : t('checkin.type_donateur_name')}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    data-testid="checkin-org-search-input"
+                    data-testid="checkin-target-search-input"
                   />
                   {suggestions.length > 0 && (
-                    <ul className="mt-2 border border-border bg-surface divide-y divide-border" data-testid="checkin-org-suggestions">
+                    <ul className="mt-2 border border-border bg-surface divide-y divide-border" data-testid="checkin-target-suggestions">
                       {suggestions.map((o) => (
                         <li key={o.id}>
                           <button
-                            onClick={() => { setSelectedOrg(o); setQuery(o.name); setSuggestions([]); }}
-                            data-testid={`checkin-org-option-${o.id}`}
+                            onClick={() => { setSelectedTarget(o); setQuery(o.name); setSuggestions([]); }}
+                            data-testid={`checkin-target-option-${o.id}`}
                             className="w-full text-left px-4 py-4 text-sm hover:bg-muted active:bg-muted transition-colors"
                           >
                             <span className="font-medium">{o.name}</span>
-                            <span className="text-muted-foreground ml-2 text-xs">{t(`org_categories.${o.category}`)}</span>
+                            {targetType === 'org' && (
+                              <span className="text-muted-foreground ml-2 text-xs">{t(`org_categories.${o.category}`)}</span>
+                            )}
                           </button>
                         </li>
                       ))}
@@ -184,7 +230,7 @@ export default function Checkin() {
             </div>
             <button
               onClick={() => setStep(2)}
-              disabled={!selectedOrg}
+              disabled={!selectedTarget}
               className="btn-primary"
               data-testid="checkin-step1-next"
             >
@@ -293,8 +339,8 @@ export default function Checkin() {
         {step === 3 && (
           <section className="space-y-6" data-testid="checkin-step-3">
             <div>
-              <p className="overline mb-1">{t('checkin.summary_org')}</p>
-              <p className="text-lg font-medium" data-testid="checkin-summary-org">{selectedOrg.name}</p>
+              <p className="overline mb-1">{targetType === 'org' ? t('checkin.summary_org') : t('checkin.summary_donateur')}</p>
+              <p className="text-lg font-medium" data-testid="checkin-summary-target">{selectedTarget.name}</p>
             </div>
 
             <div>
@@ -364,7 +410,7 @@ export default function Checkin() {
             <p className="text-foreground/80 leading-relaxed max-w-md mx-auto">
               <Trans
                 i18nKey="checkin.success_body"
-                values={{ org: selectedOrg.name, kg: confirmedTotal.toFixed(2) }}
+                values={{ org: selectedTarget.name, kg: confirmedTotal.toFixed(2) }}
               >
                 <span className="font-medium" data-testid="checkin-success-org" />
                 {' heeft '}

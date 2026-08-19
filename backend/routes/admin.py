@@ -160,6 +160,19 @@ async def admin_list_users(
     return {"total": total, "items": users}
 
 
+@router.get("/admin/donateurs/search")
+async def search_donateur_companies(q: str = Query(..., min_length=2), admin: dict = Depends(get_admin_user)):
+    """Zoekt bedrijfs-donateurs op bedrijfsnaam — gebruikt bij de magazijn-
+    checkin, zodat een admin daar ook een donerend bedrijf kan opzoeken i.p.v.
+    enkel organisaties (zelfde zoekervaring als /organisations/search)."""
+    regex = {"$regex": q, "$options": "i"}
+    docs = await db.users.find(
+        {"role": "donateur", "donorType": "bedrijf", "status": "validated", "companyName": regex},
+        {"_id": 0, "id": 1, "companyName": 1},
+    ).limit(10).to_list(10)
+    return docs
+
+
 @router.patch("/admin/users/{user_id}")
 async def admin_update_user(user_id: str, body: AdminUserUpdate, admin: dict = Depends(get_admin_user)):
     existing = await db.users.find_one({"id": user_id})
@@ -535,6 +548,18 @@ async def get_stats(
         async for d in db.checkins.aggregate(org_checkin_pipeline)
     ]
 
+    # --- Per bedrijfs-donateur: checkins ---
+    donateur_checkin_pipeline = [
+        *match_stage,
+        {"$match": {"donateurUserId": {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": "$donateurUserId", "name": {"$first": "$donateurCompanyName"}, "kg": {"$sum": "$totalWeightKg"}}},
+        {"$sort": {"kg": -1}},
+    ]
+    donateur_checkin = [
+        {"name": d.get("name") or "", "kg": round(d["kg"], 2)}
+        async for d in db.checkins.aggregate(donateur_checkin_pipeline)
+    ]
+
     return {
         "totals": {
             "magazijn_kg": total_magazijn_kg,
@@ -547,6 +572,7 @@ async def get_stats(
         "by_org_platform": org_platform,
         "by_org_platform_givers": org_platform_givers,
         "by_org_checkin": org_checkin,
+        "by_donateur_checkin": donateur_checkin,
         "checkouts_count": checkouts_count,
         "transfers_count": transfers_count,
         "checkins_count": checkins_count,
@@ -626,8 +652,10 @@ async def admin_list_transactions(
                 "id": c["id"],
                 "type": "checkin",
                 "createdAt": c.get("createdAt"),
+                # checkin komt ofwel van een organisatie, ofwel van een
+                # bedrijfs-donateur (zie CheckinCreate) — nooit beide.
                 "fromOrgId": c.get("organisationId"),
-                "fromOrgName": c.get("organisationName"),
+                "fromOrgName": c.get("organisationName") or c.get("donateurCompanyName"),
                 "toOrgId": None,
                 "toOrgName": MAGAZIJN_LABEL,
                 "material": _items_material_summary(c.get("items")),

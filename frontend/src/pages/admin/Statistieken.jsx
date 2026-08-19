@@ -225,6 +225,28 @@ export default function Statistieken() {
                 </table>
               </div>
             )}
+
+            {stats.by_donateur_checkin?.length > 0 && (
+              <div className="mt-6">
+                <p className="overline mb-3">Top bedrijfs-donateurs — gedoneerd aan magazijn</p>
+                <table className="w-full text-sm border-y border-border" data-testid="admin-stats-donateur-checkin-table">
+                  <thead>
+                    <tr className="text-xs uppercase tracking-wider text-muted-foreground">
+                      <th className="text-left py-2">Bedrijf</th>
+                      <th className="text-right py-2">Kg gedoneerd</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {stats.by_donateur_checkin.slice(0, 20).map((o, i) => (
+                      <tr key={i}>
+                        <td className="py-2">{o.name}</td>
+                        <td className="py-2 text-right font-medium">{o.kg.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
 
           {/* Org platform */}

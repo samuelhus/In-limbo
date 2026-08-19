@@ -13,15 +13,10 @@ router = APIRouter()
 
 @router.post("/checkin")
 async def create_checkin(body: CheckinCreate, admin: dict = Depends(get_admin_user)):
-    org = await db.organisations.find_one({"id": body.organisationId})
-    if not org or org["status"] not in ("validated", "active"):
-        raise HTTPException(404, "Organisatie niet gevonden")
     now = now_iso()
     total = round(sum(item.weightKg for item in body.items), 2)
     doc = {
         "id": str(uuid.uuid4()),
-        "organisationId": body.organisationId,
-        "organisationName": org["name"],
         "items": [
             {
                 "material": i.material,
@@ -34,5 +29,21 @@ async def create_checkin(body: CheckinCreate, admin: dict = Depends(get_admin_us
         "type": "magazijn_checkin",
         "createdAt": now,
     }
+
+    if body.organisationId:
+        org = await db.organisations.find_one({"id": body.organisationId})
+        if not org or org["status"] not in ("validated", "active"):
+            raise HTTPException(404, "Organisatie niet gevonden")
+        doc["organisationId"] = body.organisationId
+        doc["organisationName"] = org["name"]
+    else:
+        donateur = await db.users.find_one({
+            "id": body.donateurUserId, "role": "donateur", "donorType": "bedrijf",
+        })
+        if not donateur or donateur.get("status") != "validated":
+            raise HTTPException(404, "Donateur niet gevonden")
+        doc["donateurUserId"] = body.donateurUserId
+        doc["donateurCompanyName"] = donateur.get("companyName")
+
     await db.checkins.insert_one(doc)
     return {"ok": True, "totalWeightKg": total}
