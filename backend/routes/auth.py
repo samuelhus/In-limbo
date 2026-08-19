@@ -187,7 +187,10 @@ async def register_donateur(request: Request, body: RegisterDonateur = Body(...)
     email = body.email.lower()
     if await db.users.find_one({"email": email}):
         raise HTTPException(409, msg("email_exists", request))
-    if await db.users.find_one({"username": body.username}):
+    # Enkel checken als er een username is (bedrijfs-donateurs hebben er geen
+    # — anders zou elke tweede bedrijfs-donateur onterecht botsen op de
+    # eerste, want die hebben allebei username=None in de database).
+    if body.username and await db.users.find_one({"username": body.username}):
         raise HTTPException(409, msg("username_exists", request))
     user_id = str(uuid.uuid4())
     now = now_iso()
@@ -195,7 +198,7 @@ async def register_donateur(request: Request, body: RegisterDonateur = Body(...)
         "id": user_id,
         "email": email,
         "passwordHash": hash_password(body.password),
-        "username": body.username,
+        "username": body.username or None,
         "firstName": body.firstName,
         "lastName": None,
         "phone": None,

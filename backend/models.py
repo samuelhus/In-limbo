@@ -159,7 +159,11 @@ class PasswordResetConfirm(BaseModel):
 
 class RegisterDonateur(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
-    username: str
+    # Username is enkel het publieke identificatiemiddel voor een particuliere
+    # donateur (die geen bedrijfsnaam heeft om zich mee te tonen bij een
+    # aanbieding) — voor een bedrijfs-donateur wordt companyName daarvoor
+    # gebruikt, dus daar is username niet verplicht.
+    username: Optional[str] = None
     email: EmailStr
     password: str = Field(..., min_length=8)
     firstName: str = Field(..., min_length=1, max_length=100)
@@ -169,9 +173,13 @@ class RegisterDonateur(BaseModel):
     preferredLanguage: Literal["nl", "fr"] = "nl"
 
     @model_validator(mode="after")
-    def _validate_company_name(self):
-        if self.donorType == "bedrijf" and not (self.companyName and self.companyName.strip()):
-            raise ValueError("Bedrijfsnaam is verplicht wanneer donorType 'bedrijf' is")
+    def _validate_by_donor_type(self):
+        if self.donorType == "bedrijf":
+            if not (self.companyName and self.companyName.strip()):
+                raise ValueError("Bedrijfsnaam is verplicht wanneer donorType 'bedrijf' is")
+        else:
+            if not (self.username and self.username.strip()):
+                raise ValueError("Username is verplicht voor particuliere donateurs")
         return self
 
 

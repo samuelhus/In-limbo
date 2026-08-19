@@ -37,6 +37,8 @@ def _public_listing_view(listing: dict, viewer: dict | None) -> dict:
         lst.pop("offererFirstName", None)
         lst.pop("offererUsername", None)
         lst.pop("offererIsDonateur", None)
+        lst.pop("offererDonorType", None)
+        lst.pop("offererCompanyName", None)
         lst.pop("organisationId", None)
         lst.pop("organisation", None)
         return lst
@@ -66,7 +68,7 @@ async def _enrich_listings(items: list[dict]) -> list[dict]:
     if user_ids:
         async for u in db.users.find(
             {"id": {"$in": user_ids}},
-            {"_id": 0, "id": 1, "firstName": 1, "role": 1, "username": 1},
+            {"_id": 0, "id": 1, "firstName": 1, "role": 1, "username": 1, "donorType": 1, "companyName": 1},
         ):
             users_map[u["id"]] = u
     orgs_map: dict[str, dict] = {}
@@ -79,8 +81,13 @@ async def _enrich_listings(items: list[dict]) -> list[dict]:
         if not owner:
             continue
         if owner.get("role") == "donateur":
-            it["offererUsername"] = owner.get("username")
             it["offererIsDonateur"] = True
+            it["offererDonorType"] = owner.get("donorType") or "particulier"
+            if owner.get("donorType") == "bedrijf":
+                it["offererFirstName"] = owner.get("firstName")
+                it["offererCompanyName"] = owner.get("companyName")
+            else:
+                it["offererUsername"] = owner.get("username")
         else:
             it["offererFirstName"] = owner.get("firstName")
             org = orgs_map.get(it.get("organisationId"))
@@ -254,8 +261,13 @@ async def get_listing(listing_id: str, request: Request):
         owner = await db.users.find_one({"id": listing["userId"]})
         if owner:
             if owner.get("role") == "donateur":
-                view["offererUsername"] = owner.get("username")
                 view["offererIsDonateur"] = True
+                view["offererDonorType"] = owner.get("donorType") or "particulier"
+                if owner.get("donorType") == "bedrijf":
+                    view["offererFirstName"] = owner.get("firstName")
+                    view["offererCompanyName"] = owner.get("companyName")
+                else:
+                    view["offererUsername"] = owner.get("username")
             else:
                 view["offererFirstName"] = owner.get("firstName")
                 org = await db.organisations.find_one({"id": listing.get("organisationId")}) if listing.get("organisationId") else None
@@ -268,7 +280,8 @@ async def get_listing(listing_id: str, request: Request):
                 if listing.get("isRecurrent"):
                     view["offererEmail"] = owner["email"]
         if viewer and viewer.get("role") == "donateur":
-            for k in ("offererFirstName", "offererUsername", "offererIsDonateur", "organisation", "offererEmail"):
+            for k in ("offererFirstName", "offererUsername", "offererIsDonateur",
+                      "offererDonorType", "offererCompanyName", "organisation", "offererEmail"):
                 view.pop(k, None)
 
         if viewer:

@@ -110,7 +110,10 @@ function ListingTile({ item, isValidated, isAdmin }) {
   };
 
   const photo = item.photos?.[0];
-  const isDonateurOffer = !item.limited && item.offererIsDonateur && item.offererUsername;
+  const isDonateurParticulier = !item.limited && item.offererIsDonateur
+    && item.offererDonorType !== 'bedrijf' && item.offererUsername;
+  const isDonateurBedrijf = !item.limited && item.offererIsDonateur
+    && item.offererDonorType === 'bedrijf' && item.offererFirstName && item.offererCompanyName;
   const showOfferer = !item.limited && item.offererFirstName && item.organisation;
 
   const goToListing = () => navigate(`/aanbieding/${item.slug || item.id}`);
@@ -175,10 +178,17 @@ function ListingTile({ item, isValidated, isAdmin }) {
           {item.title}
         </h3>
         {/*<p className="mt-1 text-xs text-muted-foreground uppercase tracking-wider">{item.material}</p>*/}
-        {isDonateurOffer && (
+        {isDonateurParticulier && (
           <p className="mt-1 text-xs text-muted-foreground" data-testid={`listing-tile-donateur-${item.id}`}>
-            {t('catalogus.aangeboden_door')} <span className="font-medium text-foreground/85">{item.offererUsername}</span>{' '}
-            <span className="text-muted-foreground italic">{t('catalogus.geen_partner')}</span>
+            {t('catalogus.aangeboden_door')} <span className="font-medium text-foreground/85">{item.offererUsername}</span>
+            {' - '}{t('auth.donateur_type_particulier')}
+          </p>
+        )}
+        {isDonateurBedrijf && (
+          <p className="mt-1 text-xs text-muted-foreground" data-testid={`listing-tile-donateur-${item.id}`}>
+            {t('catalogus.aangeboden_door')} <span className="font-medium text-foreground/85">{item.offererFirstName}</span> {t('catalogus.van')}{' '}
+            <span className="font-medium text-foreground/85">{item.offererCompanyName}</span>
+            {' - '}{t('auth.donateur_type_bedrijf')}
           </p>
         )}
         {showOfferer && (

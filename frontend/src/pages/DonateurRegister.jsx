@@ -35,9 +35,9 @@ export default function DonateurRegister() {
   const back = () => setStep((s) => Math.max(1, s - 1));
 
   const canNext1 = terms;
-  const canNext2 = form.username.trim() && form.email.trim() && form.password.length >= 8
+  const canNext2 = form.email.trim() && form.password.length >= 8
     && form.firstName.trim()
-    && (form.donorType === 'particulier' || form.companyName.trim());
+    && (form.donorType === 'particulier' ? form.username.trim() : form.companyName.trim());
 
   const submit = async () => {
     setSubmitting(true);
@@ -69,7 +69,7 @@ export default function DonateurRegister() {
               <li>{t('auth.donateur_terms_individual')}</li>
               <li>{t('auth.donateur_terms_free_truthful')}</li>
               <li>{t('auth.donateur_terms_username_visible')}</li>
-              <li>{t('auth.donateur_terms_marked_as')} <em>'{t('auth.donateur_terms_no_partner_label')}'</em>.</li>
+              <li>{t('auth.donateur_terms_marked_as')}</li>
             </ul>
             <div className="mt-4 border-l-2 border-foreground pl-4 py-1 text-sm">
               <p className="font-medium mb-1">{t('auth.donateur_apply_warning_title')}</p>
@@ -104,25 +104,6 @@ export default function DonateurRegister() {
         <section className="space-y-5" data-testid="donateur-step-2">
           <h2 className="text-2xl font-semibold">{t('auth.donateur_account_title')}</h2>
           <div>
-            <label className="label-overline">{t('auth.username')}</label>
-            <input
-              className="input-flat"
-              data-testid="donateur-username"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="label-overline">{t('auth.donateur_first_name_label')}</label>
-            <input
-              className="input-flat"
-              data-testid="donateur-firstname"
-              value={form.firstName}
-              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-            />
-          </div>
-          <div>
             <label className="label-overline">{t('auth.donateur_type_question')}</label>
             <div className="flex gap-4 mt-1">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -133,6 +114,7 @@ export default function DonateurRegister() {
                   checked={form.donorType === 'particulier'}
                   onChange={() => setForm({ ...form, donorType: 'particulier', companyName: '' })}
                   data-testid="donateur-type-particulier"
+                  autoFocus
                 />
                 <span className="text-sm">{t('auth.donateur_type_particulier')}</span>
               </label>
@@ -142,23 +124,55 @@ export default function DonateurRegister() {
                   name="donorType"
                   value="bedrijf"
                   checked={form.donorType === 'bedrijf'}
-                  onChange={() => setForm({ ...form, donorType: 'bedrijf' })}
+                  onChange={() => setForm({ ...form, donorType: 'bedrijf', username: '' })}
                   data-testid="donateur-type-bedrijf"
                 />
                 <span className="text-sm">{t('auth.donateur_type_bedrijf')}</span>
               </label>
             </div>
           </div>
-          {form.donorType === 'bedrijf' && (
-            <div>
-              <label className="label-overline">{t('auth.donateur_company_name_label')}</label>
-              <input
-                className="input-flat"
-                data-testid="donateur-companyname"
-                value={form.companyName}
-                onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-              />
-            </div>
+          {form.donorType === 'particulier' ? (
+            <>
+              <div>
+                <label className="label-overline">{t('auth.username')}</label>
+                <input
+                  className="input-flat"
+                  data-testid="donateur-username"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label-overline">{t('auth.donateur_first_name_label')}</label>
+                <input
+                  className="input-flat"
+                  data-testid="donateur-firstname"
+                  value={form.firstName}
+                  onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="label-overline">{t('auth.donateur_first_name_label')}</label>
+                <input
+                  className="input-flat"
+                  data-testid="donateur-firstname"
+                  value={form.firstName}
+                  onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label-overline">{t('auth.donateur_company_name_label')}</label>
+                <input
+                  className="input-flat"
+                  data-testid="donateur-companyname"
+                  value={form.companyName}
+                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                />
+              </div>
+            </>
           )}
           <div>
             <label className="label-overline">{t('auth.email')}</label>
@@ -195,10 +209,12 @@ export default function DonateurRegister() {
         <section className="space-y-6" data-testid="donateur-step-3">
           <h2 className="text-2xl font-semibold">{t('auth.donateur_confirm_title')}</h2>
           <dl className="border-t border-border divide-y divide-border">
-            <div className="flex items-start gap-6 py-3">
-              <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.username')}</dt>
-              <dd className="text-foreground/85">{form.username}</dd>
-            </div>
+            {form.donorType === 'particulier' && (
+              <div className="flex items-start gap-6 py-3">
+                <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.username')}</dt>
+                <dd className="text-foreground/85">{form.username}</dd>
+              </div>
+            )}
             <div className="flex items-start gap-6 py-3">
               <dt className="overline w-40 shrink-0 pt-0.5">{t('auth.donateur_first_name_label')}</dt>
               <dd className="text-foreground/85">{form.firstName}</dd>

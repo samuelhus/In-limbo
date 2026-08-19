@@ -190,11 +190,21 @@ export default function ListingDetail() {
                 </div>
               )}
 
-              {item.offererIsDonateur && item.offererUsername && (
+              {item.offererIsDonateur && item.offererDonorType !== 'bedrijf' && item.offererUsername && (
                 <div className="border-t border-border pt-6" data-testid="listing-offerer-donateur-block">
                   <p className="text-base">
-                    {t('listing.offered_by')} <span className="font-medium">{item.offererUsername}</span>{' '}
-                    <span className="text-muted-foreground italic">{t('listing.geen_partner')}</span>
+                    {t('listing.offered_by')} <span className="font-medium">{item.offererUsername}</span>
+                    {' - '}{t('auth.donateur_type_particulier')}
+                  </p>
+                </div>
+              )}
+
+              {item.offererIsDonateur && item.offererDonorType === 'bedrijf' && item.offererFirstName && item.offererCompanyName && (
+                <div className="border-t border-border pt-6" data-testid="listing-offerer-donateur-block">
+                  <p className="text-base">
+                    {t('listing.offered_by')} <span className="font-medium">{item.offererFirstName}</span> {t('listing.van')}{' '}
+                    <span className="font-medium">{item.offererCompanyName}</span>
+                    {' - '}{t('auth.donateur_type_bedrijf')}
                   </p>
                 </div>
               )}
