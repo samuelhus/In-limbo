@@ -2,9 +2,10 @@
 
 Fase 1 (zie PRD_direct_messaging.md): datamodel + kernroutes — gesprek
 starten, berichten ophalen/versturen, als gelezen markeren.
-Fase 2 (dit): bijlagen bij berichten (PRD §6.2/§7), met een cumulatieve limiet
-per Conversation. Nog steeds niet in deze fase: blokkeren,
-verwijderen/archiveren, notificaties/e-mail.
+Fase 2: bijlagen bij berichten (PRD §6.2/§7), met een cumulatieve limiet
+per Conversation.
+Fase 3 (dit): blokkeren en verwijderen/archiveren per gesprek (PRD §6.4/§6.5).
+Nog steeds niet in deze fase: notificaties/e-mail.
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
 één listing + één aanvrager/aanbieder-paar). offererUserId wordt nergens
@@ -53,12 +54,21 @@ def _check_message_rate_limit(user_id: str) -> None:
     _message_send_times[user_id] = times
 
 
-def _serialize_conversation(doc: dict, offerer_user_id: str) -> dict:
+def _serialize_conversation(doc: dict, offerer_user_id: str, viewer_user_id: str) -> dict:
     out = strip_mongo(dict(doc))
     out["offererUserId"] = offerer_user_id
     # Defaults voor gesprekken die aangemaakt zijn vóór fase 2 (bijlagen).
     out.setdefault("attachmentCount", 0)
     out.setdefault("attachmentBytes", 0)
+
+    # blockedBy/hiddenBy zijn arrays van userId's (zie models.py) — nooit
+    # rechtstreeks exposen, enkel de per-viewer afgeleide booleans (PRD §7).
+    blocked_by = out.pop("blockedBy", [])
+    hidden_by = out.pop("hiddenBy", [])
+    other_user_id = out["requesterUserId"] if viewer_user_id == offerer_user_id else offerer_user_id
+    out["blockedByMe"] = viewer_user_id in blocked_by
+    out["blockedByOther"] = other_user_id in blocked_by
+    out["hiddenByMe"] = viewer_user_id in hidden_by
     return out
 
 
@@ -105,7 +115,7 @@ async def create_conversation(body: ConversationCreate, user: dict = Depends(get
     # geeft gewoon het bestaande gesprek terug i.p.v. een foutmelding.
     existing = await db.conversations.find_one({"applicationId": body.applicationId})
     if existing:
-        return _serialize_conversation(existing, listing["userId"])
+        return _serialize_conversation(existing, listing["userId"], user["id"])
 
     now = now_iso()
     doc = {
@@ -118,9 +128,11 @@ async def create_conversation(body: ConversationCreate, user: dict = Depends(get
         "lastMessagePreview": None,
         "attachmentCount": 0,
         "attachmentBytes": 0,
+        "blockedBy": [],
+        "hiddenBy": [],
     }
     await db.conversations.insert_one(doc)
-    return _serialize_conversation(doc, listing["userId"])
+    return _serialize_conversation(doc, listing["userId"], user["id"])
 
 
 @router.get("/conversations/{conversation_id}/messages")
@@ -142,6 +154,7 @@ async def send_message(
     conversation_id: str, body: MessageCreate, user: dict = Depends(get_donateur_or_validated_user),
 ):
     conversation, offerer_user_id, role = await _load_conversation(conversation_id, user)
+    other_party_id = offerer_user_id if role == "requester" else conversation["requesterUserId"]
 
     # Asymmetrie-regel (PRD §3): de aanvrager mag pas berichten sturen nadat
     # de aanbieder als eerste iets gestuurd heeft in dit gesprek. Voor de
@@ -154,6 +167,15 @@ async def send_message(
             raise HTTPException(
                 403, "Wacht tot de aanbieder het gesprek geopend heeft voor je kan reageren",
             )
+
+    # Blokkeren (PRD §6.4): enkel de geblokkeerde partij wordt beperkt — wie
+    # zelf blokkeert kan nog gewoon verder berichten (geen wederzijdse
+    # opschorting, zie PRD). Geschiedenis blijft voor iedereen zichtbaar,
+    # dus enkel het versturen wordt hier tegengehouden, niet GET/read.
+    if other_party_id in conversation.get("blockedBy", []):
+        raise HTTPException(
+            403, "Je kan geen berichten meer sturen in dit gesprek — de andere partij heeft je geblokkeerd.",
+        )
 
     # Cumulatieve bijlage-limiet per Conversation (PRD §6.2), niet per
     # bericht: check vóór het bericht aanvaard wordt, tegen de lopende
@@ -189,7 +211,14 @@ async def send_message(
     await db.messages.insert_one(doc)
 
     preview = body.text if len(body.text) <= 100 else body.text[:99] + "…"
-    update: dict = {"$set": {"lastMessageAt": now, "lastMessagePreview": preview}}
+    update: dict = {
+        "$set": {"lastMessageAt": now, "lastMessagePreview": preview},
+        # PRD §6.5: als de ontvanger dit gesprek eerder bij zichzelf
+        # verwijderd/verborgen had, laat een nieuw bericht het terugkeren
+        # in hun lijst. Enkel de ontvanger — de eigen hidden-status van de
+        # verzender (indien die het ooit zelf verwijderde) blijft staan.
+        "$pull": {"hiddenBy": other_party_id},
+    }
     if new_attachments:
         update["$inc"] = {"attachmentCount": new_attachments, "attachmentBytes": new_bytes}
     await db.conversations.update_one({"id": conversation_id}, update)
@@ -204,3 +233,39 @@ async def mark_conversation_read(conversation_id: str, user: dict = Depends(get_
         {"$set": {"readAt": now_iso()}},
     )
     return {"ok": True, "modified": result.modified_count}
+
+
+@router.patch("/conversations/{conversation_id}/block")
+async def block_conversation(conversation_id: str, user: dict = Depends(get_donateur_or_validated_user)):
+    """Blokkeert de andere partij in dit gesprek (PRD §6.4) — per gesprek,
+    niet platformbreed. $addToSet is idempotent: een 2de keer blokkeren
+    verandert niets. De blokkerende partij zelf blijft gewoon kunnen
+    versturen (zie send_message) — enkel de geblokkeerde partij wordt
+    tegengehouden."""
+    _conversation, offerer_user_id, _role = await _load_conversation(conversation_id, user)
+    await db.conversations.update_one({"id": conversation_id}, {"$addToSet": {"blockedBy": user["id"]}})
+    updated = await db.conversations.find_one({"id": conversation_id})
+    return _serialize_conversation(updated, offerer_user_id, user["id"])
+
+
+@router.patch("/conversations/{conversation_id}/unblock")
+async def unblock_conversation(conversation_id: str, user: dict = Depends(get_donateur_or_validated_user)):
+    """Heft een eigen blokkade op. $pull raakt enkel de eigen entry in
+    blockedBy — wie zelf geblokkeerd wérd (i.p.v. blokkeerde) kan zichzelf
+    hierdoor dus niet deblokkeren, enkel wie de blokkade instelde."""
+    _conversation, offerer_user_id, _role = await _load_conversation(conversation_id, user)
+    await db.conversations.update_one({"id": conversation_id}, {"$pull": {"blockedBy": user["id"]}})
+    updated = await db.conversations.find_one({"id": conversation_id})
+    return _serialize_conversation(updated, offerer_user_id, user["id"])
+
+
+@router.delete("/conversations/{conversation_id}")
+async def hide_conversation(conversation_id: str, user: dict = Depends(get_donateur_or_validated_user)):
+    """Verbergt dit gesprek enkel voor de aanroeper (PRD §6.5) — geen echte
+    verwijdering: de andere partij behoudt het gesprek volledig, en het
+    verschijnt terug in de lijst van de aanroeper zodra er een nieuw
+    bericht binnenkomt (zie send_message, dat de ontvanger telkens uit
+    hiddenBy haalt)."""
+    await _load_conversation(conversation_id, user)
+    await db.conversations.update_one({"id": conversation_id}, {"$addToSet": {"hiddenBy": user["id"]}})
+    return {"success": True}

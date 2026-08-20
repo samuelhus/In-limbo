@@ -213,12 +213,21 @@ class SelectApplicantBody(BaseModel):
 # ---------- Conversations & Messages ----------
 # Direct messaging tussen aanbieder en aanvrager van een listing — 1-op-1
 # gekoppeld aan een Application (zie PRD_direct_messaging.md). Fase 1:
-# datamodel + kernroutes. Fase 2 (dit): bijlagen bij berichten, met een
-# cumulatieve limiet per Conversation i.p.v. per bericht (PRD §6.2).
+# datamodel + kernroutes. Fase 2: bijlagen bij berichten, met een
+# cumulatieve limiet per Conversation i.p.v. per bericht (PRD §6.2). Fase 3
+# (dit): blokkeren en verwijderen/archiveren per gesprek (PRD §6.4/§6.5).
 #
 # offererUserId wordt bewust NIET opgeslagen op het Conversation-document —
 # die wordt live afgeleid uit Listing.userId (zie routes/conversations.py,
 # _load_conversation), zodat er geen verouderde kopie kan ontstaan.
+#
+# blockedBy/hiddenBy zijn op het Mongo-document beide simpele arrays van
+# userId's — X in blockedBy betekent "X heeft de andere partij geblokkeerd
+# in dit gesprek", X in hiddenBy betekent "X heeft dit gesprek bij zichzelf
+# verwijderd/verborgen" (zie routes/conversations.py). Beide zijn intern:
+# ConversationPublic toont enkel de per-viewer afgeleide booleans hieronder,
+# nooit de ruwe arrays (de andere partij hoeft niet te weten wélke ids
+# precies blokkeren/verbergen).
 
 # Cumulatieve bijlage-limiet per Conversation (PRD §6.2) — niet per bericht:
 # max 5 foto's/bestanden en max 20 MB, samengeteld over alle berichten in
@@ -261,6 +270,11 @@ class ConversationPublic(BaseModel):
     lastMessagePreview: Optional[str] = None
     attachmentCount: int = 0  # max MAX_CONVERSATION_ATTACHMENTS
     attachmentBytes: int = 0  # max MAX_CONVERSATION_ATTACHMENT_BYTES
+    # Per-viewer afgeleid (zie routes/conversations.py::_serialize_conversation),
+    # niet letterlijk zo opgeslagen — zie blockedBy/hiddenBy hierboven.
+    blockedByMe: bool = False
+    blockedByOther: bool = False
+    hiddenByMe: bool = False
 
 
 class MessageCreate(BaseModel):

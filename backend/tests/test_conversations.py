@@ -1,5 +1,5 @@
-"""Phase 1 + 2 tests: direct-messaging datamodel + kernroutes + bijlagen
-(PRD_direct_messaging.md). Nog geen blokkeren/verwijderen/notificaties.
+"""Phase 1 + 2 + 3 tests: direct-messaging datamodel + kernroutes + bijlagen
++ blokkeren/verwijderen (PRD_direct_messaging.md). Nog geen notificaties.
 """
 import os
 import pytest
@@ -319,3 +319,157 @@ class TestAttachments:
             json={"text": "te groot", "photos": [_attachment(21 * 1024 * 1024)]},
         )
         assert r.status_code == 422, r.text
+
+
+# ---------- Blokkeren (fase 3, PRD §6.4) ----------
+class TestBlocking:
+    def test_block_prevents_blocked_party_from_sending(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "start"})
+        assert r0.status_code in (200, 201), r0.text
+        r1 = samir.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "reply"})
+        assert r1.status_code in (200, 201), r1.text
+
+        rb = samir.patch(f"{API}/conversations/{conv['conversationId']}/block")
+        assert rb.status_code == 200, rb.text
+        data = rb.json()
+        assert data["blockedByMe"] is True
+        assert data["blockedByOther"] is False
+
+        # Lotte is geblokkeerd door Samir en kan niet meer versturen.
+        rl = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "mag ik nog?"})
+        assert rl.status_code == 403, rl.text
+
+        # Samir (de blokkerende partij) kan zelf nog gewoon versturen — de
+        # PRD beperkt enkel de geblokkeerde partij, geen wederzijdse opschorting.
+        rs = samir.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "ik blokkeer wel"})
+        assert rs.status_code in (200, 201), rs.text
+
+        # Bestaande geschiedenis blijft zichtbaar voor beide partijen.
+        rg = lotte.get(f"{API}/conversations/{conv['conversationId']}/messages")
+        assert rg.status_code == 200, rg.text
+        assert rg.json()["total"] == 3
+
+    def test_blockedByOther_from_blocked_partys_perspective(self, lotte, samir, make_conversation):
+        # Blokkeren staat los van eerder berichtenverkeer — geen bericht
+        # nodig om dit te kunnen testen (spaart ook lotte's rate-limit-
+        # budget, gedeeld over de hele testmodule).
+        conv = make_conversation()
+        samir.patch(f"{API}/conversations/{conv['conversationId']}/block")
+
+        # /unblock is hier een no-op (Lotte werd nooit geblokkeerd door
+        # zichzelf) — enkel gebruikt om Lotte's kant van de gederiveerde
+        # blocked-status te inspecteren, analoog aan hoe fase 2 de
+        # idempotente POST /conversations hergebruikt om totalen te checken.
+        r = lotte.patch(f"{API}/conversations/{conv['conversationId']}/unblock")
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["blockedByOther"] is True
+        assert data["blockedByMe"] is False
+
+    def test_unblock_lifts_the_block(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        samir.patch(f"{API}/conversations/{conv['conversationId']}/block")
+
+        ru = samir.patch(f"{API}/conversations/{conv['conversationId']}/unblock")
+        assert ru.status_code == 200, ru.text
+        assert ru.json()["blockedByMe"] is False
+
+        # Lotte is aanbieder en mag ook als allereerste in dit verse gesprek
+        # versturen (geen asymmetrie-beperking voor die rol) — bevestigt dat
+        # de opgeheven blokkade het versturen niet langer tegenhoudt.
+        rl = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "terug in gesprek"})
+        assert rl.status_code in (200, 201), rl.text
+
+    def test_blocked_party_cannot_unblock_themselves(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        samir.patch(f"{API}/conversations/{conv['conversationId']}/block")
+
+        # Lotte werd geblokkeerd, maar is niet degene die blokkeerde — haar
+        # eigen /unblock-aanroep raakt enkel haar eigen (niet-aanwezige)
+        # entry en verandert dus niets aan de blokkade.
+        lotte.patch(f"{API}/conversations/{conv['conversationId']}/unblock")
+        r = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "nog steeds geblokkeerd?"})
+        assert r.status_code == 403, r.text
+
+    def test_block_is_idempotent(self, samir, make_conversation):
+        conv = make_conversation()
+        r1 = samir.patch(f"{API}/conversations/{conv['conversationId']}/block")
+        r2 = samir.patch(f"{API}/conversations/{conv['conversationId']}/block")
+        assert r1.status_code == 200 and r2.status_code == 200
+        assert r2.json()["blockedByMe"] is True
+
+    def test_unrelated_user_cannot_block(self, make_conversation):
+        conv = make_conversation()
+        s = _session(("admin@inlimbo.be", "Admin123!"))
+        r = s.patch(f"{API}/conversations/{conv['conversationId']}/block")
+        assert r.status_code == 403, r.text
+
+    def test_anonymous_cannot_block(self, anon, make_conversation):
+        conv = make_conversation()
+        r = anon.patch(f"{API}/conversations/{conv['conversationId']}/block")
+        assert r.status_code == 401, r.text
+
+    def test_unknown_conversation_block_404(self, lotte):
+        r = lotte.patch(f"{API}/conversations/does-not-exist/block")
+        assert r.status_code == 404, r.text
+
+
+# ---------- Verwijderen/archiveren (fase 3, PRD §6.5) ----------
+class TestDeleteHide:
+    def test_delete_hides_and_reappears_on_new_message(self, lotte, samir, make_conversation):
+        # Verbergen staat los van eerder berichtenverkeer — geen bericht
+        # nodig vóór de DELETE zelf (spaart lotte's rate-limit-budget).
+        conv = make_conversation()
+        rd = samir.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert rd.status_code == 200, rd.text
+        assert rd.json()["success"] is True
+
+        # Inspectie via /unblock (no-op qua blokkering — Samir blokkeerde
+        # niets — maar geeft wel de actuele hiddenByMe-status terug).
+        r_hidden = samir.patch(f"{API}/conversations/{conv['conversationId']}/unblock")
+        assert r_hidden.status_code == 200, r_hidden.text
+        assert r_hidden.json()["hiddenByMe"] is True
+
+        # Een nieuw bericht van Lotte (aanbieder, mag als allereerste
+        # versturen) laat het gesprek terugkeren bij Samir.
+        r1 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "hallo terug"})
+        assert r1.status_code in (200, 201), r1.text
+
+        r_visible = samir.patch(f"{API}/conversations/{conv['conversationId']}/unblock")
+        assert r_visible.status_code == 200, r_visible.text
+        assert r_visible.json()["hiddenByMe"] is False
+
+    def test_delete_does_not_hide_for_other_party(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        rd = lotte.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert rd.status_code == 200, rd.text
+
+        r_other = samir.patch(f"{API}/conversations/{conv['conversationId']}/unblock")
+        assert r_other.status_code == 200, r_other.text
+        assert r_other.json()["hiddenByMe"] is False  # Samir heeft zelf niets verwijderd
+
+    def test_delete_does_not_block_messaging(self, lotte, samir, make_conversation):
+        """Verwijderen is enkel zichtbaarheid, geen blokkade — beide partijen
+        kunnen na een DELETE gewoon verder berichten (PRD §6.5)."""
+        conv = make_conversation()
+        lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "start"})
+        samir.delete(f"{API}/conversations/{conv['conversationId']}")
+
+        r = samir.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "nog steeds actief"})
+        assert r.status_code in (200, 201), r.text
+
+    def test_unknown_conversation_delete_404(self, lotte):
+        r = lotte.delete(f"{API}/conversations/does-not-exist")
+        assert r.status_code == 404, r.text
+
+    def test_unrelated_user_cannot_delete(self, make_conversation):
+        conv = make_conversation()
+        s = _session(("admin@inlimbo.be", "Admin123!"))
+        r = s.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert r.status_code == 403, r.text
+
+    def test_anonymous_cannot_delete(self, anon, make_conversation):
+        conv = make_conversation()
+        r = anon.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert r.status_code == 401, r.text
