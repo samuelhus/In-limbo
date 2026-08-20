@@ -256,11 +256,21 @@ export default function GesprekDetail() {
       </Link>
 
       <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <p className="overline mb-1">{conversation.listingTitle}</p>
-          <h1 className="text-2xl font-bold tracking-tight" data-testid="gesprek-other-party">
-            {conversation.otherPartyName || t('messages.unknown_party')}
-          </h1>
+        <div className="flex items-center gap-3 min-w-0">
+          {conversation.listingPhoto && (
+            <img
+              src={cloudinaryThumb(conversation.listingPhoto, 100, 100)}
+              alt=""
+              className="w-12 h-12 object-cover shrink-0 border border-border"
+              data-testid="gesprek-listing-photo"
+            />
+          )}
+          <div className="min-w-0">
+            <p className="overline mb-1 truncate">{conversation.listingTitle}</p>
+            <h1 className="text-2xl font-bold tracking-tight" data-testid="gesprek-other-party">
+              {conversation.otherPartyName || t('messages.unknown_party')}
+            </h1>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           <button
@@ -297,14 +307,16 @@ export default function GesprekDetail() {
           const isMine = m.senderId === user?.id;
           // Duidelijk onderscheid wie wat schreef (fase 9): naam + kleur per
           // spreker (groen = ik, blauw = de andere partij — hergebruikt de
-          // bestaande status-kleuren uit tailwind.config.js), i.p.v. enkel
-          // een subtiele achtergrondtint.
+          // bestaande status-kleuren uit tailwind.config.js). Enkel een lichte
+          // achtergrondtint (10% opaciteit) i.p.v. een felle kleurbalk, zodat
+          // het gesprek rustig oogt maar wie-wat nog steeds op één oogopslag
+          // duidelijk is.
           const senderName = isMine ? conversation.viewerName : conversation.otherPartyName;
           const hasAttachments = (m.photos && m.photos.length > 0) || (m.files && m.files.length > 0);
           return (
             <div
               key={m.id}
-              className={`p-3 border-l-4 ${isMine ? 'border-[#34D399] bg-muted/20' : 'border-[#3B82F6]'}`}
+              className={`p-3 ${isMine ? 'bg-[#34D399]/10' : 'bg-[#3B82F6]/10'}`}
               data-testid={`gesprek-message-${m.id}`}
             >
               <p className={`text-xs font-semibold ${isMine ? 'text-[#166534]' : 'text-[#1E3A8A]'}`}>
@@ -431,7 +443,8 @@ export default function GesprekDetail() {
             disabled={!canSend || sending}
             placeholder={t('messages.input_placeholder')}
             rows={2}
-            className="flex-1 border border-border bg-background px-3 py-2 text-sm resize-none disabled:opacity-50"
+            autoFocus={canSend}
+            className="flex-1 border-2 border-border bg-surface px-3 py-2 text-sm resize-none focus:border-foreground focus:outline-none transition-colors disabled:opacity-50"
             data-testid="gesprek-input"
           />
           <button
