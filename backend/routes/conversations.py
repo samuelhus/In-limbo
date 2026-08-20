@@ -4,8 +4,11 @@ Fase 1 (zie PRD_direct_messaging.md): datamodel + kernroutes — gesprek
 starten, berichten ophalen/versturen, als gelezen markeren.
 Fase 2: bijlagen bij berichten (PRD §6.2/§7), met een cumulatieve limiet
 per Conversation.
-Fase 3 (dit): blokkeren en verwijderen/archiveren per gesprek (PRD §6.4/§6.5).
-Nog steeds niet in deze fase: notificaties/e-mail.
+Fase 3: blokkeren en verwijderen/archiveren per gesprek (PRD §6.4/§6.5).
+Fase 4 (dit): in-app notificatie voor de ontvanger bij elk nieuw bericht
+(PRD §6.6), hergebruik van notifications.create_notification — dezelfde
+basis als bv. new_application in routes/applications.py. Nog steeds niet
+in deze fase: de e-maildigest-logica uit PRD §6.6 (debounce/scheduled job).
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
 één listing + één aanvrager/aanbieder-paar). offererUserId wordt nergens
@@ -26,6 +29,7 @@ from models import (
     MAX_CONVERSATION_ATTACHMENTS, MAX_CONVERSATION_ATTACHMENT_BYTES,
 )
 from auth import get_donateur_or_validated_user
+from notifications import create_notification
 
 router = APIRouter()
 
@@ -222,6 +226,24 @@ async def send_message(
     if new_attachments:
         update["$inc"] = {"attachmentCount": new_attachments, "attachmentBytes": new_bytes}
     await db.conversations.update_one({"id": conversation_id}, update)
+
+    # In-app notificatie voor de ontvanger (PRD §6.6), zelfde patroon als
+    # bv. new_application in routes/applications.py: hergebruik van
+    # create_notification, met de listing als context. Geen aparte
+    # blokkade-check nodig hier — als de ontvanger (other_party_id) de
+    # verzender geblokkeerd had, was send_message hierboven al met 403
+    # gestopt vóór het bericht ooit werd opgeslagen. De e-maildigest uit
+    # PRD §6.6 (debounce + scheduled job) is bewust nog niet in deze fase.
+    listing = await db.listings.find_one({"id": conversation["listingId"]}, {"_id": 0, "title": 1})
+    listing_title = listing.get("title") if listing else None
+    sender_org_name = None
+    if user.get("organisationId"):
+        sender_org = await db.organisations.find_one({"id": user["organisationId"]}, {"_id": 0, "name": 1})
+        sender_org_name = sender_org["name"] if sender_org else None
+    sender_name = sender_org_name or user.get("username") or f'{user.get("firstName","")} {user.get("lastName","")}'.strip()
+    notif_msg = f'{sender_name} heeft je een bericht gestuurd over "{listing_title or ""}"'
+    await create_notification(db, other_party_id, "new_message", notif_msg, conversation["listingId"], listing_title)
+
     return _serialize_message(doc)
 
 

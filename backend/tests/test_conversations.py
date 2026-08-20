@@ -1,5 +1,6 @@
-"""Phase 1 + 2 + 3 tests: direct-messaging datamodel + kernroutes + bijlagen
-+ blokkeren/verwijderen (PRD_direct_messaging.md). Nog geen notificaties.
+"""Phase 1 + 2 + 3 + 4 tests: direct-messaging datamodel + kernroutes +
+bijlagen + blokkeren/verwijderen + in-app notificaties (PRD_direct_messaging.md).
+Nog geen e-maildigest (die volgt in een latere fase, zie PRD §6.6).
 """
 import os
 import pytest
@@ -86,7 +87,12 @@ def make_conversation(lotte, samir):
         application_id = a.json()["id"]
         c = lotte.post(f"{API}/conversations", json={"applicationId": application_id})
         assert c.status_code in (200, 201), c.text
-        return {"applicationId": application_id, "conversationId": c.json()["id"]}
+        return {
+            "applicationId": application_id,
+            "conversationId": c.json()["id"],
+            "listingId": listing_id,
+            "listingTitle": payload["title"],
+        }
 
     return _make
 
@@ -473,3 +479,47 @@ class TestDeleteHide:
         conv = make_conversation()
         r = anon.delete(f"{API}/conversations/{conv['conversationId']}")
         assert r.status_code == 401, r.text
+
+
+# ---------- In-app notificaties (fase 4, PRD §6.6) ----------
+class TestMessageNotifications:
+    def _new_message_notifs(self, session, conv):
+        notifs = session.get(f"{API}/notifications/mine").json()
+        return [n for n in notifs if n["type"] == "new_message" and n["listingId"] == conv["listingId"]]
+
+    def test_requester_gets_notified_on_offerer_first_message(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "hallo daar"})
+        assert r.status_code in (200, 201), r.text
+
+        matches = self._new_message_notifs(samir, conv)
+        assert len(matches) == 1, matches
+        assert matches[0]["listingTitle"] == conv["listingTitle"]
+        assert matches[0]["read"] is False
+
+        # De verzender krijgt geen notificatie voor het eigen bericht.
+        assert self._new_message_notifs(lotte, conv) == []
+
+    def test_offerer_gets_notified_on_requester_reply(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "start"})
+        assert r0.status_code in (200, 201), r0.text
+        r1 = samir.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "antwoord"})
+        assert r1.status_code in (200, 201), r1.text
+
+        # Lotte kreeg intussen ook al de notificatie van haar eigen bericht
+        # niet (zie vorige test) — hier telt enkel Samir's antwoord mee.
+        matches = self._new_message_notifs(lotte, conv)
+        assert len(matches) == 1, matches
+
+    def test_no_notification_when_message_is_rejected_by_block(self, lotte, samir, make_conversation):
+        """PRD §6.6: geen notificatie als de ontvanger de afzender
+        geblokkeerd heeft — hoeft hier niet apart afgedwongen te worden,
+        want send_message weigert een geblokkeerd bericht al met 403 vóór
+        het ooit opgeslagen (en dus genotificeerd) wordt."""
+        conv = make_conversation()
+        samir.patch(f"{API}/conversations/{conv['conversationId']}/block")
+        r = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "mag ik nog?"})
+        assert r.status_code == 403, r.text
+
+        assert self._new_message_notifs(samir, conv) == []
