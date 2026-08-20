@@ -1,7 +1,7 @@
-"""Phase 1 + 2 + 3 + 4 + 5 + 6 tests: direct-messaging datamodel + kernroutes
-+ bijlagen + blokkeren/verwijderen + in-app notificaties + e-maildigest +
-de unread-count-route voor de "Berichten"-badge in de hoofdnav
-(PRD_direct_messaging.md).
+"""Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 tests: direct-messaging datamodel +
+kernroutes + bijlagen + blokkeren/verwijderen + in-app notificaties +
+e-maildigest + de unread-count-route voor de "Berichten"-badge + de
+gesprekslijst/-detail-routes voor de chat-UI (PRD_direct_messaging.md).
 """
 import asyncio
 import os
@@ -245,6 +245,58 @@ class TestMessaging:
     def test_unknown_conversation_404(self, lotte):
         r = lotte.get(f"{API}/conversations/does-not-exist/messages")
         assert r.status_code == 404, r.text
+
+
+# ---------- Gesprekslijst & -detail (fase 7, PRD §6.3/§8) ----------
+class TestConversationListAndDetail:
+    def test_detail_and_mine_reflect_unread_and_listing_for_samir(self, samir, test_listing):
+        # Hergebruikt bewust de 2 berichten die TestMessaging hierboven al
+        # verstuurde — op dit punt in het bestand staan die nog ongelezen
+        # (TestReadReceipt hieronder markeert ze pas als gelezen), dus dit
+        # kost geen extra berichten op Lotte's gedeelde rate-limit-budget.
+        detail = samir.get(f"{API}/conversations/{test_listing['conversationId']}")
+        assert detail.status_code == 200, detail.text
+        d = detail.json()
+        assert d["listingTitle"]
+        assert d["otherPartyName"]  # Lotte's naam/organisatie
+        assert d["lastMessagePreview"] == "Met een bestelwagen, volgende week vrijdag."
+        assert d["unreadCount"] == 1  # enkel Lotte's bericht is nog ongelezen voor Samir
+
+        mine = samir.get(f"{API}/conversations/mine")
+        assert mine.status_code == 200, mine.text
+        entry = next(c for c in mine.json() if c["id"] == test_listing["conversationId"])
+        assert entry["unreadCount"] == 1
+        assert entry["listingTitle"]
+
+    def test_detail_reflects_unread_for_offerer(self, lotte, test_listing):
+        detail = lotte.get(f"{API}/conversations/{test_listing['conversationId']}")
+        assert detail.status_code == 200, detail.text
+        assert detail.json()["unreadCount"] == 1  # Samir's antwoord is nog ongelezen voor Lotte
+
+    def test_hidden_conversation_excluded_from_mine(self, samir, make_conversation):
+        conv = make_conversation()
+        d = samir.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert d.status_code == 200, d.text
+        mine = samir.get(f"{API}/conversations/mine")
+        assert mine.status_code == 200, mine.text
+        assert all(c["id"] != conv["conversationId"] for c in mine.json())
+
+    def test_unrelated_user_cannot_get_detail(self, make_conversation):
+        conv = make_conversation()
+        s = _session(("admin@inlimbo.be", "Admin123!"))
+        r = s.get(f"{API}/conversations/{conv['conversationId']}")
+        assert r.status_code == 403, r.text
+
+    def test_unknown_conversation_detail_404(self, lotte):
+        r = lotte.get(f"{API}/conversations/does-not-exist")
+        assert r.status_code == 404, r.text
+
+    def test_anonymous_401(self, anon, make_conversation):
+        conv = make_conversation()
+        r = anon.get(f"{API}/conversations/{conv['conversationId']}")
+        assert r.status_code == 401, r.text
+        r2 = anon.get(f"{API}/conversations/mine")
+        assert r2.status_code == 401, r2.text
 
 
 # ---------- Gelezen markeren ----------

@@ -272,6 +272,7 @@
     "unrehome_btn": "Rendre à nouveau disponible",
     "delete_listing_btn": "Supprimer l'annonce",
     "select_rehome_btn": "Sélectionner et redistribuer",
+    "start_conversation_btn": "Démarrer la conversation",
     "applications": "Demandes",
     "no_applications": "Pas encore de demandes.",
     "select_applicant": "Sélectionner comme destinataire",
@@ -474,7 +475,15 @@
   "messages": {
     "title": "Messages",
     "open": "Ouvrir les messages",
-    "coming_soon": "Vos conversations apparaîtront ici bientôt."
+    "empty": "Pas encore de conversations.",
+    "unknown_party": "Utilisateur inconnu",
+    "no_messages_yet": "Pas encore de messages dans cette conversation.",
+    "not_found": "Conversation introuvable.",
+    "waiting_for_offerer": "Attendez que le donateur ouvre cette conversation avant de pouvoir répondre.",
+    "blocked_notice": "Vous ne pouvez plus envoyer de messages dans cette conversation.",
+    "input_placeholder": "Écrivez un message…",
+    "send_btn": "Envoyer",
+    "char_count": "{{count}}/2000"
   },
   "pages": {
     "voorwaarden_title": "Conditions générales",

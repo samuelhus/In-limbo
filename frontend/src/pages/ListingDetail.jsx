@@ -421,6 +421,22 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
     finally { setBusy(false); }
   };
 
+  // "Start gesprek" (PRD_direct_messaging.md §6.1, fase 7) — POST /conversations
+  // is idempotent (zie backend/routes/conversations.py), dus een 2de klik op
+  // een aanvraag waar al een gesprek voor bestaat opent gewoon dat gesprek
+  // i.p.v. een dubbele aan te maken.
+  const startConversation = async (applicationId) => {
+    setBusy(true);
+    try {
+      const { data } = await api.post('/conversations', { applicationId });
+      navigate(`/berichten/${data.id}`);
+    } catch (e) {
+      alert(formatApiError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const confirmDelete = async () => {
     setBusy(true);
     setDeleteError('');
@@ -520,6 +536,14 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
                 </p>
               )}
               <p className="text-xs text-muted-foreground italic mt-3">"{sel.motivation}"</p>
+              <button
+                onClick={() => startConversation(sel.id)}
+                disabled={busy}
+                className="btn-secondary !py-1.5 px-3 text-xs mt-3"
+                data-testid={`owner-start-conversation-${sel.id}`}
+              >
+                {t('listing.start_conversation_btn')}
+              </button>
             </div>
           ))}
           {listing.status === 'herbestemd' && (
@@ -577,7 +601,15 @@ function OwnerPanel({ listing, isAdmin, onChanged }) {
                 )}
                 <p className="text-sm mt-2 text-foreground/80 italic">"{a.motivation}"</p>
               </div>
-              <div className="md:col-span-4 md:flex md:justify-end items-start">
+              <div className="md:col-span-4 flex flex-col items-start md:items-end gap-2">
+                <button
+                  onClick={() => startConversation(a.id)}
+                  disabled={busy}
+                  className="btn-secondary !py-2 text-xs"
+                  data-testid={`owner-start-conversation-${a.id}`}
+                >
+                  {t('listing.start_conversation_btn')}
+                </button>
                 <button
                   onClick={() => selectApplicant(a.id, `${a.applicant.firstName} ${a.applicant.lastName || ''}`.trim(), a.requestedQuantity || 1)}
                   disabled={busy}

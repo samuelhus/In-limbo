@@ -42,6 +42,7 @@ import WachtwoordVergeten from '@/pages/WachtwoordVergeten';
 import WachtwoordReset from '@/pages/WachtwoordReset';
 import Notificaties from '@/pages/Notificaties';
 import Berichten from '@/pages/Berichten';
+import GesprekDetail from '@/pages/GesprekDetail';
 import Voorwaarden from '@/pages/Voorwaarden';
 import Privacy from '@/pages/Privacy';
 import AdminDonateurListings from '@/pages/AdminDonateurListings';
@@ -106,6 +107,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowDonateur>
                     <Berichten />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/berichten/:id"
+                element={
+                  <ProtectedRoute allowDonateur>
+                    <GesprekDetail />
                   </ProtectedRoute>
                 }
               />

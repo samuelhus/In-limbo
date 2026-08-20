@@ -246,6 +246,7 @@
     "unrehome_btn": "Terug beschikbaar maken",
     "delete_listing_btn": "Verwijder aanbieding",
     "select_rehome_btn": "Selecteer & herbestem",
+    "start_conversation_btn": "Start gesprek",
     "applications": "Aanvragen",
     "no_applications": "Nog geen aanvragen.",
     "select_applicant": "Selecteer als ontvanger",
@@ -464,7 +465,15 @@
   "messages": {
     "title": "Berichten",
     "open": "Berichten openen",
-    "coming_soon": "Je gesprekken verschijnen hier binnenkort."
+    "empty": "Nog geen gesprekken.",
+    "unknown_party": "Onbekende gebruiker",
+    "no_messages_yet": "Nog geen berichten in dit gesprek.",
+    "not_found": "Gesprek niet gevonden.",
+    "waiting_for_offerer": "Wacht tot de aanbieder dit gesprek opent voor je kan reageren.",
+    "blocked_notice": "Je kan geen berichten meer sturen in dit gesprek.",
+    "input_placeholder": "Typ een bericht…",
+    "send_btn": "Versturen",
+    "char_count": "{{count}}/2000"
   },
   "pages": {
     "voorwaarden_title": "Algemene voorwaarden",

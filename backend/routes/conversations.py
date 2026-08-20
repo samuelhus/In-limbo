@@ -12,10 +12,14 @@ Fase 5: de e-maildigest-logica uit PRD §6.6 — dit bestand zet enkel
 lopende ongelezen-periode was) en reset het bij het lezen; de scheduled job
 die de bundel-mail effectief verstuurt staat in tasks.py::send_message_email_reminders
 (geregistreerd op de bestaande APScheduler in server.py).
-Fase 6 (dit): GET /conversations/unread-count, een lichtgewicht route voor
-de badge op de "Berichten"-tab in de hoofdnav (PRD §6.3) — telt gesprekken
+Fase 6: GET /conversations/unread-count, een lichtgewicht route voor de
+badge op de "Berichten"-tab in de hoofdnav (PRD §6.3) — telt gesprekken
 met ongelezen berichten, niet het volledige GET /conversations/mine uit
-PRD §8 (dat komt pas met de gesprekslijst in een latere fase).
+PRD §8 (die kwam pas met de gesprekslijst hieronder).
+Fase 7 (dit): de eigenlijke chat-UI — GET /conversations/mine (gesprekslijst,
+PRD §6.3/§8) en GET /conversations/{id} (detail voor de header van het
+gespreksvenster), beide via _enrich_conversations hieronder verrijkt met
+listingtitel en de weergavenaam van de andere partij.
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
 één listing + één aanvrager/aanbieder-paar). offererUserId wordt nergens
@@ -94,6 +98,95 @@ def _serialize_message(doc: dict) -> dict:
     return strip_mongo(dict(doc))
 
 
+def _my_conversations_filter(user_id: str, listing_ids: list[str]) -> dict:
+    """Mongo-filter voor "mijn gesprekken" — gedeeld tussen /unread-count en
+    /mine zodat beide exact dezelfde set gesprekken tellen/tonen. offererUserId
+    staat niet op het Conversation-document (zie module-docstring), dus "mijn
+    gesprekken als aanbieder" loopt via de listings die ik zelf bezit."""
+    return {
+        "$or": [
+            {"requesterUserId": user_id},
+            {"listingId": {"$in": listing_ids}},
+        ],
+        # Verborgen gesprekken (PRD §6.5) tellen niet mee: een nieuw bericht
+        # haalt de ontvanger sowieso al uit hiddenBy (zie send_message), dus
+        # dit sluit enkel bewust gearchiveerde, reeds geziene gesprekken uit.
+        "hiddenBy": {"$ne": user_id},
+    }
+
+
+async def _enrich_conversations(docs: list[dict], viewer_id: str) -> list[dict]:
+    """Verrijkt ruwe Conversation-documenten met wat de gesprekslijst en het
+    gespreksvenster nodig hebben, maar wat niet op het document zelf staat:
+    listingtitel, de weergavenaam van de andere partij en het aantal
+    ongelezen berichten in dat gesprek. Behoudt de volgorde van `docs`
+    (de aanroeper bepaalt de sortering vooraf, bv. op lastMessageAt)."""
+    if not docs:
+        return []
+
+    listing_ids = list({d["listingId"] for d in docs})
+    listings = {
+        l["id"]: l async for l in db.listings.find(
+            {"id": {"$in": listing_ids}}, {"_id": 0, "id": 1, "title": 1, "userId": 1},
+        )
+    }
+
+    # offererUserId per gesprek live afleiden (zie module-docstring), en
+    # meteen bepalen wie voor déze viewer "de andere partij" is.
+    other_user_ids: set[str] = set()
+    for d in docs:
+        listing = listings.get(d["listingId"])
+        offerer_id = listing["userId"] if listing else None
+        other_id = d["requesterUserId"] if viewer_id == offerer_id else offerer_id
+        d["_offererUserId"] = offerer_id
+        d["_otherUserId"] = other_id
+        if other_id:
+            other_user_ids.add(other_id)
+
+    users = {
+        u["id"]: u async for u in db.users.find(
+            {"id": {"$in": list(other_user_ids)}},
+            {"_id": 0, "id": 1, "firstName": 1, "lastName": 1, "username": 1, "organisationId": 1},
+        )
+    }
+    org_ids = [u["organisationId"] for u in users.values() if u.get("organisationId")]
+    orgs = {
+        o["id"]: o async for o in db.organisations.find({"id": {"$in": org_ids}}, {"_id": 0, "id": 1, "name": 1})
+    }
+
+    # Ongelezen-telling per gesprek in 1 aggregatie i.p.v. een query per
+    # gesprek — zelfde criterium als /unread-count (bericht van de andere
+    # partij, nog niet gelezen door de viewer).
+    conversation_ids = [d["id"] for d in docs]
+    unread_counts: dict[str, int] = {}
+    pipeline = [
+        {"$match": {"conversationId": {"$in": conversation_ids}, "senderId": {"$ne": viewer_id}, "readAt": None}},
+        {"$group": {"_id": "$conversationId", "count": {"$sum": 1}}},
+    ]
+    async for row in db.messages.aggregate(pipeline):
+        unread_counts[row["_id"]] = row["count"]
+
+    out = []
+    for d in docs:
+        listing = listings.get(d["listingId"])
+        offerer_id = d.pop("_offererUserId")
+        other_id = d.pop("_otherUserId")
+        other_user = users.get(other_id) or {}
+        other_org = orgs.get(other_user.get("organisationId")) or {}
+        other_name = (
+            other_org.get("name")
+            or other_user.get("username")
+            or f'{other_user.get("firstName", "")} {other_user.get("lastName", "")}'.strip()
+            or None
+        )
+        serialized = _serialize_conversation(d, offerer_id, viewer_id)
+        serialized["listingTitle"] = listing.get("title") if listing else None
+        serialized["otherPartyName"] = other_name
+        serialized["unreadCount"] = unread_counts.get(d["id"], 0)
+        out.append(serialized)
+    return out
+
+
 async def _load_conversation(conversation_id: str, user: dict) -> tuple[dict, str, str]:
     """Haalt een Conversation op + bepaalt de rol van de aanroeper.
 
@@ -165,32 +258,17 @@ async def unread_conversation_count(user: dict = Depends(get_donateur_or_validat
     """Aantal gesprekken met minstens 1 ongelezen bericht voor de ingelogde
     gebruiker (PRD §6.3, fase 6) — voedt de badge op de "Berichten"-tab in
     de hoofdnav. Telt gesprekken, niet losse berichten, zoals de PRD
-    voorschrijft. Een lichtgewicht route i.p.v. het volledige
-    GET /conversations/mine uit PRD §8 (nog niet gebouwd — dat komt met de
-    gesprekslijst in een latere fase): enkel het aantal is hier nodig, geen
-    listingtitels of laatste-berichtfragmenten.
-
-    offererUserId staat niet op het Conversation-document (zie module-
-    docstring), dus "mijn gesprekken als aanbieder" wordt via de eigen
-    listings gevonden — zelfde aanpak als routes/donateur.py's dashboard-stats.
+    voorschrijft. Blijft bestaan naast het (intussen gebouwde, fase 7)
+    GET /conversations/mine hieronder: de badge in Header.jsx pollt dit
+    lichtgewicht aantal, zonder de volledige lijst met listingtitels en
+    laatste-berichtfragmenten mee te moeten sturen.
     """
     listing_ids = [
         doc["id"] async for doc in db.listings.find({"userId": user["id"]}, {"_id": 0, "id": 1})
     ]
     conversation_ids = [
         doc["id"] async for doc in db.conversations.find(
-            {
-                "$or": [
-                    {"requesterUserId": user["id"]},
-                    {"listingId": {"$in": listing_ids}},
-                ],
-                # Verborgen gesprekken (PRD §6.5) tellen niet mee: een nieuw
-                # bericht haalt de ontvanger sowieso al uit hiddenBy (zie
-                # send_message), dus dit sluit enkel bewust gearchiveerde,
-                # reeds geziene gesprekken uit.
-                "hiddenBy": {"$ne": user["id"]},
-            },
-            {"_id": 0, "id": 1},
+            _my_conversations_filter(user["id"], listing_ids), {"_id": 0, "id": 1},
         )
     ]
     if not conversation_ids:
@@ -204,6 +282,36 @@ async def unread_conversation_count(user: dict = Depends(get_donateur_or_validat
         },
     )
     return {"count": len(unread_conversation_ids)}
+
+
+@router.get("/conversations/mine")
+async def list_my_conversations(user: dict = Depends(get_donateur_or_validated_user)):
+    """Gesprekslijst (PRD §6.3/§8, fase 7): naam tegenpartij, listingtitel,
+    laatste berichtfragment, tijdstip en ongelezen-indicator per gesprek —
+    verborgen gesprekken (PRD §6.5) niet meegeteld, zelfde filter als
+    /unread-count. Nieuwste gesprek eerst; gesprekken zonder berichten
+    (net gestart, aanbieder heeft nog niets gestuurd) vallen op createdAt
+    terug en komen achteraan te staan."""
+    listing_ids = [
+        doc["id"] async for doc in db.listings.find({"userId": user["id"]}, {"_id": 0, "id": 1})
+    ]
+    cursor = db.conversations.find(
+        _my_conversations_filter(user["id"], listing_ids),
+    ).sort([("lastMessageAt", -1), ("createdAt", -1)])
+    docs = [doc async for doc in cursor]
+    return await _enrich_conversations(docs, user["id"])
+
+
+@router.get("/conversations/{conversation_id}")
+async def get_conversation(conversation_id: str, user: dict = Depends(get_donateur_or_validated_user)):
+    """Detail van 1 gesprek (fase 7) — voedt de header van het gespreksvenster
+    (naam andere partij, listingtitel, blokkade-status) met dezelfde
+    verrijking als /mine. Moet ná /mine en /unread-count geregistreerd staan:
+    anders zou FastAPI die twee statische paden als een {conversation_id}
+    van "mine"/"unread-count" behandelen."""
+    conversation, _offerer_user_id, _role = await _load_conversation(conversation_id, user)
+    enriched = await _enrich_conversations([conversation], user["id"])
+    return enriched[0]
 
 
 @router.get("/conversations/{conversation_id}/messages")
