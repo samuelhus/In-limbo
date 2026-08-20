@@ -31,7 +31,7 @@ export async function compressImage(file) {
   }
 }
 
-export async function uploadToCloudinary(file) {
+async function _uploadImage(file) {
   // 1. Get signature from backend
   const { data: sig } = await api.get('/cloudinary/signature');
 
@@ -54,11 +54,26 @@ export async function uploadToCloudinary(file) {
     const txt = await res.text();
     throw new Error(`Cloudinary upload mislukt: ${txt}`);
   }
-  const data = await res.json();
+  return res.json();
+}
+
+export async function uploadToCloudinary(file) {
+  const data = await _uploadImage(file);
   return data.secure_url;
 }
 
-export async function uploadPdfToCloudinary(file) {
+// Voor Direct Messaging-bijlagen (PRD_direct_messaging.md §6.2/§7, fase 8):
+// MessageAttachment heeft naast de URL ook de effectieve bestandsgrootte
+// nodig (zie backend/models.py) om de cumulatieve limiet van 5 bijlagen/
+// 20 MB per Conversation client-side te kunnen aftoetsen vóór het
+// versturen — de server telt dit sowieso ook af (send_message), dit is
+// enkel om de gebruiker niet nodeloos tegen een 413 te laten aanlopen.
+export async function uploadImageWithMeta(file) {
+  const data = await _uploadImage(file);
+  return { url: data.secure_url, bytes: data.bytes };
+}
+
+async function _uploadRaw(file) {
   // 1. Get PDF-specific signature from backend
   const { data: sig } = await api.get('/cloudinary/pdf-signature');
 
@@ -79,8 +94,18 @@ export async function uploadPdfToCloudinary(file) {
     const txt = await res.text();
     throw new Error(`Cloudinary PDF upload mislukt: ${txt}`);
   }
-  const data = await res.json();
+  return res.json();
+}
+
+export async function uploadPdfToCloudinary(file) {
+  const data = await _uploadRaw(file);
   return data.secure_url;
+}
+
+// Zie uploadImageWithMeta hierboven — zelfde reden, voor bestandsbijlagen.
+export async function uploadFileWithMeta(file) {
+  const data = await _uploadRaw(file);
+  return { url: data.secure_url, bytes: data.bytes };
 }
 
 export function cloudinaryPdfUrl(url) {

@@ -483,7 +483,18 @@
     "blocked_notice": "Vous ne pouvez plus envoyer de messages dans cette conversation.",
     "input_placeholder": "Écrivez un message…",
     "send_btn": "Envoyer",
-    "char_count": "{{count}}/2000"
+    "char_count": "{{count}}/2000",
+    "add_photo": "+ Photo",
+    "add_file": "+ Fichier",
+    "uploading": "Téléchargement…",
+    "attachment_limit_reached": "La limite de pièces jointes pour cette conversation est atteinte (max. 5 photos/fichiers, 20 Mo au total) — veuillez poursuivre par e-mail.",
+    "attachment_upload_failed": "Échec du téléchargement. Réessayez.",
+    "block_btn": "Bloquer",
+    "unblock_btn": "Débloquer",
+    "confirm_block": "Voulez-vous vraiment bloquer {{name}} dans cette conversation ? {{name}} ne pourra plus envoyer de messages, mais l'historique existant reste visible pour vous deux. Vous pouvez annuler cela plus tard.",
+    "confirm_unblock": "Voulez-vous vraiment lever le blocage de {{name}} ?",
+    "hide_btn": "Masquer la conversation",
+    "confirm_hide": "Cette conversation disparaîtra de votre liste. Elle réapparaîtra dès qu'un nouveau message arrive. Continuer ?"
   },
   "pages": {
     "voorwaarden_title": "Conditions générales",

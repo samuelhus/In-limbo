@@ -21,7 +21,8 @@ function timeAgo(iso, lang = 'nl') {
 
 // Gesprekslijst (fase 7, PRD_direct_messaging.md §6.3): naam tegenpartij,
 // listingtitel, laatste berichtfragment, tijdstip en ongelezen-indicator
-// per gesprek — data komt van GET /conversations/mine (fase 7).
+// per gesprek — data komt van GET /conversations/mine (fase 7). Fase 8
+// voegt de verwijder/archiveer-knop (×) per rij toe (PRD §6.5).
 export default function Berichten() {
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage || 'nl').slice(0, 2);
@@ -39,6 +40,23 @@ export default function Berichten() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Verwijderen/archiveren (fase 8, PRD §6.5) — soft-delete: verdwijnt enkel
+  // uit mijn eigen lijst, de andere partij behoudt het gesprek volledig, en
+  // het verschijnt bij mij terug zodra er een nieuw bericht binnenkomt (zie
+  // backend/routes/conversations.py::hide_conversation). Optimistische
+  // update i.p.v. herladen, zelfde patroon als Notificaties.jsx::remove.
+  const hide = async (e, conversationId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.confirm(t('messages.confirm_hide'))) return;
+    try {
+      await api.delete(`/conversations/${conversationId}`);
+      setItems((prev) => prev.filter((c) => c.id !== conversationId));
+    } catch (err) {
+      alert(formatApiError(err));
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-12" data-testid="berichten-page">
       <p className="overline mb-2">{t('messages.title')}</p>
@@ -53,11 +71,11 @@ export default function Berichten() {
       {items && items.length > 0 && (
         <ul className="divide-y divide-border border-y border-border">
           {items.map((c) => (
-            <li key={c.id}>
+            <li key={c.id} className="flex items-stretch" data-testid={`berichten-row-${c.id}`}>
               <Link
                 to={`/berichten/${c.id}`}
                 data-testid={`berichten-item-${c.id}`}
-                className={`block py-4 pl-4 hover:bg-muted transition-colors ${
+                className={`flex-1 min-w-0 block py-4 pl-4 hover:bg-muted transition-colors ${
                   c.unreadCount > 0 ? 'border-l-2 border-[#34D399] bg-muted/30' : ''
                 }`}
               >
@@ -74,6 +92,15 @@ export default function Berichten() {
                   {c.lastMessagePreview || t('messages.no_messages_yet')}
                 </p>
               </Link>
+              <button
+                onClick={(e) => hide(e, c.id)}
+                className="text-muted-foreground hover:text-destructive text-lg leading-none px-3 self-center shrink-0"
+                data-testid={`berichten-hide-${c.id}`}
+                aria-label={t('messages.hide_btn')}
+                title={t('messages.hide_btn')}
+              >
+                ×
+              </button>
             </li>
           ))}
         </ul>
