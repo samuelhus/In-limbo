@@ -1,8 +1,10 @@
 """Direct messaging tussen aanbieder en aanvrager van een listing.
 
 Fase 1 (zie PRD_direct_messaging.md): datamodel + kernroutes — gesprek
-starten, berichten ophalen/versturen, als gelezen markeren. Bewust NIET in
-deze fase: bijlagen, blokkeren, verwijderen/archiveren, notificaties/e-mail.
+starten, berichten ophalen/versturen, als gelezen markeren.
+Fase 2 (dit): bijlagen bij berichten (PRD §6.2/§7), met een cumulatieve limiet
+per Conversation. Nog steeds niet in deze fase: blokkeren,
+verwijderen/archiveren, notificaties/e-mail.
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
 één listing + één aanvrager/aanbieder-paar). offererUserId wordt nergens
@@ -18,7 +20,10 @@ from collections import defaultdict
 from fastapi import APIRouter, HTTPException, Depends, Query
 
 from deps import db, now_iso, strip_mongo
-from models import ConversationCreate, MessageCreate
+from models import (
+    ConversationCreate, MessageCreate,
+    MAX_CONVERSATION_ATTACHMENTS, MAX_CONVERSATION_ATTACHMENT_BYTES,
+)
 from auth import get_donateur_or_validated_user
 
 router = APIRouter()
@@ -51,6 +56,9 @@ def _check_message_rate_limit(user_id: str) -> None:
 def _serialize_conversation(doc: dict, offerer_user_id: str) -> dict:
     out = strip_mongo(dict(doc))
     out["offererUserId"] = offerer_user_id
+    # Defaults voor gesprekken die aangemaakt zijn vóór fase 2 (bijlagen).
+    out.setdefault("attachmentCount", 0)
+    out.setdefault("attachmentBytes", 0)
     return out
 
 
@@ -108,6 +116,8 @@ async def create_conversation(body: ConversationCreate, user: dict = Depends(get
         "createdAt": now,
         "lastMessageAt": None,
         "lastMessagePreview": None,
+        "attachmentCount": 0,
+        "attachmentBytes": 0,
     }
     await db.conversations.insert_one(doc)
     return _serialize_conversation(doc, listing["userId"])
@@ -145,24 +155,44 @@ async def send_message(
                 403, "Wacht tot de aanbieder het gesprek geopend heeft voor je kan reageren",
             )
 
+    # Cumulatieve bijlage-limiet per Conversation (PRD §6.2), niet per
+    # bericht: check vóór het bericht aanvaard wordt, tegen de lopende
+    # totalen op het Conversation-document (attachmentCount/attachmentBytes,
+    # bijgewerkt bij elk eerder bericht met bijlage — zie onderaan).
+    new_attachments = len(body.photos) + len(body.files)
+    new_bytes = sum(a.bytes for a in body.photos) + sum(a.bytes for a in body.files)
+    if new_attachments:
+        prospective_count = conversation.get("attachmentCount", 0) + new_attachments
+        prospective_bytes = conversation.get("attachmentBytes", 0) + new_bytes
+        if prospective_count > MAX_CONVERSATION_ATTACHMENTS or prospective_bytes > MAX_CONVERSATION_ATTACHMENT_BYTES:
+            raise HTTPException(
+                413,
+                "Bijlage-limiet voor dit gesprek is bereikt (max 5 foto's/bestanden, "
+                "20 MB in totaal) — gelieve verder uit te wisselen via e-mail.",
+            )
+
     _check_message_rate_limit(user["id"])
 
     now = now_iso()
+    photos = [a.model_dump() for a in body.photos]
+    files = [a.model_dump() for a in body.files]
     doc = {
         "id": str(uuid.uuid4()),
         "conversationId": conversation_id,
         "senderId": user["id"],
         "text": body.text,
+        "photos": photos,
+        "files": files,
         "createdAt": now,
         "readAt": None,
     }
     await db.messages.insert_one(doc)
 
     preview = body.text if len(body.text) <= 100 else body.text[:99] + "…"
-    await db.conversations.update_one(
-        {"id": conversation_id},
-        {"$set": {"lastMessageAt": now, "lastMessagePreview": preview}},
-    )
+    update: dict = {"$set": {"lastMessageAt": now, "lastMessagePreview": preview}}
+    if new_attachments:
+        update["$inc"] = {"attachmentCount": new_attachments, "attachmentBytes": new_bytes}
+    await db.conversations.update_one({"id": conversation_id}, update)
     return _serialize_message(doc)
 
 

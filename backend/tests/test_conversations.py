@@ -1,7 +1,5 @@
-"""Phase 1 tests: direct-messaging datamodel + kernroutes (PRD_direct_messaging.md).
-
-Enkel gesprek starten, berichten ophalen/versturen, als gelezen markeren —
-geen bijlagen/blokkeren/verwijderen/notificaties in deze fase.
+"""Phase 1 + 2 tests: direct-messaging datamodel + kernroutes + bijlagen
+(PRD_direct_messaging.md). Nog geen blokkeren/verwijderen/notificaties.
 """
 import os
 import pytest
@@ -59,6 +57,42 @@ def test_listing(lotte, samir):
     a = samir.post(f"{API}/listings/{listing_id}/apply", json={"motivation": "test conversation"})
     assert a.status_code in (200, 201), a.text
     return {"listingId": listing_id, "applicationId": a.json()["id"]}
+
+
+@pytest.fixture(scope="module")
+def make_conversation(lotte, samir):
+    """Factory die telkens een verse listing + aanvraag + gesprek aanmaakt —
+    i.t.t. test_listing (gedeeld over TestMessaging/TestReadReceipt) hebben
+    de bijlage-limiet-tests elk hun eigen, geïsoleerde Conversation nodig
+    zodat cumulatieve tellers elkaar niet beïnvloeden."""
+    counter = {"n": 0}
+
+    def _make():
+        counter["n"] += 1
+        payload = {
+            "title": f"TEST_conversations_attachments_{counter['n']}",
+            "description": "ephemeral test listing voor bijlage-tests",
+            "material": "Hout",
+            "weight": 5.0,
+            "photos": ["https://res.cloudinary.com/demo/image/upload/sample.jpg"],
+            "isRecurrent": False,
+            "deadline": "2026-12-31",
+        }
+        r = lotte.post(f"{API}/listings", json=payload)
+        assert r.status_code in (200, 201), r.text
+        listing_id = r.json()["id"]
+        a = samir.post(f"{API}/listings/{listing_id}/apply", json={"motivation": "test attachments"})
+        assert a.status_code in (200, 201), a.text
+        application_id = a.json()["id"]
+        c = lotte.post(f"{API}/conversations", json={"applicationId": application_id})
+        assert c.status_code in (200, 201), c.text
+        return {"applicationId": application_id, "conversationId": c.json()["id"]}
+
+    return _make
+
+
+def _attachment(n_bytes=1024, url="https://res.cloudinary.com/demo/image/upload/sample.jpg"):
+    return {"url": url, "bytes": n_bytes}
 
 
 # ---------- Gesprek starten ----------
@@ -184,3 +218,104 @@ class TestReadReceipt:
         r = lotte.patch(f"{API}/conversations/{test_listing['conversationId']}/read")
         assert r.status_code == 200, r.text
         assert r.json()["modified"] == 0
+
+
+# ---------- Bijlagen (fase 2, PRD §6.2) ----------
+class TestAttachments:
+    def test_message_with_attachment_succeeds(self, lotte, make_conversation):
+        conv = make_conversation()
+        r = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={"text": "Hier een foto van de staat.", "photos": [_attachment(500_000)]},
+        )
+        assert r.status_code in (200, 201), r.text
+        data = r.json()
+        assert len(data["photos"]) == 1
+        assert data["photos"][0]["bytes"] == 500_000
+        assert data["files"] == []
+
+    def test_requester_can_send_attachment_after_offerer_first_message(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "start"})
+        assert r0.status_code in (200, 201), r0.text
+        r = samir.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={"text": "hier is een foto van mijn kant", "photos": [_attachment(2048)]},
+        )
+        assert r.status_code in (200, 201), r.text
+        assert r.json()["photos"][0]["bytes"] == 2048
+
+    def test_conversation_totals_updated_cumulatively(self, lotte, make_conversation):
+        conv = make_conversation()
+        r1 = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={"text": "eerste", "photos": [_attachment(1000)]},
+        )
+        assert r1.status_code in (200, 201), r1.text
+        r2 = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={"text": "tweede", "photos": [_attachment(2000)]},
+        )
+        assert r2.status_code in (200, 201), r2.text
+
+        # POST /conversations is idempotent (zie TestConversationCreate) — dus
+        # herbruikbaar om de lopende Conversation-totalen te inspecteren.
+        again = lotte.post(f"{API}/conversations", json={"applicationId": conv["applicationId"]})
+        assert again.status_code in (200, 201), again.text
+        data = again.json()
+        assert data["attachmentCount"] == 2
+        assert data["attachmentBytes"] == 3000
+
+    def test_attachment_count_limit_exceeded_413(self, lotte, make_conversation):
+        conv = make_conversation()
+        # 5 berichten met telkens 1 kleine bijlage — net binnen de limiet.
+        for i in range(5):
+            r = lotte.post(
+                f"{API}/conversations/{conv['conversationId']}/messages",
+                json={"text": f"bijlage {i}", "photos": [_attachment(1024)]},
+            )
+            assert r.status_code in (200, 201), r.text
+        # 6de bijlage overschrijdt het maximum van 5 voor dit gesprek.
+        r = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={"text": "te veel", "photos": [_attachment(1024)]},
+        )
+        assert r.status_code == 413, r.text
+        assert "e-mail" in r.text.lower()
+
+    def test_attachment_bytes_limit_exceeded_413(self, lotte, make_conversation):
+        conv = make_conversation()
+        r1 = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={
+                "text": "groot bestand",
+                "files": [_attachment(15 * 1024 * 1024, "https://res.cloudinary.com/demo/raw/upload/sample.pdf")],
+            },
+        )
+        assert r1.status_code in (200, 201), r1.text
+        # Nog eens 6 MB erbij (totaal 21 MB) overschrijdt de 20 MB-limiet,
+        # ook al blijft het aantal bijlagen (2) ruim onder de max van 5.
+        r2 = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={
+                "text": "nog een groot bestand",
+                "files": [_attachment(6 * 1024 * 1024, "https://res.cloudinary.com/demo/raw/upload/sample2.pdf")],
+            },
+        )
+        assert r2.status_code == 413, r2.text
+
+    def test_too_many_attachments_in_one_message_422(self, lotte, make_conversation):
+        conv = make_conversation()
+        r = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={"text": "te veel in 1 bericht", "photos": [_attachment(100) for _ in range(6)]},
+        )
+        assert r.status_code == 422, r.text
+
+    def test_single_attachment_over_20mb_422(self, lotte, make_conversation):
+        conv = make_conversation()
+        r = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={"text": "te groot", "photos": [_attachment(21 * 1024 * 1024)]},
+        )
+        assert r.status_code == 422, r.text

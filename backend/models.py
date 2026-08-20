@@ -213,12 +213,40 @@ class SelectApplicantBody(BaseModel):
 # ---------- Conversations & Messages ----------
 # Direct messaging tussen aanbieder en aanvrager van een listing — 1-op-1
 # gekoppeld aan een Application (zie PRD_direct_messaging.md). Fase 1:
-# enkel datamodel + kernroutes, dus bewust nog geen bijlage-, blokkeer- of
-# ongelezen-sinds-velden (die komen in latere fases).
+# datamodel + kernroutes. Fase 2 (dit): bijlagen bij berichten, met een
+# cumulatieve limiet per Conversation i.p.v. per bericht (PRD §6.2).
 #
 # offererUserId wordt bewust NIET opgeslagen op het Conversation-document —
 # die wordt live afgeleid uit Listing.userId (zie routes/conversations.py,
 # _load_conversation), zodat er geen verouderde kopie kan ontstaan.
+
+# Cumulatieve bijlage-limiet per Conversation (PRD §6.2) — niet per bericht:
+# max 5 foto's/bestanden en max 20 MB, samengeteld over alle berichten in
+# dat gesprek. Bij overschrijding weigert de server het volledige bericht
+# (zie routes/conversations.py::send_message).
+MAX_CONVERSATION_ATTACHMENTS = 5
+MAX_CONVERSATION_ATTACHMENT_BYTES = 20 * 1024 * 1024  # 20 MB
+
+
+class MessageAttachment(BaseModel):
+    """Eén foto of bestand bij een bericht.
+
+    De bestaande upload-infra (zie frontend/src/lib/cloudinary.js) uploadt
+    rechtstreeks van browser naar Cloudinary via een door de backend
+    ondertekende signature — de backend krijgt achteraf enkel de
+    resulterende URL te zien, nooit de bytes zelf. Om de cumulatieve
+    limiet hieronder te kunnen afdwingen zonder een extra Cloudinary
+    Admin-API-call (= nieuwe infra) te introduceren, geeft de client de
+    grootte mee die Cloudinary's eigen uploadresponse al teruggeeft
+    (`data.bytes`). Dat is hetzelfde vertrouwensniveau als de rest van de
+    upload-infrastructuur, die URL's ook zonder server-side verificatie
+    aanvaardt (zie o.a. Listing.photos/technicalFiles) — het aanvaarde
+    risico hierrond staat in PRD §12.
+    """
+    url: str = Field(..., min_length=1)
+    bytes: int = Field(..., gt=0, le=MAX_CONVERSATION_ATTACHMENT_BYTES)
+
+
 class ConversationCreate(BaseModel):
     applicationId: str
 
@@ -231,10 +259,16 @@ class ConversationPublic(BaseModel):
     createdAt: str
     lastMessageAt: Optional[str] = None
     lastMessagePreview: Optional[str] = None
+    attachmentCount: int = 0  # max MAX_CONVERSATION_ATTACHMENTS
+    attachmentBytes: int = 0  # max MAX_CONVERSATION_ATTACHMENT_BYTES
 
 
 class MessageCreate(BaseModel):
     text: str = Field(..., max_length=2000, min_length=1)
+    # max_length hier is een goedkope per-bericht sanity-bound; de echte
+    # grens is cumulatief op Conversation-niveau, zie send_message.
+    photos: List[MessageAttachment] = Field(default_factory=list, max_length=MAX_CONVERSATION_ATTACHMENTS)
+    files: List[MessageAttachment] = Field(default_factory=list, max_length=MAX_CONVERSATION_ATTACHMENTS)
 
 
 class MessagePublic(BaseModel):
@@ -242,6 +276,8 @@ class MessagePublic(BaseModel):
     conversationId: str
     senderId: str
     text: str
+    photos: List[MessageAttachment] = Field(default_factory=list)
+    files: List[MessageAttachment] = Field(default_factory=list)
     createdAt: str
     readAt: Optional[str] = None
 
