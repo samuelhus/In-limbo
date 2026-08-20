@@ -54,6 +54,7 @@
     "register": "Registreer",
     "admin": "Admin",
     "notifications": "Notificaties",
+    "messages": "Berichten",
     "new_listing": "Nieuwe aanbieding",
     "warehouse": "Magazijn",
     "donate_material": "Word donateur",
@@ -459,6 +460,11 @@
     "loading": "Notificaties laden…",
     "view_listing": "Bekijk aanbieding →",
     "view_all": "Bekijk alle notificaties →"
+  },
+  "messages": {
+    "title": "Berichten",
+    "open": "Berichten openen",
+    "coming_soon": "Je gesprekken verschijnen hier binnenkort."
   },
   "pages": {
     "voorwaarden_title": "Algemene voorwaarden",

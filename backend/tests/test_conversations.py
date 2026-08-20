@@ -1,5 +1,6 @@
-"""Phase 1 + 2 + 3 + 4 + 5 tests: direct-messaging datamodel + kernroutes +
-bijlagen + blokkeren/verwijderen + in-app notificaties + e-maildigest
+"""Phase 1 + 2 + 3 + 4 + 5 + 6 tests: direct-messaging datamodel + kernroutes
++ bijlagen + blokkeren/verwijderen + in-app notificaties + e-maildigest +
+de unread-count-route voor de "Berichten"-badge in de hoofdnav
 (PRD_direct_messaging.md).
 """
 import asyncio
@@ -677,3 +678,36 @@ class TestEmailDigest:
         _run_email_digest(timedelta(minutes=30))
         doc2 = _fetch_conversation(conv["conversationId"])
         assert doc2["requesterEmailSentAt"] is None
+
+
+# ---------- Berichten-badge (fase 6, PRD §6.3) ----------
+class TestUnreadCount:
+    def test_counts_conversations_not_messages_read_and_hidden(self, lotte, samir, make_conversation):
+        """Combineert alle badge-scenario's in 1 gesprek/2 berichten i.p.v.
+        aparte tests — spaart lotte's gedeelde rate-limit-budget in dit
+        testbestand (zelfde overweging als TestDeleteHide hierboven)."""
+        conv = make_conversation()
+        samir_before = samir.get(f"{API}/conversations/unread-count").json()["count"]
+        lotte_before = lotte.get(f"{API}/conversations/unread-count").json()["count"]
+
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "eerste"})
+        assert r0.status_code in (200, 201), r0.text
+        r1 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "tweede"})
+        assert r1.status_code in (200, 201), r1.text
+
+        # Twee ongelezen berichten in hetzelfde gesprek tellen als 1 gesprek
+        # (PRD §6.3: "aantal gesprekken", niet het totaal aantal berichten).
+        assert samir.get(f"{API}/conversations/unread-count").json()["count"] == samir_before + 1
+        # De verzender zelf heeft geen ongelezen berichten van zichzelf.
+        assert lotte.get(f"{API}/conversations/unread-count").json()["count"] == lotte_before
+
+        # Verbergen (PRD §6.5) sluit een bewust weggeborgen, reeds ongelezen
+        # gesprek uit van de badge (het mechanisme dat het bij een nieuw
+        # bericht terugkeert is al gedekt in TestDeleteHide hierboven).
+        d = samir.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert d.status_code == 200, d.text
+        assert samir.get(f"{API}/conversations/unread-count").json()["count"] == samir_before
+
+    def test_anonymous_401(self, anon):
+        r = anon.get(f"{API}/conversations/unread-count")
+        assert r.status_code == 401, r.text

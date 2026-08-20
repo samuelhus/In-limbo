@@ -41,6 +41,7 @@ import Checkin from '@/pages/Checkin';
 import WachtwoordVergeten from '@/pages/WachtwoordVergeten';
 import WachtwoordReset from '@/pages/WachtwoordReset';
 import Notificaties from '@/pages/Notificaties';
+import Berichten from '@/pages/Berichten';
 import Voorwaarden from '@/pages/Voorwaarden';
 import Privacy from '@/pages/Privacy';
 import AdminDonateurListings from '@/pages/AdminDonateurListings';
@@ -97,6 +98,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowDonateur>
                     <Notificaties />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/berichten"
+                element={
+                  <ProtectedRoute allowDonateur>
+                    <Berichten />
                   </ProtectedRoute>
                 }
               />

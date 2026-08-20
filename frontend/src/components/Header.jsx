@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from './Logo';
 import NotificationCenter from './NotificationCenter';
+import MessagesTab from './MessagesTab';
 import LanguageSwitcher from './LanguageSwitcher';
 import { api } from '@/lib/api';
 
@@ -34,6 +35,7 @@ export default function Header() {
   const [nieuwsOpen, setNieuwsOpen] = useState(false);
   const [mobileNieuwsOpen, setMobileNieuwsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -44,6 +46,19 @@ export default function Header() {
       .then(({ data }) => {
         setUnreadCount(data.filter((n) => !n.read).length);
       })
+      .catch(() => {});
+  }, [isLoggedIn, location.pathname]);
+
+  // Badge-aantal voor de mobiele weergave (compact icoon naast de hamburger
+  // + regel in het mobiele menu, zie hieronder) — het desktop MessagesTab-
+  // icoon pollt dit zelf al op hetzelfde POLL_MS-interval (PRD §9).
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setMessagesUnreadCount(0);
+      return;
+    }
+    api.get('/conversations/unread-count')
+      .then(({ data }) => setMessagesUnreadCount(data.count))
       .catch(() => {});
   }, [isLoggedIn, location.pathname]);
 
@@ -323,6 +338,7 @@ export default function Header() {
           )}
           {isLoggedIn && (
             <>
+              <MessagesTab />
               <NotificationCenter />
               <Link to="/profiel" data-testid="header-profile-link" className="text-sm text-foreground/80 hover:text-foreground transition hidden sm:inline">
                 {displayName}
@@ -340,6 +356,17 @@ export default function Header() {
 
         {/* MOBILE HAMBURGER */}
         <div className="md:hidden relative flex items-center gap-2">
+          {isLoggedIn && messagesUnreadCount > 0 && !mobileOpen && (
+            <Link
+              to="/berichten"
+              className="relative p-1"
+              data-testid="mobile-messages-badge"
+            >
+              <span className="w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-medium">
+                {messagesUnreadCount > 9 ? '9+' : messagesUnreadCount}
+              </span>
+            </Link>
+          )}
           {isLoggedIn && unreadCount > 0 && !mobileOpen && (
             <Link
               to="/notificaties"
@@ -536,6 +563,24 @@ export default function Header() {
                   className={({ isActive }) => `${mobileItemClass} ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`}
                 >
                   {t('nav.admin')}
+                </NavLink>
+              )}
+
+              {isLoggedIn && (
+                <NavLink
+                  to="/berichten"
+                  data-testid="mobile-nav-berichten"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `${mobileItemClass} flex items-center justify-between ${isActive ? 'text-foreground bg-muted/50 font-medium' : ''}`
+                  }
+                >
+                  <span>{t('nav.messages')}</span>
+                  {messagesUnreadCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-medium">
+                      {messagesUnreadCount > 9 ? '9+' : messagesUnreadCount}
+                    </span>
+                  )}
                 </NavLink>
               )}
 

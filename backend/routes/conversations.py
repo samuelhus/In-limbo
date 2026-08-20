@@ -7,11 +7,15 @@ per Conversation.
 Fase 3: blokkeren en verwijderen/archiveren per gesprek (PRD §6.4/§6.5).
 Fase 4: in-app notificatie voor de ontvanger bij elk nieuw bericht (PRD §6.6),
 hergebruik van notifications.create_notification.
-Fase 5 (dit): de e-maildigest-logica uit PRD §6.6 — dit bestand zet enkel
+Fase 5: de e-maildigest-logica uit PRD §6.6 — dit bestand zet enkel
 {offerer,requester}UnreadSince (bij een nieuw bericht, als er nog geen
 lopende ongelezen-periode was) en reset het bij het lezen; de scheduled job
 die de bundel-mail effectief verstuurt staat in tasks.py::send_message_email_reminders
 (geregistreerd op de bestaande APScheduler in server.py).
+Fase 6 (dit): GET /conversations/unread-count, een lichtgewicht route voor
+de badge op de "Berichten"-tab in de hoofdnav (PRD §6.3) — telt gesprekken
+met ongelezen berichten, niet het volledige GET /conversations/mine uit
+PRD §8 (dat komt pas met de gesprekslijst in een latere fase).
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
 één listing + één aanvrager/aanbieder-paar). offererUserId wordt nergens
@@ -154,6 +158,52 @@ async def create_conversation(body: ConversationCreate, user: dict = Depends(get
     }
     await db.conversations.insert_one(doc)
     return _serialize_conversation(doc, listing["userId"], user["id"])
+
+
+@router.get("/conversations/unread-count")
+async def unread_conversation_count(user: dict = Depends(get_donateur_or_validated_user)):
+    """Aantal gesprekken met minstens 1 ongelezen bericht voor de ingelogde
+    gebruiker (PRD §6.3, fase 6) — voedt de badge op de "Berichten"-tab in
+    de hoofdnav. Telt gesprekken, niet losse berichten, zoals de PRD
+    voorschrijft. Een lichtgewicht route i.p.v. het volledige
+    GET /conversations/mine uit PRD §8 (nog niet gebouwd — dat komt met de
+    gesprekslijst in een latere fase): enkel het aantal is hier nodig, geen
+    listingtitels of laatste-berichtfragmenten.
+
+    offererUserId staat niet op het Conversation-document (zie module-
+    docstring), dus "mijn gesprekken als aanbieder" wordt via de eigen
+    listings gevonden — zelfde aanpak als routes/donateur.py's dashboard-stats.
+    """
+    listing_ids = [
+        doc["id"] async for doc in db.listings.find({"userId": user["id"]}, {"_id": 0, "id": 1})
+    ]
+    conversation_ids = [
+        doc["id"] async for doc in db.conversations.find(
+            {
+                "$or": [
+                    {"requesterUserId": user["id"]},
+                    {"listingId": {"$in": listing_ids}},
+                ],
+                # Verborgen gesprekken (PRD §6.5) tellen niet mee: een nieuw
+                # bericht haalt de ontvanger sowieso al uit hiddenBy (zie
+                # send_message), dus dit sluit enkel bewust gearchiveerde,
+                # reeds geziene gesprekken uit.
+                "hiddenBy": {"$ne": user["id"]},
+            },
+            {"_id": 0, "id": 1},
+        )
+    ]
+    if not conversation_ids:
+        return {"count": 0}
+    unread_conversation_ids = await db.messages.distinct(
+        "conversationId",
+        {
+            "conversationId": {"$in": conversation_ids},
+            "senderId": {"$ne": user["id"]},
+            "readAt": None,
+        },
+    )
+    return {"count": len(unread_conversation_ids)}
 
 
 @router.get("/conversations/{conversation_id}/messages")

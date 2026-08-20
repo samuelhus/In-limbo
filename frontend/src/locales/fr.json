@@ -54,6 +54,7 @@
     "register": "S'inscrire",
     "admin": "Admin",
     "notifications": "Notifications",
+    "messages": "Messages",
     "new_listing": "Nouvelle offre",
     "warehouse": "Entrepôt",
     "donate_material": "Devenez donneur",
@@ -469,6 +470,11 @@
     "loading": "Chargement des notifications…",
     "view_listing": "Voir l'offre →",
     "view_all": "Voir toutes les notifications →"
+  },
+  "messages": {
+    "title": "Messages",
+    "open": "Ouvrir les messages",
+    "coming_soon": "Vos conversations apparaîtront ici bientôt."
   },
   "pages": {
     "voorwaarden_title": "Conditions générales",
