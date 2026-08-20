@@ -54,6 +54,7 @@ from routes.og import router as og_router
 from routes.search_requests import router as search_requests_router
 from routes.tags import router as tags_router
 from routes.donateur import router as donateur_router
+from routes.conversations import router as conversations_router
 
 
 cloudinary.config(
@@ -126,6 +127,9 @@ async def startup() -> None:
     await db.applications.create_index("applicantUserId")
     await db.applications.create_index([("listingId", 1), ("applicantUserId", 1)])
     await db.applications.create_index([("listingId", 1), ("status", 1)])  # open-count aggregatie
+    await db.conversations.create_index("applicationId", unique=True)  # 1-op-1 met Application
+    await db.conversations.create_index("requesterUserId")
+    await db.messages.create_index([("conversationId", 1), ("createdAt", 1)])  # paginatie/chatvolgorde
     await db.notifications.create_index("userId")  # notificaties per gebruiker
     await db.notifications.create_index([("userId", 1), ("read", 1)])  # ongelezen badge
     await db.notifications.create_index("createdAt")  # purge oude notificaties
@@ -201,6 +205,7 @@ api.include_router(og_router)
 api.include_router(search_requests_router)
 api.include_router(tags_router)
 api.include_router(donateur_router)
+api.include_router(conversations_router)
 
 app.include_router(api)
 

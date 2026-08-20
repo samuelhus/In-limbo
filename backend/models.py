@@ -210,6 +210,42 @@ class SelectApplicantBody(BaseModel):
     quantity: Optional[int] = Field(None, ge=1)  # None = ken toe wat gevraagd werd
 
 
+# ---------- Conversations & Messages ----------
+# Direct messaging tussen aanbieder en aanvrager van een listing — 1-op-1
+# gekoppeld aan een Application (zie PRD_direct_messaging.md). Fase 1:
+# enkel datamodel + kernroutes, dus bewust nog geen bijlage-, blokkeer- of
+# ongelezen-sinds-velden (die komen in latere fases).
+#
+# offererUserId wordt bewust NIET opgeslagen op het Conversation-document —
+# die wordt live afgeleid uit Listing.userId (zie routes/conversations.py,
+# _load_conversation), zodat er geen verouderde kopie kan ontstaan.
+class ConversationCreate(BaseModel):
+    applicationId: str
+
+
+class ConversationPublic(BaseModel):
+    id: str
+    applicationId: str
+    listingId: str
+    requesterUserId: str
+    createdAt: str
+    lastMessageAt: Optional[str] = None
+    lastMessagePreview: Optional[str] = None
+
+
+class MessageCreate(BaseModel):
+    text: str = Field(..., max_length=2000, min_length=1)
+
+
+class MessagePublic(BaseModel):
+    id: str
+    conversationId: str
+    senderId: str
+    text: str
+    createdAt: str
+    readAt: Optional[str] = None
+
+
 # ---------- Update bodies ----------
 class UserUpdate(BaseModel):
     firstName: Optional[str] = None
