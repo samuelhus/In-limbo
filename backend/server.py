@@ -29,10 +29,14 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 from deps import db, client, log, limiter
 from seed import seed
-from tasks import archive_expired_listings, mark_inactive_orgs, send_photo_reminders
+from tasks import (
+    archive_expired_listings, mark_inactive_orgs, send_photo_reminders,
+    send_message_email_reminders,
+)
 from notifications import backfill_mailerlite
 
 scheduler = AsyncIOScheduler(timezone="Europe/Brussels")
@@ -111,6 +115,14 @@ async def _photo_reminder_job() -> None:
     log.info(f"Photo-reminder job — {sent} herinneringsmail(s) verstuurd")
 
 
+async def _message_email_reminder_job() -> None:
+    """Elke ~5 min: bundelmail voor gesprekken met een ongelezen-periode
+    ouder dan 30 min (direct messaging fase 5, PRD §6.6)."""
+    sent = await send_message_email_reminders(db)
+    if sent:
+        log.info(f"Message-email-reminder job — {sent} digestmail(s) verstuurd")
+
+
 @app.on_event("startup")
 async def startup() -> None:
     await db.users.create_index("email", unique=True)
@@ -129,6 +141,8 @@ async def startup() -> None:
     await db.applications.create_index([("listingId", 1), ("status", 1)])  # open-count aggregatie
     await db.conversations.create_index("applicationId", unique=True)  # 1-op-1 met Application
     await db.conversations.create_index("requesterUserId")
+    await db.conversations.create_index("offererUnreadSince")  # e-maildigest-job (fase 5)
+    await db.conversations.create_index("requesterUnreadSince")  # e-maildigest-job (fase 5)
     await db.messages.create_index([("conversationId", 1), ("createdAt", 1)])  # paginatie/chatvolgorde
     await db.notifications.create_index("userId")  # notificaties per gebruiker
     await db.notifications.create_index([("userId", 1), ("read", 1)])  # ongelezen badge
@@ -168,8 +182,13 @@ async def startup() -> None:
     scheduler.add_job(_nightly_maintenance, CronTrigger(hour=2, minute=0))
     # Foto-herinneringsmails: elke dag om 13:12 Brusselse tijd
     scheduler.add_job(_photo_reminder_job, CronTrigger(hour=13, minute=12))
+    # Bericht-e-maildigest: elke ~5 min (direct messaging fase 5, PRD §6.6)
+    scheduler.add_job(_message_email_reminder_job, IntervalTrigger(minutes=5))
     scheduler.start()
-    log.info("Scheduler gestart — nachtelijke maintenance om 02:00, foto-herinneringen om 13:12")
+    log.info(
+        "Scheduler gestart — nachtelijke maintenance om 02:00, foto-herinneringen om 13:12, "
+        "bericht-e-maildigest elke 5 min"
+    )
 
 
 @app.on_event("shutdown")

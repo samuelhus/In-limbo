@@ -1,10 +1,15 @@
-"""Phase 1 + 2 + 3 + 4 tests: direct-messaging datamodel + kernroutes +
-bijlagen + blokkeren/verwijderen + in-app notificaties (PRD_direct_messaging.md).
-Nog geen e-maildigest (die volgt in een latere fase, zie PRD §6.6).
+"""Phase 1 + 2 + 3 + 4 + 5 tests: direct-messaging datamodel + kernroutes +
+bijlagen + blokkeren/verwijderen + in-app notificaties + e-maildigest
+(PRD_direct_messaging.md).
 """
+import asyncio
 import os
+import sys
+from datetime import datetime, timedelta, timezone
+
 import pytest
 import requests
+from motor.motor_asyncio import AsyncIOMotorClient
 
 BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/") if os.environ.get("REACT_APP_BACKEND_URL") else None
 if not BASE_URL:
@@ -14,6 +19,50 @@ API = f"{BASE_URL}/api"
 
 LOTTE = ("lotte@atelier-brussel.example", "User123!")
 SAMIR = ("samir@vagebond.example", "User123!")
+
+# Directe Mongo-toegang voor de e-maildigest-tests (fase 5): unreadSince/
+# emailSentAt zijn bewust géén onderdeel van het publieke Conversation-
+# contract (zie _serialize_conversation), dus enkel via de API te
+# verifiëren is niet mogelijk — zelfde aanpak als test_contact_newsletter.py.
+MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+DB_NAME = os.environ.get("DB_NAME", "test_database")
+
+# backend/ zelf toevoegen aan sys.path zodat `import tasks` werkt ongeacht
+# vanuit welke directory pytest gestart wordt (tests/ zelf staat er wel op).
+_BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _BACKEND_DIR not in sys.path:
+    sys.path.insert(0, _BACKEND_DIR)
+from tasks import send_message_email_reminders  # noqa: E402
+
+
+def _db():
+    client = AsyncIOMotorClient(MONGO_URL)
+    return client[DB_NAME], client
+
+
+def _run(coro):
+    """Voert een async DB-call/task synchroon uit vanuit een gewone pytest-testfunctie."""
+    return asyncio.run(coro)
+
+
+def _fetch_conversation(conv_id):
+    async def _get():
+        db, client = _db()
+        try:
+            return await db.conversations.find_one({"id": conv_id}, {"_id": 0})
+        finally:
+            client.close()
+    return _run(_get())
+
+
+def _set_conversation_fields(conv_id, fields):
+    async def _set():
+        db, client = _db()
+        try:
+            await db.conversations.update_one({"id": conv_id}, {"$set": fields})
+        finally:
+            client.close()
+    return _run(_set())
 
 
 def _session(creds=None):
@@ -274,14 +323,13 @@ class TestAttachments:
 
     def test_attachment_count_limit_exceeded_413(self, lotte, make_conversation):
         conv = make_conversation()
-        # 5 berichten met telkens 1 kleine bijlage — net binnen de limiet.
-        for i in range(5):
-            r = lotte.post(
-                f"{API}/conversations/{conv['conversationId']}/messages",
-                json={"text": f"bijlage {i}", "photos": [_attachment(1024)]},
-            )
-            assert r.status_code in (200, 201), r.text
-        # 6de bijlage overschrijdt het maximum van 5 voor dit gesprek.
+        # Simuleer rechtstreeks in Mongo dat dit gesprek al op de limiet zit
+        # (5 bijlagen), i.p.v. daar via 5 losse berichten naartoe te bouwen —
+        # dat zou nodeloos zwaar wegen op de gedeelde bericht-rate-limit van
+        # dit testbestand (zie ook TestEmailDigest verderop). Dat elke
+        # bijlage tot en met de 5de gewoon aanvaard wordt, dekt
+        # test_conversation_totals_updated_cumulatively hierboven al.
+        _set_conversation_fields(conv["conversationId"], {"attachmentCount": 5, "attachmentBytes": 5 * 1024})
         r = lotte.post(
             f"{API}/conversations/{conv['conversationId']}/messages",
             json={"text": "te veel", "photos": [_attachment(1024)]},
@@ -523,3 +571,109 @@ class TestMessageNotifications:
         assert r.status_code == 403, r.text
 
         assert self._new_message_notifs(samir, conv) == []
+
+
+# ---------- E-maildigest (fase 5, PRD §6.6) ----------
+# unreadSince/emailSentAt zijn bewust géén onderdeel van het publieke
+# Conversation-contract (zie _serialize_conversation), dus deze tests lezen
+# ze rechtstreeks uit Mongo (_fetch_conversation/_set_conversation_fields
+# hierboven) — zelfde aanpak als test_contact_newsletter.py.
+def _run_email_digest(delay):
+    async def _job():
+        db, client = _db()
+        try:
+            return await send_message_email_reminders(db, delay=delay)
+        finally:
+            client.close()
+    return _run(_job())
+
+
+class TestEmailDigest:
+    def test_unread_since_set_once_per_burst_and_reset_on_read(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "eerste"})
+        assert r0.status_code in (200, 201), r0.text
+
+        doc = _fetch_conversation(conv["conversationId"])
+        first_unread_since = doc["requesterUnreadSince"]
+        assert first_unread_since is not None
+        # Lotte is zelf de verzender — voor haar start geen ongelezen-periode.
+        assert doc["offererUnreadSince"] is None
+
+        # Een 2de bericht in dezelfde burst mag unreadSince niet vooruitschuiven
+        # (anders zou de 30-min-klok telkens herstarten en nooit aflopen).
+        r1 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "tweede"})
+        assert r1.status_code in (200, 201), r1.text
+        doc2 = _fetch_conversation(conv["conversationId"])
+        assert doc2["requesterUnreadSince"] == first_unread_since
+
+        # Lezen sluit de ongelezen-periode af.
+        rr = samir.patch(f"{API}/conversations/{conv['conversationId']}/read")
+        assert rr.status_code == 200, rr.text
+        doc3 = _fetch_conversation(conv["conversationId"])
+        assert doc3["requesterUnreadSince"] is None
+
+    def test_digest_email_sent_once_for_old_unread_period(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "bericht 1"})
+        assert r0.status_code in (200, 201), r0.text
+        r1 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "bericht 2"})
+        assert r1.status_code in (200, 201), r1.text
+
+        # Simuleer dat deze ongelezen-periode al 40 min oud is (i.p.v. écht
+        # 40 min wachten) — de job gebruikt hier gewoon de productie-default
+        # van 30 min, ongewijzigd.
+        backdated = (datetime.now(timezone.utc) - timedelta(minutes=40)).isoformat()
+        _set_conversation_fields(conv["conversationId"], {"requesterUnreadSince": backdated})
+
+        sent = _run_email_digest(timedelta(minutes=30))
+        assert sent >= 1
+
+        doc = _fetch_conversation(conv["conversationId"])
+        assert doc["requesterEmailSentAt"] is not None
+        assert doc["requesterEmailSentAt"] >= backdated
+        first_sent_at = doc["requesterEmailSentAt"]
+
+        # Nog een run: geen 2de mail voor dezelfde ongelezen-periode.
+        _run_email_digest(timedelta(minutes=30))
+        doc2 = _fetch_conversation(conv["conversationId"])
+        assert doc2["requesterEmailSentAt"] == first_sent_at
+
+    def test_digest_respects_delay_and_supports_short_override_for_testing(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "recent bericht"})
+        assert r0.status_code in (200, 201), r0.text
+
+        # Slechts ~90 sec oud — ver onder de productie-default van 30 min.
+        backdated = (datetime.now(timezone.utc) - timedelta(seconds=90)).isoformat()
+        _set_conversation_fields(conv["conversationId"], {"requesterUnreadSince": backdated})
+
+        # Met de echte 30-min-default is dit nog niet oud genoeg.
+        _run_email_digest(timedelta(minutes=30))
+        doc = _fetch_conversation(conv["conversationId"])
+        assert doc["requesterEmailSentAt"] is None
+
+        # PRD-voorstel: test met een kortere, tijdelijke vertraging (bv. 1
+        # min) om het gedrag snel te verifiëren zonder echt te wachten — de
+        # effectief geregistreerde job in server.py blijft op 30 min staan.
+        _run_email_digest(timedelta(minutes=1))
+        doc2 = _fetch_conversation(conv["conversationId"])
+        assert doc2["requesterEmailSentAt"] is not None
+
+    def test_digest_skips_already_read_conversation(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "gelezen bericht"})
+        assert r0.status_code in (200, 201), r0.text
+        rr = samir.patch(f"{API}/conversations/{conv['conversationId']}/read")
+        assert rr.status_code == 200, rr.text
+
+        doc = _fetch_conversation(conv["conversationId"])
+        assert doc["requesterUnreadSince"] is None
+
+        # De 30-min-default zou dit gesprek sowieso nog niet oppikken (te
+        # recent), maar het punt hier is dat unreadSince door het lezen al
+        # None is — "is het gesprek intussen gelezen?" hoeft de job dus niet
+        # apart te checken, zie tasks.py::send_message_email_reminders.
+        _run_email_digest(timedelta(minutes=30))
+        doc2 = _fetch_conversation(conv["conversationId"])
+        assert doc2["requesterEmailSentAt"] is None

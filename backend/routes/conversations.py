@@ -5,10 +5,13 @@ starten, berichten ophalen/versturen, als gelezen markeren.
 Fase 2: bijlagen bij berichten (PRD §6.2/§7), met een cumulatieve limiet
 per Conversation.
 Fase 3: blokkeren en verwijderen/archiveren per gesprek (PRD §6.4/§6.5).
-Fase 4 (dit): in-app notificatie voor de ontvanger bij elk nieuw bericht
-(PRD §6.6), hergebruik van notifications.create_notification — dezelfde
-basis als bv. new_application in routes/applications.py. Nog steeds niet
-in deze fase: de e-maildigest-logica uit PRD §6.6 (debounce/scheduled job).
+Fase 4: in-app notificatie voor de ontvanger bij elk nieuw bericht (PRD §6.6),
+hergebruik van notifications.create_notification.
+Fase 5 (dit): de e-maildigest-logica uit PRD §6.6 — dit bestand zet enkel
+{offerer,requester}UnreadSince (bij een nieuw bericht, als er nog geen
+lopende ongelezen-periode was) en reset het bij het lezen; de scheduled job
+die de bundel-mail effectief verstuurt staat in tasks.py::send_message_email_reminders
+(geregistreerd op de bestaande APScheduler in server.py).
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
 één listing + één aanvrager/aanbieder-paar). offererUserId wordt nergens
@@ -73,6 +76,13 @@ def _serialize_conversation(doc: dict, offerer_user_id: str, viewer_user_id: str
     out["blockedByMe"] = viewer_user_id in blocked_by
     out["blockedByOther"] = other_user_id in blocked_by
     out["hiddenByMe"] = viewer_user_id in hidden_by
+
+    # E-maildigest-boekhouding (fase 5, PRD §6.6/§7) — puur interne server-
+    # state voor de scheduled job in tasks.py, geen publiek API-contract.
+    out.pop("offererUnreadSince", None)
+    out.pop("offererEmailSentAt", None)
+    out.pop("requesterUnreadSince", None)
+    out.pop("requesterEmailSentAt", None)
     return out
 
 
@@ -134,6 +144,13 @@ async def create_conversation(body: ConversationCreate, user: dict = Depends(get
         "attachmentBytes": 0,
         "blockedBy": [],
         "hiddenBy": [],
+        # E-maildigest-boekhouding per partij (PRD §6.6/§7) — None = geen
+        # lopende ongelezen-periode. Zie send_message/mark_conversation_read
+        # en tasks.py::send_message_email_reminders.
+        "offererUnreadSince": None,
+        "offererEmailSentAt": None,
+        "requesterUnreadSince": None,
+        "requesterEmailSentAt": None,
     }
     await db.conversations.insert_one(doc)
     return _serialize_conversation(doc, listing["userId"], user["id"])
@@ -215,8 +232,18 @@ async def send_message(
     await db.messages.insert_one(doc)
 
     preview = body.text if len(body.text) <= 100 else body.text[:99] + "…"
+    recipient_prefix = "offerer" if other_party_id == offerer_user_id else "requester"
+    set_fields: dict = {"lastMessageAt": now, "lastMessagePreview": preview}
+    # E-maildigest (PRD §6.6/fase 5): start een ongelezen-periode voor de
+    # ontvanger, maar enkel als er nog geen lopende was — een 2de, 3de
+    # bericht in dezelfde burst mag unreadSince niet vooruitschuiven, anders
+    # zou de 30-minuten-klok telkens herstarten en nooit aflopen. De
+    # scheduled job in tasks.py::send_message_email_reminders bundelt
+    # alles sinds dat eerste tijdstip in één mail.
+    if not conversation.get(f"{recipient_prefix}UnreadSince"):
+        set_fields[f"{recipient_prefix}UnreadSince"] = now
     update: dict = {
-        "$set": {"lastMessageAt": now, "lastMessagePreview": preview},
+        "$set": set_fields,
         # PRD §6.5: als de ontvanger dit gesprek eerder bij zichzelf
         # verwijderd/verborgen had, laat een nieuw bericht het terugkeren
         # in hun lijst. Enkel de ontvanger — de eigen hidden-status van de
@@ -232,8 +259,7 @@ async def send_message(
     # create_notification, met de listing als context. Geen aparte
     # blokkade-check nodig hier — als de ontvanger (other_party_id) de
     # verzender geblokkeerd had, was send_message hierboven al met 403
-    # gestopt vóór het bericht ooit werd opgeslagen. De e-maildigest uit
-    # PRD §6.6 (debounce + scheduled job) is bewust nog niet in deze fase.
+    # gestopt vóór het bericht ooit werd opgeslagen.
     listing = await db.listings.find_one({"id": conversation["listingId"]}, {"_id": 0, "title": 1})
     listing_title = listing.get("title") if listing else None
     sender_org_name = None
@@ -249,10 +275,20 @@ async def send_message(
 
 @router.patch("/conversations/{conversation_id}/read")
 async def mark_conversation_read(conversation_id: str, user: dict = Depends(get_donateur_or_validated_user)):
-    await _load_conversation(conversation_id, user)
+    _conversation, _offerer_user_id, role = await _load_conversation(conversation_id, user)
     result = await db.messages.update_many(
         {"conversationId": conversation_id, "senderId": {"$ne": user["id"]}, "readAt": None},
         {"$set": {"readAt": now_iso()}},
+    )
+    # E-maildigest (PRD §6.6/fase 5): lezen sluit de eigen ongelezen-periode
+    # af, zodat de scheduled job geen (verouderde) bundelmail meer stuurt
+    # voor berichten die intussen al gelezen zijn. Een volgend bericht start
+    # gewoon een nieuwe periode (zie send_message). emailSentAt laten we
+    # bewust staan — die wordt enkel vergeleken met de (nieuwe) unreadSince
+    # van een volgende periode, dus stale hem alvast op None zetten voegt
+    # niets toe.
+    await db.conversations.update_one(
+        {"id": conversation_id}, {"$set": {f"{role}UnreadSince": None}},
     )
     return {"ok": True, "modified": result.modified_count}
 

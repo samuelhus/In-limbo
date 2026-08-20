@@ -1,10 +1,15 @@
 """Background-ish maintenance tasks: archive expired listings + mark inactive orgs
-+ herinneringsmails om 3 maanden na een overdracht/checkout een resultaatfoto te vragen."""
++ herinneringsmails om 3 maanden na een overdracht/checkout een resultaatfoto te vragen
++ e-maildigest voor ongelezen berichten (PRD_direct_messaging.md §6.6)."""
 from __future__ import annotations
+import html
 import uuid
 from datetime import datetime, timezone, timedelta
 
-from notifications import create_notification, purge_old_notifications, render_email, maybe_send_email, FRONTEND_URL
+from notifications import (
+    create_notification, purge_old_notifications, render_email, maybe_send_email,
+    send_email, pick_lang, FRONTEND_URL,
+)
 
 MONTHS_NL = [
     "januari", "februari", "maart", "april", "mei", "juni",
@@ -363,5 +368,122 @@ async def send_photo_reminders(db) -> int:
             "studentEmail": cand.get("studentEmail"),
         })
         sent += 1
+
+    return sent
+
+
+MESSAGE_EMAIL_REMINDER_DELAY = timedelta(minutes=30)  # PRD §6.6
+
+
+async def _display_name(db, user: dict) -> str:
+    """Organisatienaam > username > voor-/achternaam — zelfde patroon als
+    bv. applicant_name in routes/applications.py en sender_name in
+    routes/conversations.py::send_message."""
+    org_name = None
+    if user.get("organisationId"):
+        org = await db.organisations.find_one({"id": user["organisationId"]}, {"_id": 0, "name": 1})
+        org_name = org["name"] if org else None
+    return org_name or user.get("username") or f'{user.get("firstName","")} {user.get("lastName","")}'.strip()
+
+
+async def send_message_email_reminders(db, *, delay: timedelta = MESSAGE_EMAIL_REMINDER_DELAY) -> int:
+    """E-maildigest voor ongelezen berichten (PRD §6.6, direct messaging fase 5).
+
+    Draait elke ~5 min (zie server.py). Voor elke partij (offerer/requester)
+    van elk gesprek met een lopende ongelezen-periode ({prefix}UnreadSince):
+
+    1. Skip als unreadSince nog niet ouder is dan `delay` (default 30 min).
+    2. Skip als er al een mail verstuurd is ná het begin van déze periode
+       (emailSentAt >= unreadSince) — "max 1 mail per ongelezen-periode",
+       geen herhaalde herinneringen.
+    3. "Is het gesprek intussen gelezen?" wordt niet apart gecheckt: lezen
+       (routes/conversations.py::mark_conversation_read) zet unreadSince
+       meteen terug op None, dus een gelezen periode faalt vanzelf al de
+       "unreadSince is gezet"-voorwaarde hierboven — geen aparte query nodig.
+    4. Bundel alle berichten van de andere partij sinds unreadSince in één
+       mail via de bestaande send_email-helper, en zet emailSentAt.
+
+    `delay` is enkel overrideable voor tests (PRD-voorstel: test met een
+    korte vertraging, bv. 1 minuut, i.p.v. de 30 minuten die de effectief
+    geregistreerde job in server.py gebruikt).
+    """
+    now = datetime.now(timezone.utc)
+    cutoff_iso = (now - delay).isoformat()
+
+    candidates = await db.conversations.find(
+        {"$or": [{"offererUnreadSince": {"$ne": None}}, {"requesterUnreadSince": {"$ne": None}}]}
+    ).to_list(500)
+
+    sent = 0
+    for conv in candidates:
+        listing = await db.listings.find_one({"id": conv["listingId"]}, {"_id": 0, "userId": 1, "title": 1})
+        if not listing:
+            continue
+        offerer_user_id = listing["userId"]
+        requester_user_id = conv["requesterUserId"]
+
+        for prefix, recipient_user_id, other_party_id in (
+            ("offerer", offerer_user_id, requester_user_id),
+            ("requester", requester_user_id, offerer_user_id),
+        ):
+            unread_since = conv.get(f"{prefix}UnreadSince")
+            if not unread_since or unread_since > cutoff_iso:
+                continue
+            email_sent_at = conv.get(f"{prefix}EmailSentAt")
+            if email_sent_at and email_sent_at >= unread_since:
+                continue  # al 1 mail verstuurd voor deze ongelezen-periode
+
+            messages = await db.messages.find(
+                {"conversationId": conv["id"], "senderId": {"$ne": recipient_user_id}, "createdAt": {"$gte": unread_since}}
+            ).sort("createdAt", 1).to_list(200)
+            if not messages:
+                # Zou niet mogen voorkomen (unreadSince wordt enkel gezet bij
+                # een nieuw bericht) — defensief overslaan i.p.v. een lege
+                # mail sturen; emailSentAt laten we dan ook ongemoeid, zodat
+                # een latere run alsnog kan bundelen mocht dit toch gebeuren.
+                continue
+
+            recipient = await db.users.find_one({"id": recipient_user_id})
+            if not recipient or not recipient.get("email"):
+                continue
+            other_party = await db.users.find_one({"id": other_party_id}) or {}
+            other_name = await _display_name(db, other_party)
+            listing_title = listing.get("title") or ""
+            cta_url = f"{FRONTEND_URL}/aanbieding/{conv['listingId']}"
+
+            # Berichttekst is vrije, ongemodereerde tekst van een andere
+            # gebruiker (zie PRD §12) — html.escape() vóór opname in de
+            # e-mail-HTML, newlines als <br/> (zelfde stijl als notify_
+            # admins_contact_message hierboven, maar dan wél ge-escaped).
+            safe_texts = [html.escape(m["text"]).replace("\n", "<br/>") for m in messages]
+
+            lang = pick_lang(recipient)
+            if lang == "fr":
+                subject = f"Nouveaux messages de {other_name}"
+                title = "Vous avez de nouveaux messages"
+                n = len(messages)
+                intro = (
+                    f'{other_name} vous a envoyé {n} message{"s" if n > 1 else ""} '
+                    f'à propos de « {listing_title} ».'
+                )
+                cta_text = "Voir l'annonce →"
+            else:
+                subject = f"Nieuwe berichten van {other_name}"
+                title = "Je hebt nieuwe berichten"
+                n = len(messages)
+                intro = (
+                    f'{other_name} stuurde je {n} bericht{"en" if n > 1 else ""} '
+                    f'over "{listing_title}".'
+                )
+                cta_text = "Bekijk aanbieding →"
+
+            body_lines = [intro] + [f"<em>{t}</em>" for t in safe_texts]
+            html_content = render_email(title, body_lines, cta_text=cta_text, cta_url=cta_url)
+            await send_email(recipient["email"], subject, html_content)
+
+            await db.conversations.update_one(
+                {"id": conv["id"]}, {"$set": {f"{prefix}EmailSentAt": now.isoformat()}},
+            )
+            sent += 1
 
     return sent
