@@ -4,6 +4,7 @@ import '@/index.css';
 import '@/App.css';
 
 import { AuthProvider } from '@/contexts/AuthContext';
+import { MessagesProvider } from '@/contexts/MessagesContext';
 import TestBanner from '@/components/TestBanner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -64,195 +65,197 @@ export default function App() {
       <DocumentMeta />
       <ScrollToTop />
       <AuthProvider>
-        <div className="min-h-screen flex flex-col">
-          <TestBanner />
-          <Header />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/registreer" element={<Register />} />
-              <Route path="/donateur/registreer" element={<DonateurRegister />} />
-              <Route path="/over-ons" element={<OverOns />} />
-              <Route path="/partners" element={<Partners />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/nieuws" element={<Nieuws />} />
-              <Route path="/nieuws/:id" element={<NieuwsDetail />} />
-              <Route path="/inspiratie" element={<Inspiratie />} />
-              <Route path="/inspiratie/:id" element={<InspiratieDetail />} />
-              <Route path="/impact-methodologie" element={<ImpactMethodologie />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/wachtwoord-vergeten" element={<WachtwoordVergeten />} />
-              <Route path="/wachtwoord-reset" element={<WachtwoordReset />} />
-              <Route
-                path="/checkin"
-                element={
-                  <ProtectedRoute requireAdmin requireValidated={false}>
-                    <Checkin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/voorwaarden" element={<Voorwaarden />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route
-                path="/notificaties"
-                element={
-                  <ProtectedRoute allowDonateur>
-                    <Notificaties />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/berichten"
-                element={
-                  <ProtectedRoute allowDonateur>
-                    <Berichten />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/berichten/:id"
-                element={
-                  <ProtectedRoute allowDonateur>
-                    <GesprekDetail />
-                  </ProtectedRoute>
-                }
-              />
+        <MessagesProvider>
+          <div className="min-h-screen flex flex-col">
+            <TestBanner />
+            <Header />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/registreer" element={<Register />} />
+                <Route path="/donateur/registreer" element={<DonateurRegister />} />
+                <Route path="/over-ons" element={<OverOns />} />
+                <Route path="/partners" element={<Partners />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/nieuws" element={<Nieuws />} />
+                <Route path="/nieuws/:id" element={<NieuwsDetail />} />
+                <Route path="/inspiratie" element={<Inspiratie />} />
+                <Route path="/inspiratie/:id" element={<InspiratieDetail />} />
+                <Route path="/impact-methodologie" element={<ImpactMethodologie />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/wachtwoord-vergeten" element={<WachtwoordVergeten />} />
+                <Route path="/wachtwoord-reset" element={<WachtwoordReset />} />
+                <Route
+                  path="/checkin"
+                  element={
+                    <ProtectedRoute requireAdmin requireValidated={false}>
+                      <Checkin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/voorwaarden" element={<Voorwaarden />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route
+                  path="/notificaties"
+                  element={
+                    <ProtectedRoute allowDonateur>
+                      <Notificaties />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/berichten"
+                  element={
+                    <ProtectedRoute allowDonateur>
+                      <Berichten />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/berichten/:id"
+                  element={
+                    <ProtectedRoute allowDonateur>
+                      <GesprekDetail />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/wachtkamer"
-                element={
-                  <ProtectedRoute requireValidated={false}>
-                    <Pending />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/afgewezen"
-                element={
-                  <ProtectedRoute requireValidated={false}>
-                    <Rejected />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/wachtkamer"
+                  element={
+                    <ProtectedRoute requireValidated={false}>
+                      <Pending />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/afgewezen"
+                  element={
+                    <ProtectedRoute requireValidated={false}>
+                      <Rejected />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route path="/catalogus" element={<Catalogus />} />
-              <Route
-                path="/aanbieding/:id/bewerken"
-                element={
-                  <ProtectedRoute allowDonateur>
-                    <ListingWizard editMode />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/aanbieding/:id" element={<ListingDetail />} />
-              <Route path="/organisaties/:id" element={<OrganisationPage />} />
+                <Route path="/catalogus" element={<Catalogus />} />
+                <Route
+                  path="/aanbieding/:id/bewerken"
+                  element={
+                    <ProtectedRoute allowDonateur>
+                      <ListingWizard editMode />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/aanbieding/:id" element={<ListingDetail />} />
+                <Route path="/organisaties/:id" element={<OrganisationPage />} />
 
-              <Route
-                path="/aanbieding/nieuw"
-                element={
-                  <ProtectedRoute allowDonateur>
-                    <ListingWizard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profiel"
-                element={
-                  <ProtectedRoute requireValidated={false}>
-                    <Profiel />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/organisatie"
-                element={
-                  <ProtectedRoute>
-                    <MijnOrganisatie />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/aanvragen"
-                element={
-                  <ProtectedRoute>
-                    <MijnAanvragen />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/mijn-aanbiedingen"
-                element={
-                  <ProtectedRoute allowDonateur>
-                    <MijnAanbiedingen />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/zoekertje/nieuw"
-                element={
-                  <ProtectedRoute>
-                    <SearchRequestWizard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/zoekertje/:id/bewerken"
-                element={
-                  <ProtectedRoute>
-                    <SearchRequestWizard editMode />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/mijn-zoekertjes"
-                element={
-                  <ProtectedRoute>
-                    <MijnZoekertjes />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/aanbieding/nieuw"
+                  element={
+                    <ProtectedRoute allowDonateur>
+                      <ListingWizard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profiel"
+                  element={
+                    <ProtectedRoute requireValidated={false}>
+                      <Profiel />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/organisatie"
+                  element={
+                    <ProtectedRoute>
+                      <MijnOrganisatie />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/aanvragen"
+                  element={
+                    <ProtectedRoute>
+                      <MijnAanvragen />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/mijn-aanbiedingen"
+                  element={
+                    <ProtectedRoute allowDonateur>
+                      <MijnAanbiedingen />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/zoekertje/nieuw"
+                  element={
+                    <ProtectedRoute>
+                      <SearchRequestWizard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/zoekertje/:id/bewerken"
+                  element={
+                    <ProtectedRoute>
+                      <SearchRequestWizard editMode />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/mijn-zoekertjes"
+                  element={
+                    <ProtectedRoute>
+                      <MijnZoekertjes />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requireAdmin requireValidated={false}>
-                    <AdminPanel />
-                  </ProtectedRoute>
-                }
-              />
-              
-              <Route
-                path="/admin/donateur/:userId"
-                element={
-                  <ProtectedRoute requireAdmin requireValidated={false}>
-                    <AdminDonateurListings />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute requireAdmin requireValidated={false}>
+                      <AdminPanel />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                <Route
+                  path="/admin/donateur/:userId"
+                  element={
+                    <ProtectedRoute requireAdmin requireValidated={false}>
+                      <AdminDonateurListings />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/admin/zoekertje/nieuw"
-                element={
-                  <ProtectedRoute requireAdmin requireValidated={false}>
-                    <SearchRequestWizard adminMode />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/zoekertje/:id/bewerken"
-                element={
-                  <ProtectedRoute requireAdmin requireValidated={false}>
-                    <SearchRequestWizard adminMode editMode />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/admin/zoekertje/nieuw"
+                  element={
+                    <ProtectedRoute requireAdmin requireValidated={false}>
+                      <SearchRequestWizard adminMode />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/zoekertje/:id/bewerken"
+                  element={
+                    <ProtectedRoute requireAdmin requireValidated={false}>
+                      <SearchRequestWizard adminMode editMode />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </MessagesProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -483,8 +483,13 @@
     "unblock_btn": "Deblokkeer",
     "confirm_block": "Weet je zeker dat je {{name}} wil blokkeren in dit gesprek? {{name}} kan dan geen berichten meer sturen, maar de bestaande geschiedenis blijft zichtbaar voor jullie beiden. Je kan dit nadien ongedaan maken.",
     "confirm_unblock": "Weet je zeker dat je de blokkade van {{name}} wil opheffen?",
-    "hide_btn": "Verberg gesprek",
-    "confirm_hide": "Dit gesprek verdwijnt uit je lijst. Het verschijnt terug zodra er een nieuw bericht binnenkomt. Doorgaan?"
+    "hide_btn": "Verwijder gesprek",
+    "confirm_hide": "Dit gesprek verdwijnt uit je lijst. Het verschijnt terug zodra er een nieuw bericht binnenkomt. Doorgaan?",
+    "group_active": "In behandeling",
+    "group_handled": "Afgehandeld",
+    "mark_handled_btn": "Markeer als afgehandeld",
+    "mark_active_btn": "Terugzetten",
+    "unread_indicator": "Ongelezen bericht"
   },
   "pages": {
     "voorwaarden_title": "Algemene voorwaarden",

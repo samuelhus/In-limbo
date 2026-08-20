@@ -493,8 +493,13 @@
     "unblock_btn": "Débloquer",
     "confirm_block": "Voulez-vous vraiment bloquer {{name}} dans cette conversation ? {{name}} ne pourra plus envoyer de messages, mais l'historique existant reste visible pour vous deux. Vous pouvez annuler cela plus tard.",
     "confirm_unblock": "Voulez-vous vraiment lever le blocage de {{name}} ?",
-    "hide_btn": "Masquer la conversation",
-    "confirm_hide": "Cette conversation disparaîtra de votre liste. Elle réapparaîtra dès qu'un nouveau message arrive. Continuer ?"
+    "hide_btn": "Supprimer la conversation",
+    "confirm_hide": "Cette conversation disparaîtra de votre liste. Elle réapparaîtra dès qu'un nouveau message arrive. Continuer ?",
+    "group_active": "En cours",
+    "group_handled": "Traité",
+    "mark_handled_btn": "Marquer comme traité",
+    "mark_active_btn": "Remettre en cours",
+    "unread_indicator": "Message non lu"
   },
   "pages": {
     "voorwaarden_title": "Conditions générales",

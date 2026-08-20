@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMessages } from '@/contexts/MessagesContext';
 import { cloudinaryThumb, cloudinaryPdfUrl, uploadImageWithMeta, uploadFileWithMeta } from '@/lib/cloudinary';
 
 // Snellere polling zolang dit gespreksvenster openstaat (PRD_direct_messaging.md
@@ -30,6 +31,7 @@ export default function GesprekDetail() {
   const lang = (i18n.resolvedLanguage || 'nl').slice(0, 2);
   const { id } = useParams();
   const { user } = useAuth();
+  const { refresh: refreshBadge } = useMessages();
   const [conversation, setConversation] = useState(null); // null = laden, false = niet gevonden/geen toegang
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
@@ -41,6 +43,8 @@ export default function GesprekDetail() {
   const [attachmentError, setAttachmentError] = useState('');
   const [blocking, setBlocking] = useState(false);
   const [blockError, setBlockError] = useState('');
+  const [handling, setHandling] = useState(false);
+  const [handleError, setHandleError] = useState('');
   const bottomRef = useRef(null);
 
   const loadConversation = useCallback(async () => {
@@ -62,8 +66,14 @@ export default function GesprekDetail() {
   }, [id]);
 
   const markRead = useCallback(async () => {
-    try { await api.patch(`/conversations/${id}/read`); } catch { /* silent */ }
-  }, [id]);
+    try {
+      await api.patch(`/conversations/${id}/read`);
+      // Fase 9: laat de navigatiebadge onmiddellijk verdwijnen zodra alles
+      // gelezen is, i.p.v. tot 60 sec te wachten op de volgende poll
+      // (MessagesTab.jsx/Header.jsx pollen anders zelf pas later opnieuw).
+      refreshBadge();
+    } catch { /* silent */ }
+  }, [id, refreshBadge]);
 
   useEffect(() => {
     loadConversation();
@@ -218,6 +228,23 @@ export default function GesprekDetail() {
     }
   };
 
+  // "Afgehandeld" (fase 9) — puur organisatorisch (groepering in de
+  // gesprekslijst), los van blokkeren/verwijderen. Geen bevestigingsdialoog
+  // nodig: omkeerbaar met 1 klik, geen dataverlies zoals bij verwijderen.
+  const toggleHandled = async () => {
+    const willHandle = !conversation.handledByMe;
+    setHandling(true);
+    setHandleError('');
+    try {
+      await api.patch(`/conversations/${id}/${willHandle ? 'mark-handled' : 'unmark-handled'}`);
+      await loadConversation();
+    } catch (err) {
+      setHandleError(formatApiError(err));
+    } finally {
+      setHandling(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 flex flex-col" style={{ minHeight: '75vh' }} data-testid="gesprek-page">
       <Link
@@ -235,15 +262,26 @@ export default function GesprekDetail() {
             {conversation.otherPartyName || t('messages.unknown_party')}
           </h1>
         </div>
-        <button
-          onClick={toggleBlock}
-          disabled={blocking}
-          className="btn-secondary !py-1.5 px-3 text-xs shrink-0"
-          data-testid="gesprek-block-btn"
-        >
-          {conversation.blockedByMe ? t('messages.unblock_btn') : t('messages.block_btn')}
-        </button>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <button
+            onClick={toggleHandled}
+            disabled={handling}
+            className="btn-secondary !py-1.5 px-3 text-xs"
+            data-testid="gesprek-handled-btn"
+          >
+            {conversation.handledByMe ? t('messages.mark_active_btn') : t('messages.mark_handled_btn')}
+          </button>
+          <button
+            onClick={toggleBlock}
+            disabled={blocking}
+            className="btn-secondary !py-1.5 px-3 text-xs"
+            data-testid="gesprek-block-btn"
+          >
+            {conversation.blockedByMe ? t('messages.unblock_btn') : t('messages.block_btn')}
+          </button>
+        </div>
       </div>
+      {handleError && <p className="text-destructive text-sm mb-4" data-testid="gesprek-handle-error">{handleError}</p>}
       {blockError && <p className="text-destructive text-sm mb-4" data-testid="gesprek-block-error">{blockError}</p>}
 
       <div
@@ -257,10 +295,23 @@ export default function GesprekDetail() {
         )}
         {messages.map((m) => {
           const isMine = m.senderId === user?.id;
+          // Duidelijk onderscheid wie wat schreef (fase 9): naam + kleur per
+          // spreker (groen = ik, blauw = de andere partij — hergebruikt de
+          // bestaande status-kleuren uit tailwind.config.js), i.p.v. enkel
+          // een subtiele achtergrondtint.
+          const senderName = isMine ? conversation.viewerName : conversation.otherPartyName;
           const hasAttachments = (m.photos && m.photos.length > 0) || (m.files && m.files.length > 0);
           return (
-            <div key={m.id} className={`p-4 ${isMine ? 'bg-muted/30' : ''}`} data-testid={`gesprek-message-${m.id}`}>
-              <p className="text-sm whitespace-pre-wrap">{m.text}</p>
+            <div
+              key={m.id}
+              className={`p-3 border-l-4 ${isMine ? 'border-[#34D399] bg-muted/20' : 'border-[#3B82F6]'}`}
+              data-testid={`gesprek-message-${m.id}`}
+            >
+              <p className={`text-xs font-semibold ${isMine ? 'text-[#166534]' : 'text-[#1E3A8A]'}`}>
+                {senderName || t('messages.unknown_party')}
+                <span className="text-muted-foreground font-normal"> · {formatTime(m.createdAt, lang)}</span>
+              </p>
+              <p className="text-sm whitespace-pre-wrap mt-0.5">{m.text}</p>
               {hasAttachments && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {m.photos.map((p, i) => (
@@ -290,7 +341,6 @@ export default function GesprekDetail() {
                   })}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground mt-1">{formatTime(m.createdAt, lang)}</p>
             </div>
           );
         })}

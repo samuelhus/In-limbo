@@ -1,34 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { api } from '@/lib/api';
-
-// Zelfde poll-interval als NotificationCenter.jsx (PRD_direct_messaging.md
-// §9): 60 sec wanneer de gebruiker niet in een open gesprek zit. Er is nog
-// geen gespreksvenster (dat komt in een latere fase), dus deze component
-// pollt altijd aan dit tempo.
-const POLL_MS = 60_000;
+import { useMessages } from '@/contexts/MessagesContext';
 
 export default function MessagesTab() {
   const { t } = useTranslation();
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const load = useCallback(async () => {
-    try {
-      // Lichtgewicht badge-route (fase 6) — telt gesprekken met ongelezen
-      // berichten, niet het totaal aantal berichten (PRD §6.3). Nog geen
-      // GET /conversations/mine (die komt met de gesprekslijst).
-      const { data } = await api.get('/conversations/unread-count');
-      setUnreadCount(data.count);
-    } catch { /* silent, zelfde patroon als NotificationCenter */ }
-  }, []);
-
-  useEffect(() => {
-    load();
-    const id = setInterval(load, POLL_MS);
-    return () => clearInterval(id);
-  }, [load]);
+  // Gedeelde poll + "onmiddellijk verversen na lezen"-state (fase 9), zie
+  // MessagesContext.jsx — vervangt de eigen polling die hier vroeger stond.
+  const { hasUnread } = useMessages();
 
   return (
     <Link
@@ -38,13 +18,13 @@ export default function MessagesTab() {
       data-testid="messages-tab"
     >
       <MessageCircle className="w-5 h-5" />
-      {unreadCount > 0 && (
+      {hasUnread && (
+        // Fase 9: geen cijfer meer, enkel een stip — de badge toont dat er
+        // minstens 1 ongelezen bericht is, niet hoeveel precies.
         <span
-          className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center text-[10px] font-bold text-white bg-red-600 rounded-full"
+          className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full"
           data-testid="messages-tab-badge"
-        >
-          {unreadCount > 9 ? '9+' : unreadCount}
-        </span>
+        />
       )}
     </Link>
   );

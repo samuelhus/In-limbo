@@ -16,10 +16,20 @@ Fase 6: GET /conversations/unread-count, een lichtgewicht route voor de
 badge op de "Berichten"-tab in de hoofdnav (PRD §6.3) — telt gesprekken
 met ongelezen berichten, niet het volledige GET /conversations/mine uit
 PRD §8 (die kwam pas met de gesprekslijst hieronder).
-Fase 7 (dit): de eigenlijke chat-UI — GET /conversations/mine (gesprekslijst,
+Fase 7: de eigenlijke chat-UI — GET /conversations/mine (gesprekslijst,
 PRD §6.3/§8) en GET /conversations/{id} (detail voor de header van het
 gespreksvenster), beide via _enrich_conversations hieronder verrijkt met
 listingtitel en de weergavenaam van de andere partij.
+Fase 9 (dit, op vraag van product na de eerste UI-doorloop van fase 6-8):
+- "Afgehandeld" als apart, omkeerbaar statusveld (handledBy) naast — niet
+  i.p.v. — de bestaande verwijder/verberg-functie (hiddenBy): mark-handled/
+  unmark-handled hieronder, plus automatisch weer "in behandeling" zodra er
+  een nieuw bericht binnenkomt (zelfde patroon als hiddenBy in send_message).
+- Bijlagen worden nu ook echt op Cloudinary verwijderd (niet enkel de
+  referentie) zodra BEIDE partijen een gesprek verwijderd hebben — zie
+  _purge_conversation_attachments/hide_conversation.
+- Weergavenaam-formaat aangepast: "Voornaam van Organisatienaam" i.p.v.
+  enkel de organisatienaam — zie _format_display_name.
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
 één listing + één aanvrager/aanbieder-paar). offererUserId wordt nergens
@@ -28,10 +38,13 @@ verouderde kopie kan ontstaan (bv. als een listing ooit van eigenaar zou
 wisselen).
 """
 from __future__ import annotations
+import logging
+import re
 import time
 import uuid
 from collections import defaultdict
 
+import cloudinary.uploader
 from fastapi import APIRouter, HTTPException, Depends, Query
 
 from deps import db, now_iso, strip_mongo
@@ -43,6 +56,68 @@ from auth import get_donateur_or_validated_user
 from notifications import create_notification
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Fase 9: bijlagen echt verwijderen op Cloudinary zodra beide partijen een
+# gesprek verwijderd hebben (zie hide_conversation). cloudinary.config() is
+# al globaal gezet in server.py bij het opstarten, dus hier enkel de
+# uploader-call zelf — geen nieuwe credentials/infra nodig.
+# ---------------------------------------------------------------------------
+_CLOUDINARY_PUBLIC_ID_RE = re.compile(r"/upload/(?:[^/]+/)*?v\d+/(.+)$")
+
+
+def _cloudinary_public_id_from_url(url: str, resource_type: str) -> str | None:
+    """Leidt de public_id af uit een secure_url zoals Cloudinary die teruggeeft
+    bij upload (zie frontend/src/lib/cloudinary.js). Voor resource_type
+    "image" maakt Cloudinary een apart formaat-veld van de extensie (die dus
+    niet bij de public_id hoort); voor "raw" (PDF's) is de extensie wél
+    onderdeel van de public_id. Geeft None terug bij een onherkenbare vorm
+    (bv. de vaste demo-URL's in tests) — de aanroeper behandelt dat als
+    "niets te verwijderen", niet als een fout."""
+    match = _CLOUDINARY_PUBLIC_ID_RE.search(url)
+    if not match:
+        return None
+    tail = match.group(1)
+    if resource_type == "image":
+        tail = re.sub(r"\.[a-zA-Z0-9]+$", "", tail)
+    return tail
+
+
+def _destroy_cloudinary_asset(url: str, resource_type: str) -> None:
+    """Best-effort verwijdering — een falende Cloudinary-call mag het
+    verwijderen van het gesprek zelf nooit blokkeren (het is opruiming
+    achteraf, geen kernfunctionaliteit)."""
+    public_id = _cloudinary_public_id_from_url(url, resource_type)
+    if not public_id:
+        return
+    try:
+        cloudinary.uploader.destroy(public_id, resource_type=resource_type)
+    except Exception:
+        logger.warning("Cloudinary-verwijdering mislukt voor %s (%s)", public_id, resource_type, exc_info=True)
+
+
+async def _purge_conversation_attachments(conversation_id: str) -> None:
+    """Verwijdert alle bijlagen van een gesprek, zowel op Cloudinary als de
+    referenties op de berichten zelf, en zet de cumulatieve tellers op het
+    Conversation-document terug op 0. Wordt enkel aangeroepen wanneer beide
+    partijen het gesprek verwijderd hebben (zie hide_conversation) — op dat
+    moment kan geen van beide de bijlagen nog nodig hebben."""
+    cursor = db.messages.find(
+        {"conversationId": conversation_id, "$or": [{"photos.0": {"$exists": True}}, {"files.0": {"$exists": True}}]},
+    )
+    async for message in cursor:
+        for photo in message.get("photos", []):
+            _destroy_cloudinary_asset(photo["url"], "image")
+        for file in message.get("files", []):
+            _destroy_cloudinary_asset(file["url"], "raw")
+    await db.messages.update_many(
+        {"conversationId": conversation_id}, {"$set": {"photos": [], "files": []}},
+    )
+    await db.conversations.update_one(
+        {"id": conversation_id}, {"$set": {"attachmentCount": 0, "attachmentBytes": 0}},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -76,14 +151,19 @@ def _serialize_conversation(doc: dict, offerer_user_id: str, viewer_user_id: str
     out.setdefault("attachmentCount", 0)
     out.setdefault("attachmentBytes", 0)
 
-    # blockedBy/hiddenBy zijn arrays van userId's (zie models.py) — nooit
-    # rechtstreeks exposen, enkel de per-viewer afgeleide booleans (PRD §7).
+    # blockedBy/hiddenBy/handledBy zijn arrays van userId's (zie models.py) —
+    # nooit rechtstreeks exposen, enkel de per-viewer afgeleide booleans
+    # (PRD §7). handledBy (fase 9) is puur organisatorisch ("afgehandeld"),
+    # los van hiddenBy (echt verwijderen/verbergen, PRD §6.5) — zie
+    # mark_conversation_handled/unmark_conversation_handled.
     blocked_by = out.pop("blockedBy", [])
     hidden_by = out.pop("hiddenBy", [])
+    handled_by = out.pop("handledBy", [])
     other_user_id = out["requesterUserId"] if viewer_user_id == offerer_user_id else offerer_user_id
     out["blockedByMe"] = viewer_user_id in blocked_by
     out["blockedByOther"] = other_user_id in blocked_by
     out["hiddenByMe"] = viewer_user_id in hidden_by
+    out["handledByMe"] = viewer_user_id in handled_by
 
     # E-maildigest-boekhouding (fase 5, PRD §6.6/§7) — puur interne server-
     # state voor de scheduled job in tasks.py, geen publiek API-contract.
@@ -115,25 +195,57 @@ def _my_conversations_filter(user_id: str, listing_ids: list[str]) -> dict:
     }
 
 
+def _format_display_name(user_doc: dict, org_doc: dict | None) -> str | None:
+    """Weergavenaam voor de messaging-UI (fase 9, op vraag van product):
+    "Voornaam van Organisatienaam" i.p.v. enkel de organisatienaam — een
+    kale bedrijfs-/orgnaam maakt in een 1-op-1-gesprek niet duidelijk wie
+    er nu precies aan het typen is.
+
+    - Gevalideerd lid van een organisatie: "{voornaam} van {orgnaam}".
+    - Bedrijfs-donateur (geen organisationId, wel companyName): "{voornaam}
+      van {companyName}" — donorType "bedrijf" vereist firstName+companyName
+      bij registratie (zie RegisterDonateur in models.py), dus dit is altijd
+      compleet beschikbaar.
+    - Particuliere donateur: enkel de username (bewust — dat is exact hun
+      publieke identificatiemiddel, zie RegisterDonateur-docstring; geen
+      achternaam/voornaam tonen aan de andere partij).
+    - Overige gevallen (geen organisatie/donateurprofiel bekend): voornaam +
+      achternaam, of anders de username.
+    """
+    if not user_doc:
+        return None
+    first_name = user_doc.get("firstName")
+    if org_doc and org_doc.get("name"):
+        return f"{first_name} van {org_doc['name']}" if first_name else org_doc["name"]
+    if user_doc.get("role") == "donateur":
+        if user_doc.get("donorType") == "bedrijf" and user_doc.get("companyName"):
+            return f"{first_name} van {user_doc['companyName']}" if first_name else user_doc["companyName"]
+        return user_doc.get("username")
+    full_name = f'{first_name or ""} {user_doc.get("lastName", "")}'.strip()
+    return full_name or user_doc.get("username")
+
+
 async def _enrich_conversations(docs: list[dict], viewer_id: str) -> list[dict]:
     """Verrijkt ruwe Conversation-documenten met wat de gesprekslijst en het
     gespreksvenster nodig hebben, maar wat niet op het document zelf staat:
-    listingtitel, de weergavenaam van de andere partij en het aantal
-    ongelezen berichten in dat gesprek. Behoudt de volgorde van `docs`
-    (de aanroeper bepaalt de sortering vooraf, bv. op lastMessageAt)."""
+    listingtitel + -foto, de weergavenaam van de andere partij én van de
+    viewer zelf (voor de afzendernaam bij eigen berichten, zie
+    GesprekDetail.jsx), en het aantal ongelezen berichten in dat gesprek.
+    Behoudt de volgorde van `docs` (de aanroeper bepaalt de sortering
+    vooraf, bv. op lastMessageAt)."""
     if not docs:
         return []
 
     listing_ids = list({d["listingId"] for d in docs})
     listings = {
         l["id"]: l async for l in db.listings.find(
-            {"id": {"$in": listing_ids}}, {"_id": 0, "id": 1, "title": 1, "userId": 1},
+            {"id": {"$in": listing_ids}}, {"_id": 0, "id": 1, "title": 1, "userId": 1, "photos": 1},
         )
     }
 
     # offererUserId per gesprek live afleiden (zie module-docstring), en
     # meteen bepalen wie voor déze viewer "de andere partij" is.
-    other_user_ids: set[str] = set()
+    relevant_user_ids: set[str] = {viewer_id}
     for d in docs:
         listing = listings.get(d["listingId"])
         offerer_id = listing["userId"] if listing else None
@@ -141,18 +253,29 @@ async def _enrich_conversations(docs: list[dict], viewer_id: str) -> list[dict]:
         d["_offererUserId"] = offerer_id
         d["_otherUserId"] = other_id
         if other_id:
-            other_user_ids.add(other_id)
+            relevant_user_ids.add(other_id)
 
     users = {
         u["id"]: u async for u in db.users.find(
-            {"id": {"$in": list(other_user_ids)}},
-            {"_id": 0, "id": 1, "firstName": 1, "lastName": 1, "username": 1, "organisationId": 1},
+            {"id": {"$in": list(relevant_user_ids)}},
+            {
+                "_id": 0, "id": 1, "firstName": 1, "lastName": 1, "username": 1,
+                "organisationId": 1, "role": 1, "donorType": 1, "companyName": 1,
+            },
         )
     }
     org_ids = [u["organisationId"] for u in users.values() if u.get("organisationId")]
     orgs = {
         o["id"]: o async for o in db.organisations.find({"id": {"$in": org_ids}}, {"_id": 0, "id": 1, "name": 1})
     }
+
+    def _name_for(user_id: str | None) -> str | None:
+        user_doc = users.get(user_id) if user_id else None
+        if not user_doc:
+            return None
+        return _format_display_name(user_doc, orgs.get(user_doc.get("organisationId")))
+
+    viewer_name = _name_for(viewer_id)
 
     # Ongelezen-telling per gesprek in 1 aggregatie i.p.v. een query per
     # gesprek — zelfde criterium als /unread-count (bericht van de andere
@@ -171,17 +294,11 @@ async def _enrich_conversations(docs: list[dict], viewer_id: str) -> list[dict]:
         listing = listings.get(d["listingId"])
         offerer_id = d.pop("_offererUserId")
         other_id = d.pop("_otherUserId")
-        other_user = users.get(other_id) or {}
-        other_org = orgs.get(other_user.get("organisationId")) or {}
-        other_name = (
-            other_org.get("name")
-            or other_user.get("username")
-            or f'{other_user.get("firstName", "")} {other_user.get("lastName", "")}'.strip()
-            or None
-        )
         serialized = _serialize_conversation(d, offerer_id, viewer_id)
         serialized["listingTitle"] = listing.get("title") if listing else None
-        serialized["otherPartyName"] = other_name
+        serialized["listingPhoto"] = (listing.get("photos") or [None])[0] if listing else None
+        serialized["otherPartyName"] = _name_for(other_id)
+        serialized["viewerName"] = viewer_name
         serialized["unreadCount"] = unread_counts.get(d["id"], 0)
         out.append(serialized)
     return out
@@ -241,6 +358,7 @@ async def create_conversation(body: ConversationCreate, user: dict = Depends(get
         "attachmentBytes": 0,
         "blockedBy": [],
         "hiddenBy": [],
+        "handledBy": [],  # "afgehandeld" per gebruiker (fase 9) — zie mark/unmark_conversation_handled
         # E-maildigest-boekhouding per partij (PRD §6.6/§7) — None = geen
         # lopende ongelezen-periode. Zie send_message/mark_conversation_read
         # en tasks.py::send_message_email_reminders.
@@ -406,7 +524,9 @@ async def send_message(
         # verwijderd/verborgen had, laat een nieuw bericht het terugkeren
         # in hun lijst. Enkel de ontvanger — de eigen hidden-status van de
         # verzender (indien die het ooit zelf verwijderde) blijft staan.
-        "$pull": {"hiddenBy": other_party_id},
+        # Zelfde redenering voor "afgehandeld" (fase 9): nieuwe activiteit
+        # betekent dat het voor de ontvanger niet langer afgehandeld is.
+        "$pull": {"hiddenBy": other_party_id, "handledBy": other_party_id},
     }
     if new_attachments:
         update["$inc"] = {"attachmentCount": new_attachments, "attachmentBytes": new_bytes}
@@ -475,13 +595,51 @@ async def unblock_conversation(conversation_id: str, user: dict = Depends(get_do
     return _serialize_conversation(updated, offerer_user_id, user["id"])
 
 
+@router.patch("/conversations/{conversation_id}/mark-handled")
+async def mark_conversation_handled(conversation_id: str, user: dict = Depends(get_donateur_or_validated_user)):
+    """Markeert dit gesprek als "afgehandeld" voor de aanroeper (fase 9) —
+    puur organisatorisch (groepering in de gesprekslijst), géén verberg-/
+    verwijderfunctie: het gesprek blijft gewoon in /conversations/mine
+    staan, enkel handledByMe wijzigt. Los van hiddenBy (zie hide_conversation
+    hieronder, die wél de zichtbaarheid regelt) — beide kunnen onafhankelijk
+    van elkaar aan staan. Automatisch weer "in behandeling" zodra de andere
+    partij een nieuw bericht stuurt, zie send_message."""
+    _conversation, offerer_user_id, _role = await _load_conversation(conversation_id, user)
+    await db.conversations.update_one({"id": conversation_id}, {"$addToSet": {"handledBy": user["id"]}})
+    updated = await db.conversations.find_one({"id": conversation_id})
+    return _serialize_conversation(updated, offerer_user_id, user["id"])
+
+
+@router.patch("/conversations/{conversation_id}/unmark-handled")
+async def unmark_conversation_handled(conversation_id: str, user: dict = Depends(get_donateur_or_validated_user)):
+    """Zet "afgehandeld" terug naar "in behandeling" — enkel voor de eigen
+    weergave, zie mark_conversation_handled hierboven."""
+    _conversation, offerer_user_id, _role = await _load_conversation(conversation_id, user)
+    await db.conversations.update_one({"id": conversation_id}, {"$pull": {"handledBy": user["id"]}})
+    updated = await db.conversations.find_one({"id": conversation_id})
+    return _serialize_conversation(updated, offerer_user_id, user["id"])
+
+
 @router.delete("/conversations/{conversation_id}")
 async def hide_conversation(conversation_id: str, user: dict = Depends(get_donateur_or_validated_user)):
     """Verbergt dit gesprek enkel voor de aanroeper (PRD §6.5) — geen echte
     verwijdering: de andere partij behoudt het gesprek volledig, en het
     verschijnt terug in de lijst van de aanroeper zodra er een nieuw
     bericht binnenkomt (zie send_message, dat de ontvanger telkens uit
-    hiddenBy haalt)."""
-    await _load_conversation(conversation_id, user)
+    hiddenBy haalt).
+
+    Fase 9: zodra BEIDE partijen het gesprek verwijderd hebben, heeft geen
+    van beide de bijlagen nog nodig — die worden dan definitief van
+    Cloudinary verwijderd (_purge_conversation_attachments). We triggeren
+    dit enkel op de aanroep die het "beide"-punt effectief bereikt (de
+    andere partij zat al in hiddenBy, ikzelf nog niet) — anders zou elke
+    volgende DELETE-aanroep (idempotent, $addToSet) de opruiming nodeloos
+    herhalen."""
+    conversation, offerer_user_id, role = await _load_conversation(conversation_id, user)
+    other_party_id = offerer_user_id if role == "requester" else conversation["requesterUserId"]
+    other_already_hidden = other_party_id in conversation.get("hiddenBy", [])
+
     await db.conversations.update_one({"id": conversation_id}, {"$addToSet": {"hiddenBy": user["id"]}})
+    if other_already_hidden:
+        await _purge_conversation_attachments(conversation_id)
     return {"success": True}

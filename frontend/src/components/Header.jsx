@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Logo from './Logo';
 import NotificationCenter from './NotificationCenter';
 import MessagesTab from './MessagesTab';
+import { useMessages } from '@/contexts/MessagesContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import { api } from '@/lib/api';
 
@@ -35,7 +36,11 @@ export default function Header() {
   const [nieuwsOpen, setNieuwsOpen] = useState(false);
   const [mobileNieuwsOpen, setMobileNieuwsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
+  // Gedeeld met MessagesTab.jsx (desktop-icoon) via MessagesContext (fase 9)
+  // — geen eigen polling meer hier, en `refresh()` in GesprekDetail.jsx zorgt
+  // dat deze meteen bijwerkt zodra een gesprek volledig gelezen is, i.p.v.
+  // te wachten op de volgende 60 sec-poll.
+  const { hasUnread: messagesUnread } = useMessages();
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -46,19 +51,6 @@ export default function Header() {
       .then(({ data }) => {
         setUnreadCount(data.filter((n) => !n.read).length);
       })
-      .catch(() => {});
-  }, [isLoggedIn, location.pathname]);
-
-  // Badge-aantal voor de mobiele weergave (compact icoon naast de hamburger
-  // + regel in het mobiele menu, zie hieronder) — het desktop MessagesTab-
-  // icoon pollt dit zelf al op hetzelfde POLL_MS-interval (PRD §9).
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setMessagesUnreadCount(0);
-      return;
-    }
-    api.get('/conversations/unread-count')
-      .then(({ data }) => setMessagesUnreadCount(data.count))
       .catch(() => {});
   }, [isLoggedIn, location.pathname]);
 
@@ -356,15 +348,14 @@ export default function Header() {
 
         {/* MOBILE HAMBURGER */}
         <div className="md:hidden relative flex items-center gap-2">
-          {isLoggedIn && messagesUnreadCount > 0 && !mobileOpen && (
+          {isLoggedIn && messagesUnread && !mobileOpen && (
+            // Fase 9: enkel een stip, geen cijfer (zelfde als MessagesTab.jsx).
             <Link
               to="/berichten"
               className="relative p-1"
               data-testid="mobile-messages-badge"
             >
-              <span className="w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-medium">
-                {messagesUnreadCount > 9 ? '9+' : messagesUnreadCount}
-              </span>
+              <span className="block w-2.5 h-2.5 bg-red-600 rounded-full" />
             </Link>
           )}
           {isLoggedIn && unreadCount > 0 && !mobileOpen && (
@@ -576,11 +567,7 @@ export default function Header() {
                   }
                 >
                   <span>{t('nav.messages')}</span>
-                  {messagesUnreadCount > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-medium">
-                      {messagesUnreadCount > 9 ? '9+' : messagesUnreadCount}
-                    </span>
-                  )}
+                  {messagesUnread && <span className="w-2.5 h-2.5 bg-red-600 rounded-full" />}
                 </NavLink>
               )}
 

@@ -1,7 +1,9 @@
-"""Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 tests: direct-messaging datamodel +
+"""Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 + 9 tests: direct-messaging datamodel +
 kernroutes + bijlagen + blokkeren/verwijderen + in-app notificaties +
 e-maildigest + de unread-count-route voor de "Berichten"-badge + de
-gesprekslijst/-detail-routes voor de chat-UI (PRD_direct_messaging.md).
+gesprekslijst/-detail-routes voor de chat-UI + (fase 9) "afgehandeld",
+bijlage-opruiming bij wederzijds verwijderen, en het naamformaat
+(PRD_direct_messaging.md).
 """
 import asyncio
 import os
@@ -34,6 +36,7 @@ _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _BACKEND_DIR not in sys.path:
     sys.path.insert(0, _BACKEND_DIR)
 from tasks import send_message_email_reminders  # noqa: E402
+from routes.conversations import _format_display_name  # noqa: E402
 
 
 def _db():
@@ -763,3 +766,122 @@ class TestUnreadCount:
     def test_anonymous_401(self, anon):
         r = anon.get(f"{API}/conversations/unread-count")
         assert r.status_code == 401, r.text
+
+
+# ---------- "Afgehandeld" (fase 9) — los van hiddenBy/verwijderen ----------
+class TestHandled:
+    def test_mark_and_unmark_handled(self, samir, make_conversation):
+        conv = make_conversation()
+        r = samir.patch(f"{API}/conversations/{conv['conversationId']}/mark-handled")
+        assert r.status_code == 200, r.text
+        assert r.json()["handledByMe"] is True
+
+        detail = samir.get(f"{API}/conversations/{conv['conversationId']}")
+        assert detail.json()["handledByMe"] is True
+
+        r2 = samir.patch(f"{API}/conversations/{conv['conversationId']}/unmark-handled")
+        assert r2.status_code == 200, r2.text
+        assert r2.json()["handledByMe"] is False
+
+    def test_handled_is_independent_per_party(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r = samir.patch(f"{API}/conversations/{conv['conversationId']}/mark-handled")
+        assert r.status_code == 200, r.text
+        # Samir's eigen markering raakt Lotte's weergave van hetzelfde gesprek niet.
+        lotte_view = lotte.get(f"{API}/conversations/{conv['conversationId']}")
+        assert lotte_view.json()["handledByMe"] is False
+
+    def test_new_message_clears_handled_for_recipient(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r = samir.patch(f"{API}/conversations/{conv['conversationId']}/mark-handled")
+        assert r.status_code == 200, r.text
+        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "nog iets"})
+        assert r0.status_code in (200, 201), r0.text
+        # Nieuwe activiteit van Lotte zet het voor Samir terug op "in behandeling".
+        detail = samir.get(f"{API}/conversations/{conv['conversationId']}")
+        assert detail.json()["handledByMe"] is False
+
+    def test_anonymous_401(self, anon, make_conversation):
+        conv = make_conversation()
+        r = anon.patch(f"{API}/conversations/{conv['conversationId']}/mark-handled")
+        assert r.status_code == 401, r.text
+
+
+# ---------- Bijlage-opruiming bij wederzijds verwijderen (fase 9, PRD §6.5) ----------
+class TestMutualDeletePurgesAttachments:
+    def test_attachments_cleared_only_after_both_parties_delete(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r0 = lotte.post(
+            f"{API}/conversations/{conv['conversationId']}/messages",
+            json={"text": "met foto", "photos": [_attachment(1000)]},
+        )
+        assert r0.status_code in (200, 201), r0.text
+        message_id = r0.json()["id"]
+
+        d1 = lotte.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert d1.status_code == 200, d1.text
+        # Nog maar 1 partij heeft verwijderd — bijlage blijft intact voor Samir.
+        msgs = samir.get(f"{API}/conversations/{conv['conversationId']}/messages").json()["items"]
+        assert next(m for m in msgs if m["id"] == message_id)["photos"] != []
+
+        d2 = samir.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert d2.status_code == 200, d2.text
+        # Beide partijen hebben nu verwijderd — de bijlage-referentie is weg
+        # (en de effectieve Cloudinary-destroy-call is een best-effort side-
+        # effect die hier niet apart getest wordt — geen echte credentials
+        # voor de fictieve demo-URL uit _attachment() in een testomgeving).
+        msgs2 = samir.get(f"{API}/conversations/{conv['conversationId']}/messages").json()["items"]
+        assert next(m for m in msgs2 if m["id"] == message_id)["photos"] == []
+
+        again = lotte.post(f"{API}/conversations", json={"applicationId": conv["applicationId"]})
+        assert again.status_code in (200, 201), again.text
+        assert again.json()["attachmentCount"] == 0
+        assert again.json()["attachmentBytes"] == 0
+
+
+# ---------- Naamformaat (fase 9): "Voornaam van Organisatienaam" ----------
+class TestDisplayNameFormat:
+    """_format_display_name is een pure functie (geen DB/HTTP nodig) — zelfde
+    aanpak als send_message_email_reminders hierboven, rechtstreeks
+    geïmporteerd i.p.v. via de API elke tak apart op te zetten."""
+
+    def test_org_member(self):
+        assert _format_display_name(
+            {"firstName": "Lotte", "role": "user"}, {"name": "Atelier Brussel"},
+        ) == "Lotte van Atelier Brussel"
+
+    def test_org_without_first_name_falls_back_to_org_name(self):
+        assert _format_display_name(
+            {"firstName": None, "role": "user"}, {"name": "Atelier Brussel"},
+        ) == "Atelier Brussel"
+
+    def test_donateur_bedrijf(self):
+        user = {"firstName": "Kim", "role": "donateur", "donorType": "bedrijf", "companyName": "Kringwinkel Molenbeek"}
+        assert _format_display_name(user, None) == "Kim van Kringwinkel Molenbeek"
+
+    def test_donateur_particulier_uses_username(self):
+        user = {"firstName": "Dana", "role": "donateur", "donorType": "particulier", "username": "dana_doneert"}
+        assert _format_display_name(user, None) == "dana_doneert"
+
+    def test_fallback_first_and_last_name(self):
+        user = {"firstName": "Jan", "lastName": "Peeters", "role": "user"}
+        assert _format_display_name(user, None) == "Jan Peeters"
+
+    def test_fallback_username_when_no_name_known(self):
+        user = {"role": "user", "username": "anon"}
+        assert _format_display_name(user, None) == "anon"
+
+    def test_none_user_returns_none(self):
+        assert _format_display_name(None, None) is None
+
+    def test_via_api_reflects_org_membership(self, lotte, samir, test_listing):
+        """Integratietest bovenop de unit-tests hierboven — controleert dat
+        _enrich_conversations de functie ook effectief zo aanroept, met de
+        echte seed-data van Lotte/Samir (backend/seed.py). Hergebruikt
+        test_listing's al bestaande gesprek, geen nieuw bericht nodig."""
+        as_samir = samir.get(f"{API}/conversations/{test_listing['conversationId']}")
+        assert as_samir.json()["otherPartyName"] == "Lotte van Atelier Brussel"
+
+        as_lotte = lotte.get(f"{API}/conversations/{test_listing['conversationId']}")
+        assert as_lotte.json()["otherPartyName"] == "Samir van Theatergezelschap Vagebond"
+        assert as_lotte.json()["viewerName"] == "Lotte van Atelier Brussel"
