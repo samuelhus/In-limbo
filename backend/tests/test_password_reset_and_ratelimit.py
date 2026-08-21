@@ -1,5 +1,6 @@
-"""Tests for slowapi rate limiting on /auth/login, /auth/register/*, /auth/forgot-password
-and full forgot-password / reset-password flow (TTL, single-use, enumeration prevention).
+"""Tests for slowapi rate limiting on /auth/login, /auth/register/*, /auth/forgot-password,
+/game/register (+ its admin-IP exemption) and full forgot-password / reset-password flow
+(TTL, single-use, enumeration prevention).
 
 NOTE: rate-limit tests are placed FIRST so we can wait 60s afterward and then run
 functional tests on fresh buckets. Login rate limit is tested last in phase A so we
@@ -102,6 +103,37 @@ def test_a3_rate_limit_login():
     assert last.status_code == 429, f"Expected 429 on 6th call, got {last.status_code}: {last.text}"
     detail = last.json().get("detail", "")
     assert detail == "Te veel inlogpogingen. Probeer het over een minuut opnieuw.", f"Unexpected msg: {detail}"
+
+
+def test_a4_rate_limit_game_register():
+    """/game/register limit = 10/minute per IP (routes/game.py). 11th → 429."""
+    last = None
+    for i in range(11):
+        last = requests.post(f"{API}/game/register", json={
+            "username": f"TEST_rl_speler_{i}_{secrets.token_hex(4)}",
+            "email": f"test-rl-{i}-{secrets.token_hex(4)}@inlimbo-test.example",
+            "consentAccepted": True,
+        })
+    assert last.status_code == 429, f"Expected 429 on 11th call, got {last.status_code}: {last.text}"
+
+
+def test_a5_admin_ip_exempt_from_game_register_rate_limit():
+    """auth.py::is_admin_request stelt een ingelogde admin-sessie vrij van de
+    limiet hierboven (routes/game.py::_register_rate_limit_key) — meteen na
+    het opbranden van diezelfde IP-emmer in de vorige test moeten admin-
+    registraties nog gewoon lukken, elke keer met een eigen unieke sleutel
+    i.p.v. tegen het uitgeputte IP-emmertje te lopen."""
+    admin = requests.Session()
+    r_login = admin.post(f"{API}/auth/login", json={"email": "admin@inlimbo.be", "password": "Admin123!"})
+    assert r_login.status_code == 200, r_login.text
+
+    for i in range(11):
+        r = admin.post(f"{API}/game/register", json={
+            "username": f"TEST_admin_exempt_{i}_{secrets.token_hex(4)}",
+            "email": f"test-admin-exempt-{i}-{secrets.token_hex(4)}@inlimbo-test.example",
+            "consentAccepted": True,
+        })
+        assert r.status_code in (200, 201), f"call {i} failed: {r.status_code} {r.text}"
 
 
 # ---------------------------------------------------------------------------

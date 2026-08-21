@@ -60,12 +60,23 @@ def lotte_session():
     return _login(NON_ADMIN_EMAIL, NON_ADMIN_PASS)
 
 
-def _register_game_player_with_session():
+def _register_game_player_with_session(admin_session=None):
     """Registreert een verse, ephemere speler (eigen sessie, los van het
     hoofdplatform-account-systeem, zie routes/game.py::game_register) en geeft
     de ingelogde sessie mee terug — nodig om nadien als die speler te kunnen
-    evalueren (POST /game/evaluate draait op de spel-cookie van deze sessie)."""
+    evalueren (POST /game/evaluate draait op de spel-cookie van deze sessie).
+
+    `admin_session` (optioneel): stelt deze registratie vrij van de IP-rate-
+    limit op POST /game/register (zie auth.py::is_admin_request en
+    routes/game.py::_register_rate_limit_key) door de il_token-cookie van een
+    ingelogde admin mee te sturen — anders lopen de vele registraties in deze
+    testfile (allemaal vanaf hetzelfde test-IP, ruim binnen 1 minuut) zelf
+    tegen die limiet aan."""
     s = requests.Session()
+    if admin_session is not None:
+        token = admin_session.cookies.get("il_token")
+        if token:
+            s.cookies.set("il_token", token)
     payload = {
         "username": f"TEST_speler_{uuid.uuid4().hex[:10]}",
         "email": f"test-{uuid.uuid4().hex[:10]}@inlimbo-test.example",
@@ -76,8 +87,8 @@ def _register_game_player_with_session():
     return s, r.json()["id"]
 
 
-def _register_game_player():
-    _, player_id = _register_game_player_with_session()
+def _register_game_player(admin_session=None):
+    _, player_id = _register_game_player_with_session(admin_session)
     return player_id
 
 
@@ -113,8 +124,8 @@ class TestDeleteGamePlayer:
     def test_deleting_two_players_in_a_row_both_succeed(self, admin_session):
         """De kern van de regressie: vóór de fix gaf enkel de 2de verwijdering
         al een 500 (duplicate-key op de username-index bij username=None)."""
-        player1 = _register_game_player()
-        player2 = _register_game_player()
+        player1 = _register_game_player(admin_session)
+        player2 = _register_game_player(admin_session)
 
         r1 = admin_session.delete(f"{BASE}/admin/game/users/{player1}", timeout=15)
         assert r1.status_code == 200, r1.text
@@ -125,7 +136,7 @@ class TestDeleteGamePlayer:
         assert r2.json()["ok"] is True
 
     def test_deleted_player_shows_as_anonymized(self, admin_session):
-        player_id = _register_game_player()
+        player_id = _register_game_player(admin_session)
         admin_session.delete(f"{BASE}/admin/game/users/{player_id}", timeout=15)
 
         users = admin_session.get(f"{BASE}/admin/game/users", timeout=15).json()
@@ -137,8 +148,8 @@ class TestDeleteGamePlayer:
         r = admin_session.delete(f"{BASE}/admin/game/users/does-not-exist", timeout=15)
         assert r.status_code == 404, r.text
 
-    def test_non_admin_cannot_delete(self, non_admin_session):
-        player_id = _register_game_player()
+    def test_non_admin_cannot_delete(self, admin_session, non_admin_session):
+        player_id = _register_game_player(admin_session)
         r = non_admin_session.delete(f"{BASE}/admin/game/users/{player_id}", timeout=15)
         assert r.status_code == 403, r.text
 
@@ -148,8 +159,8 @@ class TestDeleteGamePlayer:
 class TestListingEvaluations:
     def test_lists_all_evaluations_with_username_and_email(self, admin_session, lotte_session):
         listing_id = _create_game_listing(lotte_session)
-        s1, _ = _register_game_player_with_session()
-        s2, _ = _register_game_player_with_session()
+        s1, _ = _register_game_player_with_session(admin_session)
+        s2, _ = _register_game_player_with_session(admin_session)
         _submit_evaluation(s1, listing_id)
         _submit_evaluation(s2, listing_id)
 
@@ -164,8 +175,8 @@ class TestListingEvaluations:
 
     def test_delete_evaluation_frees_up_the_cap_slot(self, admin_session, lotte_session):
         listing_id = _create_game_listing(lotte_session)
-        s1, _ = _register_game_player_with_session()
-        s2, _ = _register_game_player_with_session()
+        s1, _ = _register_game_player_with_session(admin_session)
+        s2, _ = _register_game_player_with_session(admin_session)
         _submit_evaluation(s1, listing_id)
         _submit_evaluation(s2, listing_id)
 
@@ -194,7 +205,7 @@ class TestListingEvaluations:
 
     def test_non_admin_cannot_view_or_delete(self, admin_session, non_admin_session, lotte_session):
         listing_id = _create_game_listing(lotte_session)
-        s1, _ = _register_game_player_with_session()
+        s1, _ = _register_game_player_with_session(admin_session)
         _submit_evaluation(s1, listing_id)
         # id via de admin-route opgehaald (die zelf al elders getest is) —
         # enkel om iets te hebben om de 403-check hieronder tegen te doen.
@@ -225,7 +236,7 @@ class TestListingEvaluations:
 class TestTopEvaluations:
     def test_top_evaluations_include_listing_status_and_email(self, admin_session, lotte_session):
         listing_id = _create_game_listing(lotte_session)
-        s1, _ = _register_game_player_with_session()
+        s1, _ = _register_game_player_with_session(admin_session)
         _submit_evaluation(s1, listing_id)
 
         # limit=200 (max toegelaten) zodat deze verse, 0-stemmen-evaluatie niet

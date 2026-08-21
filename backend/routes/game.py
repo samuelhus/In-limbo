@@ -2,9 +2,13 @@
 prd/TECHDESIGN_Schat_of_Schroot.md). Volledig losstaand van het hoofdplatform:
 eigen auth (game_auth.py), eigen collecties (game_users/game_interactions/
 game_evaluations). De enige raakvlak met het bestaande datamodel is de
-`listings`-collectie, die er 3 optionele velden bij krijgt (gameEnabled/
-gameEvaluationCount/gameValidation) — zie routes/admin_game.py voor het
-beheer daarvan.
+`listings`-collectie, die er 2 optionele velden bij krijgt (gameEnabled/
+gameEvaluationCount) — zie routes/admin_game.py voor het beheer daarvan.
+
+POST /register staat achter dezelfde IP-based rate limiter (deps.py::limiter)
+als de rest van het platform, om te vermijden dat iemand snel achter elkaar
+veel verschillende usernames aanmaakt — zie _register_rate_limit_key voor de
+vrijstelling voor een ingelogde admin van het hoofdplatform.
 
 Spelpool (GAME_POOL_STATUSES, models.py): listings met status "beschikbaar" of
 "in_magazijn" — bevestigd met product, dezelfde statusset als de publieke
@@ -28,12 +32,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Depends, Query, Response
+from fastapi import APIRouter, HTTPException, Depends, Query, Request, Response
 from pymongo import ReturnDocument
 from pymongo.collation import Collation
 from pymongo.errors import DuplicateKeyError
 
-from deps import db, now_iso
+from deps import db, now_iso, limiter, get_real_ip
 from models import (
     GameRegisterBody, GameSwipeBody, GameEvaluateBody, GameChooseBestBody,
     MAX_GAME_EVALUATIONS_PER_LISTING, GAME_POOL_STATUSES,
@@ -41,6 +45,7 @@ from models import (
 from game_auth import (
     get_current_game_user, create_game_token, set_game_auth_cookie, clear_game_auth_cookie,
 )
+from auth import is_admin_request
 
 router = APIRouter(prefix="/game", tags=["game"])
 
@@ -77,8 +82,22 @@ def _serialize_evaluation(doc: dict, viewer_id: str) -> dict:
     }
 
 
+def _register_rate_limit_key(request: Request) -> str:
+    """Sleutel voor de rate limit op POST /register hieronder — normaal het
+    IP (zoals overal elders, zie deps.py::limiter), behalve voor een
+    ingelogde admin van het hoofdplatform (auth.py::is_admin_request): die
+    krijgt telkens een eigen, unieke sleutel i.p.v. het gedeelde IP-emmertje,
+    zodat hun aanvragen nooit meetellen voor de limiet en ze dus nooit
+    geblokkeerd raken bij het testen/beheren — puur een gemaksvrijstelling,
+    geen toegangscontrole (de route blijft zelf gewoon publiek)."""
+    if is_admin_request(request):
+        return f"admin-exempt-{uuid.uuid4()}"
+    return get_real_ip(request)
+
+
 @router.post("/register")
-async def game_register(body: GameRegisterBody, response: Response):
+@limiter.limit("10/minute", key_func=_register_rate_limit_key)
+async def game_register(request: Request, body: GameRegisterBody, response: Response):
     if not body.consentAccepted:
         raise HTTPException(400, "Je moet akkoord gaan met de gegevensverwerking om te kunnen spelen.")
 
