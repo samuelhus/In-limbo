@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api, formatApiError } from '@/lib/api';
 
 // Admin-uitbreiding voor Schat of Schroot? (PRD_Schat_of_Schroot.md §6) —
@@ -191,17 +192,26 @@ function GameListings() {
           {filtered.map((l) => (
             <li key={l.id} className="py-4" data-testid={`admin-game-listing-${l.id}`}>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-start">
-                <button
-                  type="button"
-                  onClick={() => setOpenListing({ id: l.id, title: l.title })}
-                  className="md:col-span-5 text-left hover:underline decoration-dotted"
-                  data-testid={`admin-game-listing-open-${l.id}`}
-                >
-                  <p className="font-medium">{l.title}</p>
+                <div className="md:col-span-5">
+                  <Link
+                    to={`/aanbieding/${l.id}`}
+                    className="font-medium hover:underline"
+                    data-testid={`admin-game-listing-link-${l.id}`}
+                  >
+                    {l.title}
+                  </Link>
                   <p className="text-xs text-muted-foreground">
                     status: {l.status} · {l.gameEvaluationCount}/20 evaluaties
                   </p>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpenListing({ id: l.id, title: l.title })}
+                    className="text-xs text-muted-foreground underline hover:text-foreground mt-1"
+                    data-testid={`admin-game-listing-open-${l.id}`}
+                  >
+                    Evaluaties bekijken
+                  </button>
+                </div>
                 <div className="md:col-span-4">
                   {l.topEvaluation ? (
                     <p className="text-sm text-foreground/80">
@@ -278,7 +288,12 @@ function ListingEvaluationsModal({ listingId, listingTitle, onClose, onChanged }
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 mb-4">
-          <h2 className="text-lg font-bold tracking-tight">Evaluaties — {listingTitle}</h2>
+          <h2 className="text-lg font-bold tracking-tight">
+            Evaluaties —{' '}
+            <Link to={`/aanbieding/${listingId}`} className="hover:underline" data-testid="admin-game-listing-evaluations-link">
+              {listingTitle}
+            </Link>
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -368,7 +383,12 @@ function GameEvaluations() {
           {filtered.map((e) => (
             <li key={e.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-2 items-start" data-testid={`admin-game-evaluation-${e.id}`}>
               <div className="md:col-span-7">
-                <p className="text-sm font-medium">{e.listingTitle} <span className="text-muted-foreground font-normal">({e.listingStatus})</span></p>
+                <p className="text-sm font-medium">
+                  <Link to={`/aanbieding/${e.listingId}`} className="hover:underline" data-testid={`admin-game-evaluation-listing-link-${e.id}`}>
+                    {e.listingTitle}
+                  </Link>{' '}
+                  <span className="text-muted-foreground font-normal">({e.listingStatus})</span>
+                </p>
                 <p className="text-sm text-foreground/80 mt-1">"{e.answer1}"</p>
                 <p className="text-sm text-foreground/80">"{e.answer2}"</p>
                 <p className="text-xs text-muted-foreground mt-1">
