@@ -164,6 +164,17 @@ export default function AdminPanel() {
           <div>
             <p className="overline">Admin · {SECTION_TITLES[section]}</p>
             <h1 className="mt-2 text-4xl font-bold tracking-tight">{SECTION_TITLES[section]}</h1>
+            {section === 'spel' && (
+              <Link
+                to="/spel"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 text-sm hover:underline"
+                data-testid="admin-spel-link"
+              >
+                Naar het spel →
+              </Link>
+            )}
           </div>
           {section === 'validatie' && (
             <button
