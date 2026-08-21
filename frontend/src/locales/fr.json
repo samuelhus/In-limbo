@@ -963,8 +963,8 @@
     },
 
     "evaluate": {
-      "question1": "Qu'est-ce que vous pourriez en faire ?",
-      "question2": "Qui pourrait utiliser ceci ?",
+      "question1": "Qui pourrait utiliser ceci ?",
+      "question2": "Pour quoi faire ?",
       "required": "Ce champ est obligatoire.",
       "next": "Suivant",
       "submitting": "En cours…",

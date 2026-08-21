@@ -101,8 +101,7 @@ pages/
 components/game/
   GameRegister.jsx             # username + email form
   GamePlay.jsx                 # state machine: reeks-voortgang, huidige listing
-  SwipeCard.jsx                # foto + klik-en-sleep + swipe-animatie
-  SwipeArrows.jsx              # linker (vuilbak) / rechter (lamp) pijl, klikbaar
+  SwipeCard.jsx                # foto + klik-en-sleep + swipe-animatie + linker (vuilbak) / rechter (lamp) knop naast de foto
   EvaluationForm.jsx           # vraag 1 + vraag 2, enter-to-submit, lege-veld-validatie
   ChooseBestPanel.jsx          # top-evaluaties (incl. ex aequo) + eigen evaluatie, keuze = definitief
   Confetti.jsx                 # afronding-animatie

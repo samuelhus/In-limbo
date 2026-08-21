@@ -5,7 +5,6 @@ import { useGameAuth } from '@/contexts/GameAuthContext';
 import useGameSounds from '@/hooks/useGameSounds';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import SwipeCard from './SwipeCard';
-import SwipeArrows from './SwipeArrows';
 import EvaluationForm from './EvaluationForm';
 import ChooseBestPanel from './ChooseBestPanel';
 import Scoreboard from './Scoreboard';
@@ -19,7 +18,11 @@ import InfoModal from './InfoModal';
 //    rechts = toon EvaluationForm (geen server-call, zie routes/game.py).
 // 3. Na POST /evaluate: isFirstEvaluator -> volgende listing; anders ->
 //    ChooseBestPanel -> POST /choose-best -> volgende listing.
-// 4. Lijst leeg (of <6) bij een nieuwe /series-call -> Scoreboard.
+// 4. Laatste listing van de huidige reeks gespeeld -> altijd naar het
+//    Scoreboard, ook als de pool nog meer listings zou hebben — geen
+//    automatische vervolgreeks meer (op vraag van product: de speler moet
+//    zelf bewust op "Speel opnieuw" klikken, zie Scoreboard::onPlayAgain,
+//    om aan een volgende reeks te beginnen).
 export default function GamePlay() {
   const { t } = useTranslation();
   const { gameUser, logout } = useGameAuth();
@@ -58,9 +61,12 @@ export default function GamePlay() {
       setIndex(next);
       setPhase('card');
     } else {
-      loadSeries();
+      // Reeks uitgespeeld -> Scoreboard, zie docstring hierboven. Een
+      // nieuwe reeks wordt pas opgehaald als de speler zelf op "Speel
+      // opnieuw" klikt (Scoreboard::onPlayAgain -> loadSeries).
+      setPhase('finished');
     }
-  }, [items, index, loadSeries]);
+  }, [items, index]);
 
   const listing = items && items[index];
 
@@ -147,10 +153,7 @@ export default function GamePlay() {
       )}
 
       {phase === 'card' && listing && (
-        <>
-          <SwipeCard listing={listing} onSwipe={handleSwipe} />
-          <SwipeArrows onSwipe={handleSwipe} disabled={busy} />
-        </>
+        <SwipeCard listing={listing} onSwipe={handleSwipe} disabled={busy} />
       )}
 
       {phase === 'evaluate' && listing && (

@@ -953,8 +953,8 @@
     },
 
     "evaluate": {
-      "question1": "Wat kan je ermee doen?",
-      "question2": "Wie kan dit gebruiken?",
+      "question1": "Wie kan dit gebruiken?",
+      "question2": "Waarvoor?",
       "required": "Dit veld is verplicht.",
       "next": "Volgende",
       "submitting": "Bezig…",
