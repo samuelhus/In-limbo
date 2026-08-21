@@ -979,7 +979,8 @@
       "empty": "Nog geen scores.",
       "points_one": "{{count}} punt",
       "points_other": "{{count}} punten",
-      "play_again": "Opnieuw spelen"
+      "play_again": "Opnieuw spelen",
+      "waiting_for_new": "Wacht op nieuwe aanbiedingen"
     },
 
     "rules": {
@@ -988,7 +989,7 @@
       "intro": "Beoordeel aanbiedingen zonder bestemming en verdien punten door inspiratie te geven.",
       "items": [
         "Swipe naar rechts (lamp) als je inspiratie ziet in de aanbieding, naar links (vuilbak) als je er niets in ziet.",
-        "Zie je inspiratie? Beantwoord dan 2 korte vragen: wat kan je ermee doen, en wie kan dit gebruiken?",
+        "Zie je inspiratie? Beantwoord dan 2 korte vragen: wie kan dit gebruiken, en waarvoor?",
         "Je krijgt +1 punt voor elke volledig ingevulde evaluatie.",
         "Ben je niet de eerste die deze aanbieding evalueert? Dan kies je het beste van de bestaande antwoorden — die speler krijgt er +3 punten bij.",
         "Elke aanbieding kan je maar 1 keer evalueren, en een gekozen beste evaluatie kan niet meer gewijzigd worden.",

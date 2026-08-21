@@ -62,8 +62,13 @@ export default function Scoreboard({ onPlayAgain, emptyPool }) {
         </ol>
       )}
 
+      {/* Bij een echt lege pool (emptyPool, zie GamePlay.jsx) is er niets
+          nieuws om mee te spelen — het label maakt dat duidelijk i.p.v. een
+          "Opnieuw spelen" te tonen dat toch weer meteen leeg terugkomt. Blijft
+          wel klikbaar: er kan intussen wél een nieuwe aanbieding bijgekomen
+          zijn sinds het laatste bezoek. */}
       <button onClick={onPlayAgain} className="btn-primary w-full mt-8" data-testid="game-play-again">
-        {t('game.scoreboard.play_again')}
+        {t(emptyPool ? 'game.scoreboard.waiting_for_new' : 'game.scoreboard.play_again')}
       </button>
     </div>
   );

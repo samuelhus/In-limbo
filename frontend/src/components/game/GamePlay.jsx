@@ -35,7 +35,14 @@ export default function GamePlay() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [confettiBurst, setConfettiBurst] = useState(0);
-  const [playedCount, setPlayedCount] = useState(0); // onderscheidt "net een lege pool" van "reeks net uitgespeeld"
+  // Onderscheidt "de huidige reeks (max. 6) is uitgespeeld, er kán nog meer
+  // in de pool zitten" (poolEmpty blijft false, "Speel opnieuw" haalt de
+  // volgende reeks op) van "GET /series zelf kwam al leeg terug, er is
+  // écht niets meer" (poolEmpty true) — enkel dat laatste zet de knop op
+  // het scorebord om naar "Wacht op nieuwe aanbiedingen" (zie Scoreboard.jsx).
+  // Wordt bij elke geslaagde loadSeries()-call herzet op het effectieve
+  // resultaat, dus zodra er weer aanbiedingen bijkomen klopt dit vanzelf weer.
+  const [poolEmpty, setPoolEmpty] = useState(false);
 
   const loadSeries = useCallback(async () => {
     setError('');
@@ -44,6 +51,7 @@ export default function GamePlay() {
       const { data } = await api.get('/game/series');
       setItems(data.items);
       setIndex(0);
+      setPoolEmpty(data.items.length === 0);
       setPhase(data.items.length > 0 ? 'card' : 'finished');
     } catch (e) {
       setError(formatApiError(e));
@@ -55,7 +63,6 @@ export default function GamePlay() {
   useEffect(() => { loadSeries(); }, [loadSeries]);
 
   const advance = useCallback(() => {
-    setPlayedCount((n) => n + 1);
     const next = index + 1;
     if (items && next < items.length) {
       setIndex(next);
@@ -172,7 +179,7 @@ export default function GamePlay() {
       )}
 
       {phase === 'finished' && (
-        <Scoreboard onPlayAgain={loadSeries} emptyPool={playedCount === 0} />
+        <Scoreboard onPlayAgain={loadSeries} emptyPool={poolEmpty} />
       )}
 
       <Confetti trigger={confettiBurst} />

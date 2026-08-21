@@ -79,7 +79,12 @@ export default function SwipeCard({ listing, onSwipe, disabled = false, compact 
     <div className="max-w-sm mx-auto px-10 relative">
       <motion.div
         className="relative w-full aspect-[3/4] bg-surface border border-border overflow-hidden select-none cursor-grab active:cursor-grabbing"
-        style={{ x, rotate, borderRadius: 2 }}
+        // touchAction: 'none' overschrijft framer-motion's eigen default voor
+        // drag="x" (touch-action: pan-y, dat verticaal scrollen door de vinger
+        // laat lopen zodra die niet zuiver horizontaal beweegt) — op de foto
+        // zelf mag geen enkele verticale sleepbeweging iets doen (niet de
+        // kaart bewegen, niet de pagina scrollen), enkel horizontaal swipen.
+        style={{ x, rotate, borderRadius: 2, touchAction: 'none' }}
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.7}

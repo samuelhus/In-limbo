@@ -989,7 +989,8 @@
       "empty": "Pas encore de scores.",
       "points_one": "{{count}} point",
       "points_other": "{{count}} points",
-      "play_again": "Rejouer"
+      "play_again": "Rejouer",
+      "waiting_for_new": "En attente de nouvelles offres"
     },
 
     "rules": {
@@ -998,7 +999,7 @@
       "intro": "Évaluez des offres sans destination et gagnez des points en apportant de l'inspiration.",
       "items": [
         "Glissez vers la droite (ampoule) si l'offre vous inspire, vers la gauche (poubelle) si elle ne vous inspire pas.",
-        "Une inspiration ? Répondez à 2 courtes questions : qu'en feriez-vous, et qui pourrait l'utiliser ?",
+        "Une inspiration ? Répondez à 2 courtes questions : qui pourrait l'utiliser, et pour quoi faire ?",
         "Vous gagnez +1 point pour chaque évaluation entièrement complétée.",
         "Vous n'êtes pas le premier à évaluer cette offre ? Choisissez alors la meilleure réponse existante — son auteur reçoit +3 points supplémentaires.",
         "Vous ne pouvez évaluer chaque offre qu'une seule fois, et une meilleure évaluation choisie ne peut plus être modifiée.",
