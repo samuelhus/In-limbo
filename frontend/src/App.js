@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import '@/index.css';
 import '@/App.css';
 
@@ -49,6 +49,18 @@ import Privacy from '@/pages/Privacy';
 import AdminDonateurListings from '@/pages/AdminDonateurListings';
 import Game from '@/pages/Game';
 
+
+// Schat of Schroot? (/spel) heeft geen footer: het spel is bedoeld als 1
+// aaneengesloten schermvullend geheel (kaart + knoppen), een footer eronder
+// voegt enkel nodeloze scroll-/witruimte toe (op vraag van product). Los
+// component i.p.v. de check inline in App() — useLocation() heeft de
+// Router-context nodig, die pas bestaat binnen <BrowserRouter>, en App()
+// zelf rendert die pas als kind.
+function ConditionalFooter() {
+  const { pathname } = useLocation();
+  if (pathname === '/spel') return null;
+  return <Footer />;
+}
 
 function NotFound() {
   return (
@@ -255,7 +267,7 @@ export default function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
-            <Footer />
+            <ConditionalFooter />
           </div>
         </MessagesProvider>
       </AuthProvider>

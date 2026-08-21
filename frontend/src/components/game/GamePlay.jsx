@@ -62,6 +62,18 @@ export default function GamePlay() {
 
   useEffect(() => { loadSeries(); }, [loadSeries]);
 
+  // Het spel heeft geen footer (zie App.js::ConditionalFooter) en is bedoeld
+  // om meteen volledig in beeld te staan, zonder dat de speler eerst voorbij
+  // de header moet scrollen — bij elke stap (nieuwe kaart, evaluatieformulier,
+  // keuzepaneel, scorebord, ...) schuift de pagina daarom mee naar helemaal
+  // onderaan. Na de render (rAF) zodat de nieuwe content al z'n hoogte heeft.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [phase, index]);
+
   const advance = useCallback(() => {
     const next = index + 1;
     if (items && next < items.length) {
@@ -128,7 +140,7 @@ export default function GamePlay() {
   const total = items?.length || 0;
 
   return (
-    <div className="min-h-[70vh] py-8" data-testid="game-play">
+    <div className="min-h-[70vh] pt-8 pb-3" data-testid="game-play">
       <div className="max-w-sm mx-auto px-4 flex items-center justify-between mb-6">
         <InfoModal />
         <div className="flex items-center gap-3">
