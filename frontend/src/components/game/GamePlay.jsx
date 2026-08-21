@@ -163,11 +163,12 @@ export default function GamePlay() {
         </>
       )}
 
+      {/* Geen foto meer hier (i.t.t. de 'evaluate'-fase hierboven) — eenmaal de
+          evaluatie ingevoerd is, gaat de aandacht naar het kiezen tussen de
+          antwoorden zelf, groter getoond, zie ChooseBestPanel (op vraag van
+          product). */}
       {phase === 'choose' && listing && (
-        <>
-          <SwipeCard listing={listing} compact />
-          <ChooseBestPanel evaluations={topEvaluations} onChoose={handleChooseBest} />
-        </>
+        <ChooseBestPanel evaluations={topEvaluations} onChoose={handleChooseBest} />
       )}
 
       {phase === 'finished' && (

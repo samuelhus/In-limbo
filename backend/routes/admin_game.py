@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 
-from deps import db, now_iso, strip_mongo, anonymize_game_user
-from models import GameModerateBody, GameListingExcludeBody, GameValidateBody, GAME_POOL_STATUSES
+from deps import db, strip_mongo, anonymize_game_user
+from models import GameModerateBody, GameListingExcludeBody, GAME_POOL_STATUSES
 from auth import get_admin_user
 
 router = APIRouter(prefix="/admin/game", tags=["admin-game"])
@@ -44,7 +44,7 @@ async def admin_game_listings_stats(admin: dict = Depends(get_admin_user)):
         strip_mongo(l) async for l in db.listings.find(
             {"$or": [{"status": {"$in": GAME_POOL_STATUSES}}, {"gameEvaluationCount": {"$gt": 0}}]},
             {"_id": 0, "id": 1, "title": 1, "photos": 1, "status": 1, "gameEnabled": 1,
-             "gameEvaluationCount": 1, "gameValidation": 1},
+             "gameEvaluationCount": 1},
         ).sort("gameEvaluationCount", -1)
     ]
     listing_ids = [l["id"] for l in listings]
@@ -73,22 +73,32 @@ async def admin_game_listings_stats(admin: dict = Depends(get_admin_user)):
 async def admin_game_top_evaluations(limit: int = Query(50, ge=1, le=200), admin: dict = Depends(get_admin_user)):
     """Top evaluaties over alle listings (PRD §6) — inclusief verborgen
     evaluaties (admin moet ze kunnen terugzien om ze eventueel te de-modereren,
-    zie moderate_evaluation hieronder) en met username voor context (anders dan
-    de speler-facing top-lijst in routes/game.py, die bewust anoniem blijft)."""
+    zie moderate_evaluation hieronder) en met username+email voor context
+    (anders dan de speler-facing top-lijst in routes/game.py, die bewust
+    anoniem blijft). listingStatus laat de admin-UI filteren op beschikbaarheid
+    van de onderliggende listing (bv. enkel nog niet herbestemde tonen)."""
     evals = [
         strip_mongo(e) async for e in db.game_evaluations.find({}, {"_id": 0}).sort("votes", -1).limit(limit)
     ]
     listing_ids = list({e["listingId"] for e in evals})
     user_ids = list({e["userId"] for e in evals})
     listings = {
-        l["id"]: l async for l in db.listings.find({"id": {"$in": listing_ids}}, {"_id": 0, "id": 1, "title": 1})
+        l["id"]: l async for l in db.listings.find(
+            {"id": {"$in": listing_ids}}, {"_id": 0, "id": 1, "title": 1, "status": 1},
+        )
     }
     users = {
-        u["id"]: u async for u in db.game_users.find({"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "username": 1})
+        u["id"]: u async for u in db.game_users.find(
+            {"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "username": 1, "email": 1},
+        )
     }
     for e in evals:
-        e["listingTitle"] = listings.get(e["listingId"], {}).get("title")
-        e["username"] = users.get(e["userId"], {}).get("username")
+        listing = listings.get(e["listingId"], {})
+        e["listingTitle"] = listing.get("title")
+        e["listingStatus"] = listing.get("status")
+        user = users.get(e["userId"], {})
+        e["username"] = user.get("username")
+        e["email"] = user.get("email")
     return evals
 
 
@@ -117,27 +127,52 @@ async def admin_set_listing_game_enabled(
     return {"ok": True}
 
 
-@router.post("/evaluations/{evaluation_id}/validate")
-async def admin_validate_evaluation(
-    evaluation_id: str, body: GameValidateBody, admin: dict = Depends(get_admin_user),
-):
-    """Admin bekijkt de antwoorden en 'valideert' een evaluatie (PRD §6): dit
-    betekent dat de listing effectief naar de gekozen bestemming is opgestuurd.
-    Automatische e-mail naar de organisatie is expliciet roadmap, niet v1 (PRD)."""
-    evaluation = await db.game_evaluations.find_one({"id": evaluation_id}, {"_id": 0})
+@router.get("/listings/{listing_id}/evaluations")
+async def admin_game_listing_evaluations(listing_id: str, admin: dict = Depends(get_admin_user)):
+    """Alle evaluaties voor 1 listing (PRD §6) — i.t.t. /evaluations/top
+    hierboven (over alle listings, enkel de bovenste N) toont dit ELKE
+    evaluatie voor deze ene listing, inclusief verborgen exemplaren, zodat de
+    admin hier (na doorklikken vanuit de Aanbiedingen-tab) specifieke
+    evaluaties kan bekijken en verwijderen (zie DELETE hieronder)."""
+    listing = await db.listings.find_one({"id": listing_id}, {"_id": 0, "id": 1, "title": 1})
+    if not listing:
+        raise HTTPException(404, "Aanbieding niet gevonden")
+    evals = [
+        strip_mongo(e) async for e in db.game_evaluations.find(
+            {"listingId": listing_id}, {"_id": 0},
+        ).sort("votes", -1)
+    ]
+    user_ids = list({e["userId"] for e in evals})
+    users = {
+        u["id"]: u async for u in db.game_users.find(
+            {"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "username": 1, "email": 1},
+        )
+    }
+    for e in evals:
+        user = users.get(e["userId"], {})
+        e["username"] = user.get("username")
+        e["email"] = user.get("email")
+    return {"listingTitle": listing["title"], "items": evals}
+
+
+@router.delete("/evaluations/{evaluation_id}")
+async def admin_delete_evaluation(evaluation_id: str, admin: dict = Depends(get_admin_user)):
+    """Verwijdert een evaluatie permanent (i.p.v. enkel verbergen, zie
+    moderate_evaluation hierboven) — voor duidelijk ongepaste inhoud die niet
+    zomaar terug zichtbaar mag kunnen worden. Geeft de gereserveerde cap-slot
+    terug (PRD/techdesign §4: max MAX_GAME_EVALUATIONS_PER_LISTING evaluaties
+    per listing, zie routes/game.py::evaluate) zodat een vervangende evaluatie
+    mogelijk blijft. Laat de onderliggende game_interactions-registratie
+    bewust ongemoeid: de speler blijft geregistreerd als "heeft deze listing
+    al geëvalueerd" en kan dus niet via een omweg langs verwijderen alsnog een
+    2de keer indienen."""
+    evaluation = await db.game_evaluations.find_one({"id": evaluation_id}, {"_id": 0, "listingId": 1})
     if not evaluation:
         raise HTTPException(404, "Evaluatie niet gevonden")
-    org = await db.organisations.find_one({"id": body.destinationOrgId}, {"_id": 0, "id": 1})
-    if not org:
-        raise HTTPException(404, "Organisatie niet gevonden")
+    await db.game_evaluations.delete_one({"id": evaluation_id})
     await db.listings.update_one(
-        {"id": evaluation["listingId"]},
-        {"$set": {"gameValidation": {
-            "validatedBy": admin["id"],
-            "validatedAt": now_iso(),
-            "destinationOrgId": body.destinationOrgId,
-            "evaluationId": evaluation_id,
-        }}},
+        {"id": evaluation["listingId"], "gameEvaluationCount": {"$gt": 0}},
+        {"$inc": {"gameEvaluationCount": -1}},
     )
     return {"ok": True}
 

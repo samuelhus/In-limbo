@@ -665,9 +665,11 @@ class TagUpdate(BaseModel):
 # Volledig losstaand subsysteem: eigen account-systeem (game_users, niet gelinkt
 # aan `users`), eigen auth (zie game_auth.py — apart JWT-secret/cookie), eigen
 # collecties (game_users/game_interactions/game_evaluations). Enkel `listings`
-# krijgt er 3 optionele velden bij (gameEnabled/gameEvaluationCount/gameValidation,
-# zie routes/game.py en routes/admin_game.py) — verder geen koppeling met de rest
-# van het platform-datamodel.
+# krijgt er 2 optionele velden bij (gameEnabled/gameEvaluationCount, zie
+# routes/game.py en routes/admin_game.py) — verder geen koppeling met de rest
+# van het platform-datamodel. (Een 3de veld, gameValidation, komt nog voor op
+# listings van vóór de validatiefunctie op vraag van product werd geschrapt —
+# er wordt niets meer mee gezet of gelezen, zie routes/admin_game.py.)
 GameSwipeDirection = Literal["left", "right"]
 GameInteractionType = Literal["reject", "evaluate"]
 
@@ -704,8 +706,8 @@ class GameEvaluateBody(BaseModel):
     """PRD §4.2 stap 2-3: beide antwoorden verplicht, geen lege velden."""
     model_config = ConfigDict(str_strip_whitespace=True)
     listingId: str
-    answer1: str = Field(..., min_length=1, max_length=500)  # "Wat kan je ermee doen?"
-    answer2: str = Field(..., min_length=1, max_length=500)  # "Wie kan dit gebruiken?"
+    answer1: str = Field(..., min_length=1, max_length=500)  # "Wie kan dit gebruiken?"
+    answer2: str = Field(..., min_length=1, max_length=500)  # "Waarvoor?"
 
 
 class GameChooseBestBody(BaseModel):
@@ -719,9 +721,5 @@ class GameModerateBody(BaseModel):
 
 class GameListingExcludeBody(BaseModel):
     gameEnabled: bool
-
-
-class GameValidateBody(BaseModel):
-    destinationOrgId: str
 
 
