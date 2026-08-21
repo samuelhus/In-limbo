@@ -31,6 +31,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from pymongo.collation import Collation
+from pymongo.errors import OperationFailure
 
 from deps import db, client, log, limiter
 from seed import seed
@@ -165,9 +166,26 @@ async def startup() -> None:
     await db.contact_messages.create_index("createdAt")
     # Schat of Schroot? (swipe-spel, zie prd/PRD_Schat_of_Schroot.md) — losstaand
     # subsysteem, eigen collecties (routes/game.py, routes/admin_game.py).
-    await db.game_users.create_index(
-        "username", unique=True, collation=Collation(locale="en", strength=2),
-    )  # case-insensitieve uniciteit (PRD §3)
+    # partialFilterExpression sluit username=None uit van de uniciteitscontrole
+    # — anonymize_game_user (deps.py) zet username op None bij een GDPR-
+    # verwijdering, en zonder deze partial filter mocht dat maar bij hoogstens
+    # 1 speler tegelijk: een 2de verwijdering botste dan op een duplicate-key-
+    # fout (500) op deze index, bv. via DELETE /admin/game/users/{id}.
+    try:
+        await db.game_users.create_index(
+            "username", unique=True, collation=Collation(locale="en", strength=2),
+            partialFilterExpression={"username": {"$type": "string"}},
+        )  # case-insensitieve uniciteit (PRD §3)
+    except OperationFailure:
+        # Bestaande index van vóór de partialFilterExpression hierboven — heeft
+        # dezelfde naam/keys maar andere opties, wat MongoDB niet toestaat te
+        # wijzigen via create_index. Eenmalig droppen en opnieuw aanmaken lost
+        # dit definitief op; onschadelijk om te herhalen (idempotent).
+        await db.game_users.drop_index("username_1")
+        await db.game_users.create_index(
+            "username", unique=True, collation=Collation(locale="en", strength=2),
+            partialFilterExpression={"username": {"$type": "string"}},
+        )
     await db.game_users.create_index("email")  # niet uniek — meerdere usernames per email toegestaan
     await db.game_interactions.create_index(
         [("userId", 1), ("listingId", 1)], unique=True,
