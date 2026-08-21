@@ -937,6 +937,81 @@
     "admin_user_none": "Aucun utilisateur spécifique"
   },
 
+  "game": {
+    "title": "Récup ou Rebut ?",
+    "playing_as": "Vous jouez en tant que {{username}}",
+    "logout": "Se déconnecter",
+    "loading": "Chargement…",
+
+    "register": {
+      "heading": "Participez",
+      "intro": "Évaluez des offres sans destination et aidez-les à trouver une seconde vie. Aucun mot de passe requis — juste un nom d'utilisateur et une adresse e-mail.",
+      "username_label": "Nom d'utilisateur",
+      "email_label": "Adresse e-mail",
+      "email_hint": "Jamais visible pour les autres joueurs — sert uniquement à protéger votre nom d'utilisateur.",
+      "consent_label": "J'accepte que mes données soient utilisées pour pouvoir jouer à ce jeu.",
+      "consent_required": "Vous devez accepter le traitement de vos données pour pouvoir jouer.",
+      "submitting": "En cours…",
+      "submit": "Commencer à jouer"
+    },
+
+    "swipe": {
+      "reject_label": "Pas d'inspiration",
+      "inspire_label": "Inspirant",
+      "reject_stamp": "Rebut",
+      "inspire_stamp": "Récup"
+    },
+
+    "evaluate": {
+      "question1": "Qu'est-ce que vous pourriez en faire ?",
+      "question2": "Qui pourrait utiliser ceci ?",
+      "required": "Ce champ est obligatoire.",
+      "next": "Suivant",
+      "submitting": "En cours…",
+      "submit": "Envoyer"
+    },
+
+    "choose": {
+      "overline": "Presque fini",
+      "heading": "Choisissez la meilleure estimation",
+      "intro": "Cette offre a déjà été évaluée. Choisissez la réponse qui vous semble la plus pertinente.",
+      "mine_tag": "Votre réponse",
+      "definitive_note": "Ce choix est définitif et ne peut plus être modifié."
+    },
+
+    "scoreboard": {
+      "overline": "Classement",
+      "heading": "Série terminée !",
+      "empty_pool": "Il n'y a actuellement plus de nouvelles offres à évaluer pour vous. Revenez plus tard !",
+      "tab_alltime": "Depuis toujours",
+      "tab_monthly": "Ce mois-ci",
+      "loading": "Chargement du classement…",
+      "empty": "Pas encore de scores.",
+      "points_one": "{{count}} point",
+      "points_other": "{{count}} points",
+      "play_again": "Rejouer"
+    },
+
+    "rules": {
+      "trigger_label": "Règles du jeu",
+      "heading": "Comment fonctionne Récup ou Rebut ?",
+      "intro": "Évaluez des offres sans destination et gagnez des points en apportant de l'inspiration.",
+      "items": [
+        "Glissez vers la droite (ampoule) si l'offre vous inspire, vers la gauche (poubelle) si elle ne vous inspire pas.",
+        "Une inspiration ? Répondez à 2 courtes questions : qu'en feriez-vous, et qui pourrait l'utiliser ?",
+        "Vous gagnez +1 point pour chaque évaluation entièrement complétée.",
+        "Vous n'êtes pas le premier à évaluer cette offre ? Choisissez alors la meilleure réponse existante — son auteur reçoit +3 points supplémentaires.",
+        "Vous ne pouvez évaluer chaque offre qu'une seule fois, et une meilleure évaluation choisie ne peut plus être modifiée.",
+        "Le classement suit à la fois un tableau mensuel et un tableau depuis toujours."
+      ]
+    },
+
+    "sound": {
+      "on_label": "Couper le son",
+      "off_label": "Activer le son"
+    }
+  },
+
   "impact_methodologie": {
     "overline": "Méthodologie",
     "title": "Comment calculons-nous notre impact CO2 ?",

@@ -30,6 +30,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+from pymongo.collation import Collation
 
 from deps import db, client, log, limiter
 from seed import seed
@@ -59,6 +60,8 @@ from routes.search_requests import router as search_requests_router
 from routes.tags import router as tags_router
 from routes.donateur import router as donateur_router
 from routes.conversations import router as conversations_router
+from routes.game import router as game_router
+from routes.admin_game import router as admin_game_router
 
 
 cloudinary.config(
@@ -160,6 +163,19 @@ async def startup() -> None:
     await db.password_resets.create_index("expiresAt", expireAfterSeconds=0)
     await db.newsletter_subscribers.create_index("email", unique=True)
     await db.contact_messages.create_index("createdAt")
+    # Schat of Schroot? (swipe-spel, zie prd/PRD_Schat_of_Schroot.md) — losstaand
+    # subsysteem, eigen collecties (routes/game.py, routes/admin_game.py).
+    await db.game_users.create_index(
+        "username", unique=True, collation=Collation(locale="en", strength=2),
+    )  # case-insensitieve uniciteit (PRD §3)
+    await db.game_users.create_index("email")  # niet uniek — meerdere usernames per email toegestaan
+    await db.game_interactions.create_index(
+        [("userId", 1), ("listingId", 1)], unique=True,
+    )  # max 1 interactie (reject/evaluate) per speler per listing
+    await db.game_evaluations.create_index("listingId")
+    await db.game_evaluations.create_index("userId")
+    await db.game_evaluations.create_index([("listingId", 1), ("votes", -1)])  # top-evaluatie per listing
+    await db.game_evaluations.create_index("createdAt")  # maandelijkse leaderboard-filter
     await seed(db)
 
     # Eenmalige run bij opstart (vangt listings die verlopen zijn tijdens downtime)
@@ -225,6 +241,8 @@ api.include_router(search_requests_router)
 api.include_router(tags_router)
 api.include_router(donateur_router)
 api.include_router(conversations_router)
+api.include_router(game_router)
+api.include_router(admin_game_router)
 
 app.include_router(api)
 

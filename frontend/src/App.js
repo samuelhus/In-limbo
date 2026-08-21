@@ -47,6 +47,7 @@ import GesprekDetail from '@/pages/GesprekDetail';
 import Voorwaarden from '@/pages/Voorwaarden';
 import Privacy from '@/pages/Privacy';
 import AdminDonateurListings from '@/pages/AdminDonateurListings';
+import Game from '@/pages/Game';
 
 
 function NotFound() {
@@ -94,6 +95,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/spel" element={<Game />} />
                 <Route path="/voorwaarden" element={<Voorwaarden />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route

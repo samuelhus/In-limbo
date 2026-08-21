@@ -652,3 +652,67 @@ class TagUpdate(BaseModel):
     nameFr: Optional[str] = Field(None, min_length=1, max_length=50)
 
 
+# ---------- Schat of Schroot? (swipe-spel, zie prd/PRD_Schat_of_Schroot.md) ----------
+# Volledig losstaand subsysteem: eigen account-systeem (game_users, niet gelinkt
+# aan `users`), eigen auth (zie game_auth.py — apart JWT-secret/cookie), eigen
+# collecties (game_users/game_interactions/game_evaluations). Enkel `listings`
+# krijgt er 3 optionele velden bij (gameEnabled/gameEvaluationCount/gameValidation,
+# zie routes/game.py en routes/admin_game.py) — verder geen koppeling met de rest
+# van het platform-datamodel.
+GameSwipeDirection = Literal["left", "right"]
+GameInteractionType = Literal["reject", "evaluate"]
+
+# Cap op het aantal evaluaties per listing (PRD §4.2 punt 7 / §8.5) — zodra bereikt
+# valt de listing automatisch uit de random-selectiepool (routes/game.py::get_series).
+MAX_GAME_EVALUATIONS_PER_LISTING = 20
+
+# Statusset die de spelpool afbakent — bevestigd met product: dezelfde statussen als
+# de publieke catalogus (routes/listings.py, GET /listings), niet enkel gearchiveerde
+# listings. Herbruikt in routes/game.py (pool-query) en routes/admin_game.py (stats).
+GAME_POOL_STATUSES = ["beschikbaar", "in_magazijn"]
+
+
+class GameRegisterBody(BaseModel):
+    """Body for POST /api/game/register. Nieuwe username -> account; bestaande
+    username + matchend email -> login; bestaande username + ander email -> 409
+    (zie routes/game.py). Geen wachtwoord — email fungeert als toegangssleutel
+    (PRD §3, bewust aanvaard zwak-authenticatierisico)."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+    username: str = Field(..., min_length=2, max_length=30)
+    email: EmailStr
+    # GDPR-consent (PRD §3) — het techdesign had hiervoor geen veld voorzien;
+    # toegevoegd zodat consent effectief afgedwongen én bewaard wordt
+    # (game_users.consentAt), niet enkel een UI-checkbox zonder gevolg.
+    consentAccepted: bool = False
+
+
+class GameSwipeBody(BaseModel):
+    listingId: str
+    direction: GameSwipeDirection
+
+
+class GameEvaluateBody(BaseModel):
+    """PRD §4.2 stap 2-3: beide antwoorden verplicht, geen lege velden."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+    listingId: str
+    answer1: str = Field(..., min_length=1, max_length=500)  # "Wat kan je ermee doen?"
+    answer2: str = Field(..., min_length=1, max_length=500)  # "Wie kan dit gebruiken?"
+
+
+class GameChooseBestBody(BaseModel):
+    listingId: str
+    evaluationId: str
+
+
+class GameModerateBody(BaseModel):
+    hidden: bool
+
+
+class GameListingExcludeBody(BaseModel):
+    gameEnabled: bool
+
+
+class GameValidateBody(BaseModel):
+    destinationOrgId: str
+
+

@@ -927,6 +927,81 @@
     "admin_user_none": "Geen specifieke gebruiker"
   },
 
+  "game": {
+    "title": "Schat of Schroot?",
+    "playing_as": "Je speelt als {{username}}",
+    "logout": "Uitloggen",
+    "loading": "Laden…",
+
+    "register": {
+      "heading": "Speel mee",
+      "intro": "Beoordeel aanbiedingen zonder bestemming en help ze aan een tweede leven. Geen wachtwoord nodig — enkel een gebruikersnaam en e-mailadres.",
+      "username_label": "Gebruikersnaam",
+      "email_label": "E-mailadres",
+      "email_hint": "Wordt nooit getoond aan andere spelers — dient enkel om je gebruikersnaam te beschermen.",
+      "consent_label": "Ik ga akkoord dat mijn gegevens gebruikt worden om dit spel te kunnen spelen.",
+      "consent_required": "Je moet akkoord gaan met de gegevensverwerking om te kunnen spelen.",
+      "submitting": "Bezig…",
+      "submit": "Start het spel"
+    },
+
+    "swipe": {
+      "reject_label": "Geen inspiratie",
+      "inspire_label": "Inspirerend",
+      "reject_stamp": "Schroot",
+      "inspire_stamp": "Schat"
+    },
+
+    "evaluate": {
+      "question1": "Wat kan je ermee doen?",
+      "question2": "Wie kan dit gebruiken?",
+      "required": "Dit veld is verplicht.",
+      "next": "Volgende",
+      "submitting": "Bezig…",
+      "submit": "Versturen"
+    },
+
+    "choose": {
+      "overline": "Bijna klaar",
+      "heading": "Kies de beste inschatting",
+      "intro": "Deze aanbieding is al eerder geëvalueerd. Kies welk antwoord volgens jou het meest treffend is.",
+      "mine_tag": "Jouw antwoord",
+      "definitive_note": "Deze keuze is definitief en kan niet meer gewijzigd worden."
+    },
+
+    "scoreboard": {
+      "overline": "Scorebord",
+      "heading": "Klaar voor deze reeks!",
+      "empty_pool": "Er zijn momenteel geen nieuwe aanbiedingen meer voor jou om te beoordelen. Kom later terug!",
+      "tab_alltime": "Aller tijden",
+      "tab_monthly": "Deze maand",
+      "loading": "Scorebord laden…",
+      "empty": "Nog geen scores.",
+      "points_one": "{{count}} punt",
+      "points_other": "{{count}} punten",
+      "play_again": "Opnieuw spelen"
+    },
+
+    "rules": {
+      "trigger_label": "Spelregels",
+      "heading": "Hoe werkt Schat of Schroot?",
+      "intro": "Beoordeel aanbiedingen zonder bestemming en verdien punten door inspiratie te geven.",
+      "items": [
+        "Swipe naar rechts (lamp) als je inspiratie ziet in de aanbieding, naar links (vuilbak) als je er niets in ziet.",
+        "Zie je inspiratie? Beantwoord dan 2 korte vragen: wat kan je ermee doen, en wie kan dit gebruiken?",
+        "Je krijgt +1 punt voor elke volledig ingevulde evaluatie.",
+        "Ben je niet de eerste die deze aanbieding evalueert? Dan kies je het beste van de bestaande antwoorden — die speler krijgt er +3 punten bij.",
+        "Elke aanbieding kan je maar 1 keer evalueren, en een gekozen beste evaluatie kan niet meer gewijzigd worden.",
+        "Het scorebord houdt zowel een maandelijkse als een aller-tijden-ranglijst bij."
+      ]
+    },
+
+    "sound": {
+      "on_label": "Zet geluid uit",
+      "off_label": "Zet geluid aan"
+    }
+  },
+
   "impact_methodologie": {
     "overline": "Verantwoording",
     "title": "Hoe berekenen we onze CO2-impact?",

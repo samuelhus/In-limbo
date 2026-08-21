@@ -8,6 +8,7 @@ import Statistieken from './admin/Statistieken';
 import AdminGebruikers from './admin/AdminGebruikers';
 import AdminOrganisaties from './admin/AdminOrganisaties';
 import AdminZoekertjes from './admin/AdminZoekertjes';
+import AdminGame from './admin/AdminGame';
 
 const SECTIONS = [
   { key: 'validatie', label: 'Validatie' },
@@ -15,6 +16,7 @@ const SECTIONS = [
   { key: 'organisaties', label: 'Organisaties' },
   { key: 'nieuws', label: 'Nieuws' },
   { key: 'zoekertjes', label: 'Zoekertjes' },
+  { key: 'spel', label: 'Schat of Schroot' },
   { key: 'statistieken', label: 'Statistieken' },
   { key: 'transacties', label: 'Transacties' },
   { key: 'meldingen', label: 'Meldingen' },
@@ -27,6 +29,7 @@ const SECTION_TITLES = {
   organisaties: 'Organisaties',
   nieuws: 'Nieuws',
   zoekertjes: 'Zoekertjes',
+  spel: 'Schat of Schroot?',
   statistieken: 'Statistieken',
   transacties: 'Transacties',
   meldingen: 'Meldingen',
@@ -312,6 +315,8 @@ export default function AdminPanel() {
         {section === 'nieuws' && <AdminNieuws />}
 
         {section === 'zoekertjes' && <AdminZoekertjes />}
+
+        {section === 'spel' && <AdminGame />}
 
         {section === 'statistieken' && <Statistieken />}
 

@@ -47,6 +47,26 @@ async def anonymize_user(db, user_id: str) -> None:
     await db.notifications.delete_many({"userId": user_id})
 
 
+async def anonymize_game_user(db, game_user_id: str) -> None:
+    """GDPR-verwijdering voor een spelaccount (Schat of Schroot?, zie
+    prd/PRD_Schat_of_Schroot.md §3/§6) — los van anonymize_user hierboven, want
+    game_users heeft een heel ander schema (geen wachtwoordhash, geen naam/
+    telefoon, enkel username+email). Net als anonymize_user blijft het document
+    (en dus zijn id) bestaan zodat game_evaluations/game_interactions die naar
+    deze speler verwijzen geldig blijven — enkel username/email worden
+    gescrubt en anonymized wordt True, wat game_auth.get_current_game_user
+    gebruikt om een geanonimiseerd account voortaan de toegang te weigeren."""
+    await db.game_users.update_one(
+        {"id": game_user_id},
+        {"$set": {
+            "username": None,
+            "email": f"verwijderd-{game_user_id}@inlimbo.brussels",
+            "anonymized": True,
+            "deletedAt": now_iso(),
+        }},
+    )
+
+
 def strip_mongo(d: dict) -> dict:
     d.pop("_id", None)
     d.pop("_seed", None)
