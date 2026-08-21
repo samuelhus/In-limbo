@@ -32,7 +32,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Depends, Query, Request, Response
+from fastapi import APIRouter, Body, HTTPException, Depends, Query, Request, Response
 from pymongo import ReturnDocument
 from pymongo.collation import Collation
 from pymongo.errors import DuplicateKeyError
@@ -97,7 +97,12 @@ def _register_rate_limit_key(request: Request) -> str:
 
 @router.post("/register")
 @limiter.limit("10/minute", key_func=_register_rate_limit_key)
-async def game_register(request: Request, body: GameRegisterBody, response: Response):
+# body expliciet als = Body(...) (i.p.v. enkel het type-annotatie), zoals
+# overal elders in de codebase waar een rate-limited route ook een
+# `request: Request`-parameter heeft (zie auth.py/contact.py) — zonder dat
+# gaf FastAPI hier een 422 "field required" op username/email terug, ook al
+# stond de JSON-body er wel degelijk correct in.
+async def game_register(request: Request, body: GameRegisterBody = Body(...), response: Response = None):
     if not body.consentAccepted:
         raise HTTPException(400, "Je moet akkoord gaan met de gegevensverwerking om te kunnen spelen.")
 
