@@ -217,9 +217,17 @@ class SelectApplicantBody(BaseModel):
 # cumulatieve limiet per Conversation i.p.v. per bericht (PRD §6.2). Fase 3
 # (dit): blokkeren en verwijderen/archiveren per gesprek (PRD §6.4/§6.5).
 #
-# offererUserId wordt bewust NIET opgeslagen op het Conversation-document —
-# die wordt live afgeleid uit Listing.userId (zie routes/conversations.py,
-# _load_conversation), zodat er geen verouderde kopie kan ontstaan.
+# offererUserId wordt bij aanmaak van het gesprek als momentopname op het
+# Conversation-document opgeslagen (uit Listing.userId, zie
+# routes/conversations.py::create_conversation). Vroeger werd dit veld
+# bewust NIET opgeslagen en steeds live afgeleid uit de listing, maar een
+# aanbieding kan hard verwijderd worden (routes/listings.py::delete_listing)
+# terwijl het gesprek als berichtenhistoriek blijft bestaan — zonder een
+# opgeslagen kopie werd de aanbiederidentiteit dan onherstelbaar onbekend,
+# waardoor niemand het gesprek nog kon inkijken of verwijderen. Voor
+# gesprekken van vóór deze wijziging (veld ontbreekt) valt
+# routes/conversations.py::_get_or_backfill_offerer_id terug op de listing
+# (indien nog aanwezig) of anders op de afzender van het eerste bericht.
 #
 # blockedBy/hiddenBy zijn op het Mongo-document beide simpele arrays van
 # userId's — X in blockedBy betekent "X heeft de andere partij geblokkeerd
@@ -265,6 +273,7 @@ class ConversationPublic(BaseModel):
     applicationId: str
     listingId: str
     requesterUserId: str
+    offererUserId: Optional[str] = None  # None enkel in het randgeval hierboven (geen listing én geen berichten)
     createdAt: str
     lastMessageAt: Optional[str] = None
     lastMessagePreview: Optional[str] = None

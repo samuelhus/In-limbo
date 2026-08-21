@@ -32,10 +32,16 @@ Fase 9 (dit, op vraag van product na de eerste UI-doorloop van fase 6-8):
   enkel de organisatienaam — zie _format_display_name.
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
-één listing + één aanvrager/aanbieder-paar). offererUserId wordt nergens
-opgeslagen — steeds live afgeleid via Listing.userId, zodat er geen
-verouderde kopie kan ontstaan (bv. als een listing ooit van eigenaar zou
-wisselen).
+één listing + één aanvrager/aanbieder-paar). offererUserId wordt bij aanmaak
+als momentopname op het Conversation-document opgeslagen (zie
+create_conversation) — dit stond hier vroeger nergens opgeslagen en werd
+steeds live afgeleid via Listing.userId, maar delete_listing (routes/
+listings.py) verwijdert een listing hard terwijl het gesprek als
+berichtenhistoriek blijft bestaan, waardoor de aanbiederidentiteit anders
+onherstelbaar verloren ging zodra de listing weg was (niemand kon het
+gesprek dan nog inkijken of verwijderen — _load_conversation gaf voor
+iedereen 404). Zie _get_or_backfill_offerer_id voor de fallback op oudere
+gesprekken die dit veld nog missen.
 """
 from __future__ import annotations
 import logging
@@ -180,12 +186,16 @@ def _serialize_message(doc: dict) -> dict:
 
 def _my_conversations_filter(user_id: str, listing_ids: list[str]) -> dict:
     """Mongo-filter voor "mijn gesprekken" — gedeeld tussen /unread-count en
-    /mine zodat beide exact dezelfde set gesprekken tellen/tonen. offererUserId
-    staat niet op het Conversation-document (zie module-docstring), dus "mijn
-    gesprekken als aanbieder" loopt via de listings die ik zelf bezit."""
+    /mine zodat beide exact dezelfde set gesprekken tellen/tonen. Matcht op
+    het opgeslagen offererUserId (zie module-docstring) mét een fallback op
+    de listings die ik momenteel bezit, voor de resterende oudere gesprekken
+    die nog niet gebackfilld zijn (zie _get_or_backfill_offerer_id) — enkel
+    die fallback zou een gesprek missen zodra de onderliggende listing
+    intussen hard verwijderd is."""
     return {
         "$or": [
             {"requesterUserId": user_id},
+            {"offererUserId": user_id},
             {"listingId": {"$in": listing_ids}},
         ],
         # Verborgen gesprekken (PRD §6.5) tellen niet mee: een nieuw bericht
@@ -225,6 +235,47 @@ def _format_display_name(user_doc: dict, org_doc: dict | None) -> str | None:
     return full_name or user_doc.get("username")
 
 
+async def _get_or_backfill_offerer_id(conversation: dict, listing: dict | None = None) -> str | None:
+    """Aanbieder-id voor een gesprek, met een fallback voor gesprekken van
+    vóór offererUserId als opgeslagen veld bestond (zie module-docstring).
+
+    `listing` mag al opgehaald zijn door de aanroeper (bv. _enrich_conversations
+    doet dit al gebundeld voor een hele lijst) om een dubbele query te
+    vermijden — wordt anders hier zelf opgehaald.
+
+    Fallback-volgorde voor gesprekken zonder opgeslagen offererUserId:
+    1. Listing.userId, als de listing nog bestaat.
+    2. De afzender van het allereerste bericht in het gesprek — de aanvrager
+       mag per PRD §3 pas reageren nadat de aanbieder zelf al iets stuurde
+       (zie send_message), dus als er berichten zijn moet de eerste altijd
+       van de aanbieder komen.
+    Een gesprek zonder listing én zonder berichten (aanbieder maakte het
+    gesprek aan maar stuurde nog nooit iets, en de listing is intussen
+    verwijderd) blijft in dat uiterste randgeval onherleidbaar — er is dan
+    simpelweg geen data meer die de aanbieder identificeert.
+
+    Zodra een aanbieder-id gevonden wordt, wordt die meteen teruggeschreven
+    op het document zodat een volgende aanroep dit niet moet herhalen."""
+    if conversation.get("offererUserId"):
+        return conversation["offererUserId"]
+
+    if listing is None:
+        listing = await db.listings.find_one({"id": conversation["listingId"]}, {"_id": 0, "userId": 1})
+    offerer_id = listing["userId"] if listing else None
+
+    if not offerer_id:
+        first_message = await db.messages.find_one(
+            {"conversationId": conversation["id"]}, sort=[("createdAt", 1)],
+        )
+        if first_message and first_message["senderId"] != conversation["requesterUserId"]:
+            offerer_id = first_message["senderId"]
+
+    if offerer_id:
+        await db.conversations.update_one({"id": conversation["id"]}, {"$set": {"offererUserId": offerer_id}})
+        conversation["offererUserId"] = offerer_id
+    return offerer_id
+
+
 async def _enrich_conversations(docs: list[dict], viewer_id: str) -> list[dict]:
     """Verrijkt ruwe Conversation-documenten met wat de gesprekslijst en het
     gespreksvenster nodig hebben, maar wat niet op het document zelf staat:
@@ -243,12 +294,12 @@ async def _enrich_conversations(docs: list[dict], viewer_id: str) -> list[dict]:
         )
     }
 
-    # offererUserId per gesprek live afleiden (zie module-docstring), en
-    # meteen bepalen wie voor déze viewer "de andere partij" is.
+    # offererUserId per gesprek ophalen (zie module-docstring/
+    # _get_or_backfill_offerer_id), en meteen bepalen wie voor déze viewer
+    # "de andere partij" is.
     relevant_user_ids: set[str] = {viewer_id}
     for d in docs:
-        listing = listings.get(d["listingId"])
-        offerer_id = listing["userId"] if listing else None
+        offerer_id = await _get_or_backfill_offerer_id(d, listings.get(d["listingId"]))
         other_id = d["requesterUserId"] if viewer_id == offerer_id else offerer_id
         d["_offererUserId"] = offerer_id
         d["_otherUserId"] = other_id
@@ -308,18 +359,18 @@ async def _load_conversation(conversation_id: str, user: dict) -> tuple[dict, st
     """Haalt een Conversation op + bepaalt de rol van de aanroeper.
 
     Returns (conversation, offerer_user_id, role) met role "offerer" of
-    "requester". Gooit 404 als het gesprek (of de onderliggende listing)
-    niet bestaat, 403 als de aanroeper geen van beide partijen is.
+    "requester". Gooit 404 als het gesprek niet bestaat, 403 als de
+    aanroeper geen van beide partijen is. De onderliggende listing hoeft
+    niet meer te bestaan (delete_listing verwijdert de listing hard maar
+    laat het gesprek staan) — dit gaf hier vroeger voor iedereen een 404,
+    zie module-docstring en _get_or_backfill_offerer_id.
     """
     conversation = await db.conversations.find_one({"id": conversation_id})
     if not conversation:
         raise HTTPException(404, "Gesprek niet gevonden")
-    listing = await db.listings.find_one({"id": conversation["listingId"]}, {"_id": 0, "userId": 1})
-    if not listing:
-        raise HTTPException(404, "Aanbieding van dit gesprek niet gevonden")
-    offerer_user_id = listing["userId"]
+    offerer_user_id = await _get_or_backfill_offerer_id(conversation)
 
-    if user["id"] == offerer_user_id:
+    if offerer_user_id and user["id"] == offerer_user_id:
         role = "offerer"
     elif user["id"] == conversation["requesterUserId"]:
         role = "requester"
@@ -351,6 +402,9 @@ async def create_conversation(body: ConversationCreate, user: dict = Depends(get
         "applicationId": body.applicationId,
         "listingId": application["listingId"],
         "requesterUserId": application["applicantUserId"],
+        # Momentopname, zie module-docstring: overleeft een latere hard
+        # delete van de listing (routes/listings.py::delete_listing).
+        "offererUserId": listing["userId"],
         "createdAt": now,
         "lastMessageAt": None,
         "lastMessagePreview": None,

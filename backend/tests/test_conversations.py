@@ -69,6 +69,20 @@ def _set_conversation_fields(conv_id, fields):
     return _run(_set())
 
 
+def _unset_conversation_fields(conv_id, *field_names):
+    """Simuleert een gesprek van vóór offererUserId een opgeslagen veld werd
+    (zie routes/conversations.py::_get_or_backfill_offerer_id)."""
+    async def _unset():
+        db, client = _db()
+        try:
+            await db.conversations.update_one(
+                {"id": conv_id}, {"$unset": {name: "" for name in field_names}},
+            )
+        finally:
+            client.close()
+    return _run(_unset())
+
+
 def _session(creds=None):
     s = requests.Session()
     if creds:
@@ -583,6 +597,70 @@ class TestDeleteHide:
         conv = make_conversation()
         r = anon.delete(f"{API}/conversations/{conv['conversationId']}")
         assert r.status_code == 401, r.text
+
+
+# ---------- Gesprek overleeft een verwijderde listing ----------
+# delete_listing (routes/listings.py) verwijdert een listing + haar
+# applications hard, maar laat het gesprek bewust bestaan als
+# berichtenhistoriek. offererUserId wordt daarom als momentopname op het
+# Conversation-document opgeslagen (zie models.py) i.p.v. steeds live
+# afgeleid uit Listing.userId — anders gaf _load_conversation hier voor
+# iedereen 404 zodra de listing weg was.
+class TestConversationSurvivesListingDeletion:
+    def test_still_viewable_and_deletable_after_listing_deleted(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        r_msg = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "hallo"})
+        assert r_msg.status_code in (200, 201), r_msg.text
+
+        r_del_listing = lotte.delete(f"{API}/listings/{conv['listingId']}")
+        assert r_del_listing.status_code == 200, r_del_listing.text
+
+        for user in (lotte, samir):
+            r_detail = user.get(f"{API}/conversations/{conv['conversationId']}")
+            assert r_detail.status_code == 200, r_detail.text
+            assert r_detail.json()["listingTitle"] is None
+
+            r_messages = user.get(f"{API}/conversations/{conv['conversationId']}/messages")
+            assert r_messages.status_code == 200, r_messages.text
+            assert r_messages.json()["total"] >= 1
+
+        r_hide = samir.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert r_hide.status_code == 200, r_hide.text
+        assert r_hide.json()["success"] is True
+
+    def test_appears_in_offerer_conversation_list_after_listing_deleted(self, lotte, samir, make_conversation):
+        conv = make_conversation()
+        lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "hallo"})
+        lotte.delete(f"{API}/listings/{conv['listingId']}")
+
+        r_mine = lotte.get(f"{API}/conversations/mine")
+        assert r_mine.status_code == 200, r_mine.text
+        assert conv["conversationId"] in {c["id"] for c in r_mine.json()}
+
+    def test_legacy_conversation_without_stored_offerer_id_still_recoverable(self, lotte, samir, make_conversation):
+        """Gesprekken van vóór offererUserId een opgeslagen veld werd, vallen
+        terug op de afzender van het eerste bericht (de aanbieder moet er
+        per PRD §3 altijd als eerste een sturen) — zie
+        _get_or_backfill_offerer_id."""
+        conv = make_conversation()
+        lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "hallo"})
+        lotte.delete(f"{API}/listings/{conv['listingId']}")
+        _unset_conversation_fields(conv["conversationId"], "offererUserId")
+
+        lotte_id = lotte.get(f"{API}/auth/me").json()["id"]
+
+        r_detail = lotte.get(f"{API}/conversations/{conv['conversationId']}")
+        assert r_detail.status_code == 200, r_detail.text
+        assert r_detail.json()["offererUserId"] == lotte_id
+
+        # De backfill schrijft het opgeloste offererUserId (afgeleid uit het
+        # eerste bericht, van Lotte) terug op het document, zodat een
+        # volgende aanroep dit niet moet herhalen.
+        backfilled = _fetch_conversation(conv["conversationId"])
+        assert backfilled["offererUserId"] == lotte_id, backfilled
+
+        r_hide = samir.delete(f"{API}/conversations/{conv['conversationId']}")
+        assert r_hide.status_code == 200, r_hide.text
 
 
 # ---------- In-app notificaties (fase 4, PRD §6.6) ----------
