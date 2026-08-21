@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Lightbulb, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -17,8 +17,8 @@ const SWIPE_VELOCITY_THRESHOLD = 500; // px/s
  * aanwezig als dependency) over de volledige foto — de hele kaart is het
  * sleepvlak (drag="x" op de motion.div, de <img> zelf negeert pointer-events
  * zodat niets het slepen kan onderscheppen) — of klik op een van de knoppen
- * náást de foto (zie hieronder, PRD §8.4-toegankelijkheidsalternatief voor
- * het slepen).
+ * náást de foto, of gebruik de pijltjestoetsen (zie hieronder, PRD
+ * §8.4-toegankelijkheidsalternatieven voor het slepen).
  *
  * De vuilbak-/lampknop staan bewust náást de foto i.p.v. eronder: ze zijn
  * geen kind van de sleepbare motion.div (dat zou ze binnen de foto's eigen
@@ -45,6 +45,26 @@ export default function SwipeCard({ listing, onSwipe, disabled = false, compact 
   const inspireOpacity = useTransform(x, [0, 30, 140], [0, 0, 1]);
 
   const photo = listing?.photos?.[0];
+
+  // Pijltjestoetsen werken ook voor swipe (toegankelijkheidsalternatief naast
+  // slepen en de knoppen naast de foto, PRD §8.4) — enkel actief op de
+  // niet-compacte kaart (tijdens de 'card'-fase, zie GamePlay.jsx) en niet
+  // terwijl de knoppen al uitgeschakeld staan (disabled, bv. tussen 2 acties).
+  useEffect(() => {
+    if (compact) return undefined;
+    const handleKeyDown = (e) => {
+      if (disabled) return;
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        onSwipe('left');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        onSwipe('right');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [compact, disabled, onSwipe]);
 
   if (compact) {
     return (
