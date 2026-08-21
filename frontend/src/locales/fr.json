@@ -938,7 +938,7 @@
   },
 
   "game": {
-    "title": "Récup ou Rebut ?",
+    "title": "Trash ou Trésor ?",
     "playing_as": "Vous jouez en tant que {{username}}",
     "logout": "Se déconnecter",
     "loading": "Chargement…",
@@ -958,8 +958,8 @@
     "swipe": {
       "reject_label": "Pas d'inspiration",
       "inspire_label": "Inspirant",
-      "reject_stamp": "Rebut",
-      "inspire_stamp": "Récup"
+      "reject_stamp": "Trash",
+      "inspire_stamp": "Trésor"
     },
 
     "evaluate": {
@@ -995,7 +995,7 @@
 
     "rules": {
       "trigger_label": "Règles du jeu",
-      "heading": "Comment fonctionne Récup ou Rebut ?",
+      "heading": "Comment fonctionne Trash ou Trésor ?",
       "intro": "Évaluez des offres sans destination et gagnez des points en apportant de l'inspiration.",
       "items": [
         "Glissez vers la droite (ampoule) si l'offre vous inspire, vers la gauche (poubelle) si elle ne vous inspire pas.",

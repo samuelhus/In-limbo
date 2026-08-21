@@ -1,4 +1,4 @@
-# PRD — Schat of Schroot? / Récup ou Rebut ?
+# PRD — Schat of Schroot? / Trash ou Trésor ?
 
 **Versie:** 0.4 (functioneel compleet)
 **Auteur:** Samuel

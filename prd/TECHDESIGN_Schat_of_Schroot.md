@@ -1,4 +1,4 @@
-# Technisch ontwerp — Schat of Schroot? / Récup ou Rebut ?
+# Technisch ontwerp — Schat of Schroot? / Trash ou Trésor ?
 
 **Bij:** PRD_Recup_of_Niet.md v0.4
 **Stack:** FastAPI + MongoDB (los van hoofd-userdatabase) + React/CRA
