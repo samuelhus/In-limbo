@@ -11,6 +11,12 @@ import { cloudinaryFit } from '@/lib/cloudinary';
 // op die de afstandsgrens niet haalt maar wel duidelijk een swipe bedoelt.
 const SWIPE_DISTANCE_THRESHOLD = 60;
 const SWIPE_VELOCITY_THRESHOLD = 500; // px/s
+// Een gebaar moet minstens dit veel keer meer horizontaal dan verticaal
+// bewogen zijn vóór het als swipe telt (zie handleDragEnd) — voorkomt dat
+// een overwegend verticale beweging (bv. een mislukte scrollpoging, nu dat
+// scrollen op de foto geblokkeerd is) toch als links/rechts geïnterpreteerd
+// wordt enkel omdat de x-component toevallig de drempel hierboven haalde.
+const SWIPE_HORIZONTAL_DOMINANCE = 1.5;
 
 /**
  * PRD_Schat_of_Schroot.md §4.1: klik-en-sleep de kaart (framer-motion, al
@@ -92,19 +98,24 @@ export default function SwipeCard({ listing, onSwipe, disabled = false, compact 
     const pastDistance = Math.abs(info.offset.x) > SWIPE_DISTANCE_THRESHOLD;
     const pastVelocity = Math.abs(info.velocity.x) > SWIPE_VELOCITY_THRESHOLD;
     if (!pastDistance && !pastVelocity) return;
+    if (Math.abs(info.offset.x) <= Math.abs(info.offset.y) * SWIPE_HORIZONTAL_DOMINANCE) return;
     onSwipe(info.offset.x < 0 ? 'left' : 'right');
   };
 
   return (
-    <div className="max-w-sm mx-auto px-10 relative">
+    // touchAction: 'none' hier op de hele speelzone (niet enkel de foto
+    // hieronder) — touch-action werkt niet als losstaande, per-element regel:
+    // de browser neemt de striktste waarde over de hele voorouderketen, dus
+    // "none" hier blokkeert scrollen voor élk gebaar dat ergens in deze zone
+    // start (ook in de zijmarges naast de foto), niet enkel op de foto zelf.
+    // Dat is nodig omdat framer-motion's drag="x" alleen gebaren opmerkt die
+    // op de foto zelf beginnen — zonder deze bredere blokkade kon een
+    // gebaar dat net ernaast start, of licht naar boven afwijkt, alsnog de
+    // pagina laten scrollen vóór framer "dit is mijn drag" kon claimen.
+    <div className="max-w-sm mx-auto px-10 relative" style={{ touchAction: 'none' }}>
       <motion.div
         className="relative w-full aspect-[3/4] bg-surface border border-border overflow-hidden select-none cursor-grab active:cursor-grabbing"
-        // touchAction: 'none' overschrijft framer-motion's eigen default voor
-        // drag="x" (touch-action: pan-y, dat verticaal scrollen door de vinger
-        // laat lopen zodra die niet zuiver horizontaal beweegt) — op de foto
-        // zelf mag geen enkele verticale sleepbeweging iets doen (niet de
-        // kaart bewegen, niet de pagina scrollen), enkel horizontaal swipen.
-        style={{ x, rotate, borderRadius: 2, touchAction: 'none' }}
+        style={{ x, rotate, borderRadius: 2 }}
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.7}
