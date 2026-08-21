@@ -1,28 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// PRD_Schat_of_Schroot.md §4.2 stap 2-3: vraag 1 -> enter -> vraag 2 -> enter
-// -> evaluatie compleet. Beide velden verplicht, geen lege velden toegelaten.
+// PRD_Schat_of_Schroot.md §4.2 stap 2-3: beide velden verplicht, geen lege
+// velden toegelaten. Op vraag van product (na de eerste UI-doorloop) toont
+// dit meteen beide vragen samen i.p.v. vraag 2 pas na een "Volgende"-klik op
+// vraag 1 te onthullen — enter in vraag 1 springt gewoon naar vraag 2, enter
+// in vraag 2 verstuurt. Vraag 1 krijgt automatisch de focus zodra dit
+// formulier verschijnt (net na een swipe naar rechts), zodat je direct kan
+// beginnen typen zonder eerst zelf het veld te moeten aantikken.
 export default function EvaluationForm({ onSubmit, busy }) {
   const { t } = useTranslation();
-  const [step, setStep] = useState(1);
   const [answer1, setAnswer1] = useState('');
   const [answer2, setAnswer2] = useState('');
   const [touched, setTouched] = useState(false);
+  const answer1Ref = useRef(null);
   const answer2Ref = useRef(null);
 
   useEffect(() => {
-    if (step === 2) answer2Ref.current?.focus();
-  }, [step]);
-
-  const goToStep2 = () => {
-    if (!answer1.trim()) {
-      setTouched(true);
-      return;
-    }
-    setTouched(false);
-    setStep(2);
-  };
+    answer1Ref.current?.focus();
+  }, []);
 
   const submit = () => {
     if (!answer1.trim() || !answer2.trim()) {
@@ -45,59 +41,49 @@ export default function EvaluationForm({ onSubmit, busy }) {
         <label className="label-overline" htmlFor="game-answer1">{t('game.evaluate.question1')}</label>
         <textarea
           id="game-answer1"
+          ref={answer1Ref}
           className="input-flat resize-none"
           rows={2}
           value={answer1}
           onChange={(e) => setAnswer1(e.target.value)}
-          onKeyDown={(e) => handleKeyDown(e, goToStep2)}
-          disabled={step !== 1 || busy}
+          onKeyDown={(e) => handleKeyDown(e, () => answer2Ref.current?.focus())}
+          disabled={busy}
           maxLength={500}
           data-testid="game-answer1-input"
         />
-        {touched && step === 1 && !answer1.trim() && (
+        {touched && !answer1.trim() && (
           <p className="text-destructive text-xs mt-1">{t('game.evaluate.required')}</p>
-        )}
-        {step === 1 && (
-          <button
-            type="button"
-            onClick={goToStep2}
-            className="btn-secondary !py-2 mt-3 w-full"
-            data-testid="game-answer1-next"
-          >
-            {t('game.evaluate.next')}
-          </button>
         )}
       </div>
 
-      {step === 2 && (
-        <div className="mb-4">
-          <label className="label-overline" htmlFor="game-answer2">{t('game.evaluate.question2')}</label>
-          <textarea
-            id="game-answer2"
-            ref={answer2Ref}
-            className="input-flat resize-none"
-            rows={2}
-            value={answer2}
-            onChange={(e) => setAnswer2(e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, submit)}
-            disabled={busy}
-            maxLength={500}
-            data-testid="game-answer2-input"
-          />
-          {touched && !answer2.trim() && (
-            <p className="text-destructive text-xs mt-1">{t('game.evaluate.required')}</p>
-          )}
-          <button
-            type="button"
-            onClick={submit}
-            disabled={busy}
-            className="btn-primary !py-2 mt-3 w-full"
-            data-testid="game-answer2-submit"
-          >
-            {busy ? t('game.evaluate.submitting') : t('game.evaluate.submit')}
-          </button>
-        </div>
-      )}
+      <div className="mb-4">
+        <label className="label-overline" htmlFor="game-answer2">{t('game.evaluate.question2')}</label>
+        <textarea
+          id="game-answer2"
+          ref={answer2Ref}
+          className="input-flat resize-none"
+          rows={2}
+          value={answer2}
+          onChange={(e) => setAnswer2(e.target.value)}
+          onKeyDown={(e) => handleKeyDown(e, submit)}
+          disabled={busy}
+          maxLength={500}
+          data-testid="game-answer2-input"
+        />
+        {touched && !answer2.trim() && (
+          <p className="text-destructive text-xs mt-1">{t('game.evaluate.required')}</p>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={submit}
+        disabled={busy}
+        className="btn-primary !py-2 w-full"
+        data-testid="game-evaluation-submit"
+      >
+        {busy ? t('game.evaluate.submitting') : t('game.evaluate.submit')}
+      </button>
     </div>
   );
 }
