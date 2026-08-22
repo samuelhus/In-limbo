@@ -115,25 +115,3 @@ async def get_admin_user(user: dict = Depends(get_current_user)) -> dict:
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin-toegang vereist")
     return user
-
-
-def is_admin_request(request: Request) -> bool:
-    """Best-effort, niet-blokkerende check of de aanroeper een geldige
-    admin-sessie van het hoofdplatform heeft — gebruikt om admins vrij te
-    stellen van IP-based rate limits op routes die zelf geen login vereisen
-    (bv. POST /game/register, zie routes/game.py). Puur op het JWT-payload
-    (role staat er al in, zie create_access_token) i.p.v. een DB-lookup zoals
-    get_current_user_optional: dit is enkel een gemaksvrijstelling voor
-    testen/beheer, geen toegangscontrole, dus een net ingetrokken rol die nog
-    even als admin doorweegt is een verwaarloosbaar risico — en de route
-    blijft zelf gewoon publiek/ongeauthenticeerd, dit beïnvloedt enkel de
-    rate limit. Geeft False bij elke afwijking (geen/ongeldige/verlopen
-    cookie) i.p.v. te gooien — dit mag de aanvraag nooit blokkeren."""
-    token = get_token_from_request(request)
-    if not token:
-        return False
-    try:
-        payload = decode_token(token)
-    except jwt.PyJWTError:
-        return False
-    return payload.get("role") == "admin"

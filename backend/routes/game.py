@@ -5,11 +5,6 @@ game_evaluations). De enige raakvlak met het bestaande datamodel is de
 `listings`-collectie, die er 2 optionele velden bij krijgt (gameEnabled/
 gameEvaluationCount) — zie routes/admin_game.py voor het beheer daarvan.
 
-POST /register staat achter dezelfde IP-based rate limiter (deps.py::limiter)
-als de rest van het platform, om te vermijden dat iemand snel achter elkaar
-veel verschillende usernames aanmaakt — zie _register_rate_limit_key voor de
-vrijstelling voor een ingelogde admin van het hoofdplatform.
-
 Spelpool (GAME_POOL_STATUSES, models.py): listings met status "beschikbaar" of
 "in_magazijn" — bevestigd met product, dezelfde statusset als de publieke
 catalogus (routes/listings.py). gameEnabled/gameEvaluationCount ontbreken op
@@ -32,12 +27,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Body, HTTPException, Depends, Query, Request, Response
+from fastapi import APIRouter, HTTPException, Depends, Query, Response
 from pymongo import ReturnDocument
 from pymongo.collation import Collation
 from pymongo.errors import DuplicateKeyError
 
-from deps import db, now_iso, limiter, get_real_ip
+from deps import db, now_iso
 from models import (
     GameRegisterBody, GameSwipeBody, GameEvaluateBody, GameChooseBestBody,
     MAX_GAME_EVALUATIONS_PER_LISTING, GAME_POOL_STATUSES,
@@ -45,7 +40,6 @@ from models import (
 from game_auth import (
     get_current_game_user, create_game_token, set_game_auth_cookie, clear_game_auth_cookie,
 )
-from auth import is_admin_request
 
 router = APIRouter(prefix="/game", tags=["game"])
 
@@ -82,27 +76,8 @@ def _serialize_evaluation(doc: dict, viewer_id: str) -> dict:
     }
 
 
-def _register_rate_limit_key(request: Request) -> str:
-    """Sleutel voor de rate limit op POST /register hieronder — normaal het
-    IP (zoals overal elders, zie deps.py::limiter), behalve voor een
-    ingelogde admin van het hoofdplatform (auth.py::is_admin_request): die
-    krijgt telkens een eigen, unieke sleutel i.p.v. het gedeelde IP-emmertje,
-    zodat hun aanvragen nooit meetellen voor de limiet en ze dus nooit
-    geblokkeerd raken bij het testen/beheren — puur een gemaksvrijstelling,
-    geen toegangscontrole (de route blijft zelf gewoon publiek)."""
-    if is_admin_request(request):
-        return f"admin-exempt-{uuid.uuid4()}"
-    return get_real_ip(request)
-
-
 @router.post("/register")
-@limiter.limit("10/minute", key_func=_register_rate_limit_key)
-# body expliciet als = Body(...) (i.p.v. enkel het type-annotatie), zoals
-# overal elders in de codebase waar een rate-limited route ook een
-# `request: Request`-parameter heeft (zie auth.py/contact.py) — zonder dat
-# gaf FastAPI hier een 422 "field required" op username/email terug, ook al
-# stond de JSON-body er wel degelijk correct in.
-async def game_register(request: Request, body: GameRegisterBody = Body(...), response: Response = None):
+async def game_register(body: GameRegisterBody, response: Response):
     if not body.consentAccepted:
         raise HTTPException(400, "Je moet akkoord gaan met de gegevensverwerking om te kunnen spelen.")
 
