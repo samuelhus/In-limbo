@@ -723,3 +723,39 @@ class GameListingExcludeBody(BaseModel):
     gameEnabled: bool
 
 
+# ---------- Reports (Meldingen, zie prd/PRD_meldingen_admin.md) ----------
+# Los van het bestaande Notificatie-systeem hierboven (§NotificationType):
+# een Melding is gericht aan de admin-groep als geheel (gedeelde open/
+# afgehandeld-status, geen owner), niet aan één specifieke gebruiker — zie
+# PRD §3 voor de volledige vergelijking. Opslag: db.reports (backend/reports.py).
+ReportType = Literal[
+    'listing_reported',
+    'deadline_approaching',
+    'listing_expired_unrehomed',
+    'new_search_request',
+    'evaluation_high_score',
+    'conversation_blocked',
+]
+ReportStatus = Literal['open', 'afgehandeld']
+ReportTargetType = Literal['listing', 'search_request', 'conversation', 'evaluation']
+
+
+class ListingReportCreateBody(BaseModel):
+    """Body voor POST /api/listings/{id}/report — de 'Meld'-knop (PRD §6.1)."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+    reason: Literal['voorwaarden', 'misleidend', 'ander'] = 'ander'
+    note: Optional[str] = Field(None, max_length=500)
+
+
+class ReportPublic(BaseModel):
+    id: str
+    type: ReportType
+    status: ReportStatus = 'open'
+    createdAt: str
+    targetType: ReportTargetType
+    targetId: str
+    targetTitle: Optional[str] = None
+    message: str
+    meta: dict = Field(default_factory=dict)
+    handledByAdminId: Optional[str] = None
+    handledAt: Optional[str] = None

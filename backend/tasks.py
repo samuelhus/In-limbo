@@ -10,6 +10,7 @@ from notifications import (
     create_notification, purge_old_notifications, render_email, maybe_send_email,
     send_email, pick_lang, FRONTEND_URL,
 )
+from reports import create_report, report_already_exists
 
 MONTHS_NL = [
     "januari", "februari", "maart", "april", "mei", "juni",
@@ -61,11 +62,52 @@ async def archive_expired_listings(db) -> int:
     for lst in to_archive:
         msg = f'De deadline van je aanbieding "{lst.get("title","")}" is vervallen.'
         await create_notification(db, lst["userId"], "deadline_expired", msg, lst["id"], lst.get("title"))
+        # Melding voor de admin-groep (PRD_meldingen_admin.md §6.3) — enkel bij
+        # archivering hier, dus nooit meer dan 1x per listing: status gaat
+        # binnen deze functie eenmalig van 'beschikbaar' naar 'gearchiveerd',
+        # geen weg terug, dus geen aparte idempotentiecheck nodig.
+        await create_report(
+            db, "listing_expired_unrehomed", "listing", lst["id"],
+            f'Aanbieding "{lst.get("title","")}" is verlopen zonder herbestemd te zijn.',
+            target_title=lst.get("title"),
+        )
 
     # Purge old notifications opportunistically
     await purge_old_notifications(db, days=30)
 
     return result.modified_count
+
+
+async def report_upcoming_deadlines(db) -> int:
+    """Melding voor de admin-groep wanneer een aanbieding binnen 7 dagen haar
+    deadline bereikt (PRD_meldingen_admin.md §6.2) — los van de bestaande
+    deadline_expired-notificatie hierboven, die pas ná het verlopen vuurt en
+    naar de eigenaar gaat, niet naar admins.
+
+    Simpelste implementatie (bewust aanvaard risico, PRD §12): exact 7
+    kalenderdagen vooruit, niet "≤ 7 dagen" — een overgeslagen dagelijkse run
+    (bv. downtime) kan zo een listing missen.
+    """
+    target_date = (datetime.now(timezone.utc) + timedelta(days=7)).date().isoformat()
+    candidates = await db.listings.find(
+        {"status": "beschikbaar", "isRecurrent": False, "deadline": target_date},
+        {"_id": 0, "id": 1, "title": 1},
+    ).to_list(500)
+
+    created = 0
+    for lst in candidates:
+        # Idempotentie (§6.2): één Melding per aanbieding ooit voor deze trigger,
+        # ongeacht open/afgehandeld — een verlengde deadline die opnieuw binnen
+        # 7 dagen komt te liggen triggert in v1 dus bewust geen 2de Melding.
+        if await report_already_exists(db, "deadline_approaching", lst["id"]):
+            continue
+        await create_report(
+            db, "deadline_approaching", "listing", lst["id"],
+            f'Aanbieding "{lst.get("title","")}" bereikt binnen 7 dagen haar deadline.',
+            target_title=lst.get("title"),
+        )
+        created += 1
+    return created
 
 
 async def mark_inactive_orgs(db) -> int:

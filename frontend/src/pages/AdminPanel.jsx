@@ -9,6 +9,11 @@ import AdminGebruikers from './admin/AdminGebruikers';
 import AdminOrganisaties from './admin/AdminOrganisaties';
 import AdminZoekertjes from './admin/AdminZoekertjes';
 import AdminGame from './admin/AdminGame';
+import AdminMeldingen from './admin/AdminMeldingen';
+
+// Zie prd/PRD_meldingen_admin.md §4/§9 — zelfde 60 sec-pollinterval als de
+// bestaande bell-badge (NotificationCenter.jsx), voor consistentie.
+const REPORTS_POLL_MS = 60_000;
 
 const SECTIONS = [
   { key: 'validatie', label: 'Validatie' },
@@ -42,6 +47,7 @@ export default function AdminPanel() {
   const [queue, setQueue] = useState(null);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [openReportsCount, setOpenReportsCount] = useState(0);
 
   const load = useCallback(async () => {
     try {
@@ -52,7 +58,20 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const loadOpenReportsCount = useCallback(async () => {
+    try {
+      const { data } = await api.get('/admin/reports/open-count');
+      setOpenReportsCount(data.count);
+    } catch { /* silent, zelfde patroon als NotificationCenter.jsx */ }
+  }, []);
+
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    loadOpenReportsCount();
+    const t = setInterval(loadOpenReportsCount, REPORTS_POLL_MS);
+    return () => clearInterval(t);
+  }, [loadOpenReportsCount]);
 
   const decideUser = async (userId, decision, reason) => {
     setBusy(true);
@@ -139,6 +158,14 @@ export default function AdminPanel() {
               data-testid={`admin-nav-${s.key}`}
             >
               {s.label}
+              {s.key === 'meldingen' && openReportsCount > 0 && (
+                <span
+                  className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-600 rounded-full"
+                  data-testid="admin-nav-meldingen-badge"
+                >
+                  {openReportsCount > 9 ? '9+' : openReportsCount}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -154,6 +181,14 @@ export default function AdminPanel() {
             data-testid={`admin-mobile-nav-${s.key}`}
           >
             {s.label}
+            {s.key === 'meldingen' && openReportsCount > 0 && (
+              <span
+                className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-600 rounded-full"
+                data-testid="admin-mobile-nav-meldingen-badge"
+              >
+                {openReportsCount > 9 ? '9+' : openReportsCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -333,16 +368,7 @@ export default function AdminPanel() {
 
         {section === 'transacties' && <AdminTransacties />}
 
-        {section === 'meldingen' && (
-          <div data-testid="admin-meldingen-placeholder">
-            <p className="overline mb-4">Binnenkort beschikbaar</p>
-            <h2 className="text-2xl font-bold tracking-tight mb-4">Meldingen</h2>
-            <p className="text-foreground/75 max-w-2xl leading-relaxed">
-              Deze functie is nog in ontwikkeling. Meldingen gegenereerd door gebruikers
-              van het platform verschijnen hier.
-            </p>
-          </div>
-        )}
+        {section === 'meldingen' && <AdminMeldingen onCountChanged={loadOpenReportsCount} />}
 
         {section === 'gearchiveerd' && (
           <div data-testid="admin-gearchiveerd-placeholder">

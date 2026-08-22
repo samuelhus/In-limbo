@@ -7,6 +7,7 @@ import { cloudinaryThumb, cloudinaryPdfUrl } from '@/lib/cloudinary';
 import { useAuth } from '@/contexts/AuthContext';
 import ApplyModal from '@/components/ApplyModal';
 import ShareButton from '@/components/ShareButton';
+import ReportListingModal from '@/components/ReportListingModal';
 
 const APP_STATUS_KEYS = {
   open: 'listing.status_open',
@@ -23,6 +24,8 @@ export default function ListingDetail() {
   const [item, setItem] = useState(null);
   const [active, setActive] = useState(0);
   const [applyOpen, setApplyOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
 
   const load = useCallback(() => {
     api.get(`/listings/${id}`).then(({ data }) => setItem(data)).catch(() => setItem(false));
@@ -47,6 +50,9 @@ export default function ListingDetail() {
 
   const sameOrg = isValidated && item.organisation && user.organisationId === item.organisation.id;
   const myApp = item.myApplication;
+  // Meld-knop (PRD_meldingen_admin.md §6.1) — zelfde toegangsniveau als de
+  // backend-route (get_donateur_or_validated_user), nooit voor de eigenaar zelf.
+  const canReport = (isValidated || isDonateur) && !isOwner && !limited;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12" data-testid="listing-detail-page">
@@ -87,7 +93,16 @@ export default function ListingDetail() {
             {item.isRecurrent && (
               <span className="overline">{t('listing.recurrent')}</span>
             )}
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-3">
+              {canReport && (
+                <button
+                  onClick={() => setReportOpen(true)}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-colors industrial-link"
+                  data-testid="listing-report-button"
+                >
+                  {t('listing.report_button')}
+                </button>
+              )}
               <ShareButton
                 title={item.title}
                 text={t('listing.share_text', { title: item.title })}
@@ -95,6 +110,11 @@ export default function ListingDetail() {
               />
             </div>
           </div>
+          {reportDone && (
+            <p className="text-xs text-muted-foreground mb-4" data-testid="listing-report-done">
+              {t('listing.report_done')}
+            </p>
+          )}
           <h1 className="text-4xl font-bold tracking-tight mb-6">{item.title}</h1>
 
           {limited && (
@@ -247,6 +267,14 @@ export default function ListingDetail() {
           listing={item}
           onClose={() => setApplyOpen(false)}
           onSubmitted={() => { setApplyOpen(false); load(); }}
+        />
+      )}
+
+      {reportOpen && (
+        <ReportListingModal
+          listing={item}
+          onClose={() => setReportOpen(false)}
+          onSubmitted={() => { setReportOpen(false); setReportDone(true); }}
         />
       )}
     </div>

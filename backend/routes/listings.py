@@ -12,17 +12,24 @@ import uuid
 import cloudinary.utils
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
 
-from deps import db, now_iso, strip_mongo, generate_unique_listing_slug
+from deps import db, now_iso, strip_mongo, generate_unique_listing_slug, limiter
 from auth import get_admin_user
 
-from models import ListingCreateBody, ListingUpdate
+from models import ListingCreateBody, ListingUpdate, ListingReportCreateBody
 from auth import (
     get_current_user_optional, get_donateur_or_validated_user,
 )
 from search_keywords import enrich_listing_keywords, DICTIONARY
 from notifications import notify_ntfy, NTFY_TOPIC_LISTINGS, FRONTEND_URL
+from reports import create_report, report_already_exists
 
 router = APIRouter()
+
+REPORT_REASON_LABELS = {
+    "voorwaarden": "voldoet niet aan de gebruiksvoorwaarden",
+    "misleidend": "misleidende informatie",
+    "ander": "een andere reden",
+}
 
 
 def _public_listing_view(listing: dict, viewer: dict | None) -> dict:
@@ -482,6 +489,40 @@ async def update_listing(
         except Exception:
             pass
     return strip_mongo(updated)
+
+
+@router.post("/listings/{listing_id}/report")
+@limiter.limit("5/minute")
+async def report_listing(
+    request: Request,
+    listing_id: str,
+    body: ListingReportCreateBody,
+    user: dict = Depends(get_donateur_or_validated_user),
+):
+    """'Meld'-knop op de aanbiedingdetailpagina (PRD_meldingen_admin.md §6.1).
+    Maakt een Melding aan voor de admin-groep — geen automatische statuswijziging
+    van de aanbieding zelf, de admin beoordeelt via het bestaande beheerscherm."""
+    listing = await db.listings.find_one({"id": listing_id})
+    if not listing:
+        raise HTTPException(404, "Aanbieding niet gevonden")
+    if listing["userId"] == user["id"]:
+        raise HTTPException(400, "Je kan je eigen aanbieding niet melden")
+
+    already = await report_already_exists(
+        db, "listing_reported", listing_id, only_open=True, meta_filter={"reporterUserId": user["id"]},
+    )
+    if already:
+        raise HTTPException(409, "Je hebt deze aanbieding al gemeld — een admin behandelt dit.")
+
+    reporter_label = user.get("firstName") or user.get("username") or "Een gebruiker"
+    reason_label = REPORT_REASON_LABELS.get(body.reason, body.reason)
+    message = f'"{listing.get("title", "")}" werd gemeld door {reporter_label} ({reason_label}).'
+    await create_report(
+        db, "listing_reported", "listing", listing_id, message,
+        target_title=listing.get("title"),
+        meta={"reporterUserId": user["id"], "reason": body.reason, "note": body.note},
+    )
+    return {"ok": True}
 
 
 @router.get("/organisations/{org_id}/listings")

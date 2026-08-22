@@ -740,3 +740,62 @@ async def admin_set_transaction_photo_received(
     if result.matched_count == 0:
         raise HTTPException(404, "Transactie niet gevonden")
     return {"ok": True, "photoReceived": received}
+
+
+# --------------------------------------------------------------------------
+# Meldingen (zie prd/PRD_meldingen_admin.md) — team-overzicht van platform-
+# gebeurtenissen, los van de per-gebruiker notificaties hierboven. Records
+# worden aangemaakt via reports.py::create_report, aangeroepen vanuit de 6
+# triggers verspreid over listings.py/search_requests.py/game.py/
+# conversations.py/tasks.py (PRD §6) — hier enkel het admin-overzicht + de
+# afhandel-acties (§4/§8).
+# --------------------------------------------------------------------------
+@router.get("/admin/reports")
+async def list_reports(
+    type_: str | None = Query(None, alias="type"),
+    status: str | None = Query(None),
+    admin: dict = Depends(get_admin_user),
+):
+    filt: dict = {}
+    if type_:
+        filt["type"] = type_
+    if status and status != "alle":
+        filt["status"] = status
+    items = [strip_mongo(r) async for r in db.reports.find(filt).sort("createdAt", -1).limit(300)]
+    return items
+
+
+@router.get("/admin/reports/open-count")
+async def reports_open_count(admin: dict = Depends(get_admin_user)):
+    """Lichtgewicht aantal voor de badge in de admin-navigatie (§4), bedoeld
+    om elke 60 sec gepolld te worden — zelfde patroon als de bestaande
+    bell-badge (NotificationCenter.jsx)."""
+    count = await db.reports.count_documents({"status": "open"})
+    return {"count": count}
+
+
+@router.patch("/admin/reports/{report_id}/handle")
+async def handle_report(report_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.reports.update_one(
+        {"id": report_id},
+        {"$set": {"status": "afgehandeld", "handledByAdminId": admin["id"], "handledAt": now_iso()}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "Melding niet gevonden")
+    updated = await db.reports.find_one({"id": report_id})
+    return strip_mongo(updated)
+
+
+@router.patch("/admin/reports/{report_id}/reopen")
+async def reopen_report(report_id: str, admin: dict = Depends(get_admin_user)):
+    """Voor per ongeluk afgevinkte meldingen (§4) — geen aparte geschiedenis
+    van wie eerder afhandelde, die wordt gewoon overschreven bij de volgende
+    'Afhandelen'."""
+    result = await db.reports.update_one(
+        {"id": report_id},
+        {"$set": {"status": "open", "handledByAdminId": None, "handledAt": None}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "Melding niet gevonden")
+    updated = await db.reports.find_one({"id": report_id})
+    return strip_mongo(updated)
