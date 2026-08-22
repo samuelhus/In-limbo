@@ -30,6 +30,11 @@ Fase 9 (dit, op vraag van product na de eerste UI-doorloop van fase 6-8):
   _purge_conversation_attachments/hide_conversation.
 - Weergavenaam-formaat aangepast: "Voornaam van Organisatienaam" i.p.v.
   enkel de organisatienaam — zie _format_display_name.
+Fase 10 (op vraag van product): de in-app notificatie uit fase 4 (hierboven)
+is weer geschrapt — een dubbele alert naast de al bestaande ongelezen-badge
+op de "Berichten"-tab (fase 6/GET /conversations/unread-count), die dezelfde
+gebeurtenis al dekt. send_message zet enkel nog {offerer,requester}
+UnreadSince (fase 5, voor de e-maildigest) en de hiddenBy/handledBy-reset.
 
 Een Conversation is 1-op-1 gekoppeld aan een Application (dus impliciet aan
 één listing + één aanvrager/aanbieder-paar). offererUserId wordt bij aanmaak
@@ -59,7 +64,6 @@ from models import (
     MAX_CONVERSATION_ATTACHMENTS, MAX_CONVERSATION_ATTACHMENT_BYTES,
 )
 from auth import get_donateur_or_validated_user
-from notifications import create_notification
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -585,22 +589,6 @@ async def send_message(
     if new_attachments:
         update["$inc"] = {"attachmentCount": new_attachments, "attachmentBytes": new_bytes}
     await db.conversations.update_one({"id": conversation_id}, update)
-
-    # In-app notificatie voor de ontvanger (PRD §6.6), zelfde patroon als
-    # bv. new_application in routes/applications.py: hergebruik van
-    # create_notification, met de listing als context. Geen aparte
-    # blokkade-check nodig hier — als de ontvanger (other_party_id) de
-    # verzender geblokkeerd had, was send_message hierboven al met 403
-    # gestopt vóór het bericht ooit werd opgeslagen.
-    listing = await db.listings.find_one({"id": conversation["listingId"]}, {"_id": 0, "title": 1})
-    listing_title = listing.get("title") if listing else None
-    sender_org_name = None
-    if user.get("organisationId"):
-        sender_org = await db.organisations.find_one({"id": user["organisationId"]}, {"_id": 0, "name": 1})
-        sender_org_name = sender_org["name"] if sender_org else None
-    sender_name = sender_org_name or user.get("username") or f'{user.get("firstName","")} {user.get("lastName","")}'.strip()
-    notif_msg = f'{sender_name} heeft je een bericht gestuurd over "{listing_title or ""}"'
-    await create_notification(db, other_party_id, "new_message", notif_msg, conversation["listingId"], listing_title)
 
     return _serialize_message(doc)
 

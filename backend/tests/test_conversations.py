@@ -663,49 +663,11 @@ class TestConversationSurvivesListingDeletion:
         assert r_hide.status_code == 200, r_hide.text
 
 
-# ---------- In-app notificaties (fase 4, PRD §6.6) ----------
-class TestMessageNotifications:
-    def _new_message_notifs(self, session, conv):
-        notifs = session.get(f"{API}/notifications/mine").json()
-        return [n for n in notifs if n["type"] == "new_message" and n["listingId"] == conv["listingId"]]
-
-    def test_requester_gets_notified_on_offerer_first_message(self, lotte, samir, make_conversation):
-        conv = make_conversation()
-        r = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "hallo daar"})
-        assert r.status_code in (200, 201), r.text
-
-        matches = self._new_message_notifs(samir, conv)
-        assert len(matches) == 1, matches
-        assert matches[0]["listingTitle"] == conv["listingTitle"]
-        assert matches[0]["read"] is False
-
-        # De verzender krijgt geen notificatie voor het eigen bericht.
-        assert self._new_message_notifs(lotte, conv) == []
-
-    def test_offerer_gets_notified_on_requester_reply(self, lotte, samir, make_conversation):
-        conv = make_conversation()
-        r0 = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "start"})
-        assert r0.status_code in (200, 201), r0.text
-        r1 = samir.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "antwoord"})
-        assert r1.status_code in (200, 201), r1.text
-
-        # Lotte kreeg intussen ook al de notificatie van haar eigen bericht
-        # niet (zie vorige test) — hier telt enkel Samir's antwoord mee.
-        matches = self._new_message_notifs(lotte, conv)
-        assert len(matches) == 1, matches
-
-    def test_no_notification_when_message_is_rejected_by_block(self, lotte, samir, make_conversation):
-        """PRD §6.6: geen notificatie als de ontvanger de afzender
-        geblokkeerd heeft — hoeft hier niet apart afgedwongen te worden,
-        want send_message weigert een geblokkeerd bericht al met 403 vóór
-        het ooit opgeslagen (en dus genotificeerd) wordt."""
-        conv = make_conversation()
-        samir.patch(f"{API}/conversations/{conv['conversationId']}/block")
-        r = lotte.post(f"{API}/conversations/{conv['conversationId']}/messages", json={"text": "mag ik nog?"})
-        assert r.status_code == 403, r.text
-
-        assert self._new_message_notifs(samir, conv) == []
-
+# De in-app notificatie bij een nieuw bericht (fase 4, PRD §6.6) — met de
+# bijhorende TestMessageNotifications hier — is in fase 10 op vraag van
+# product weer geschrapt: dubbele alert naast de al bestaande ongelezen-
+# badge op de "Berichten"-tab (zie de module-docstring van
+# routes/conversations.py, "Fase 10").
 
 # ---------- E-maildigest (fase 5, PRD §6.6) ----------
 # unreadSince/emailSentAt zijn bewust géén onderdeel van het publieke
