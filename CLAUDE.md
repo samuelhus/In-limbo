@@ -77,6 +77,24 @@ spec — this feature was built in the numbered phases listed in `claude_code_pr
 document physical pickup/drop-off, feeding the admin impact/statistics views. `news` posts split into
 `nieuws`/`inspiratie` categories per `PostType`.
 
+### Notificaties vs. Meldingen vs. Berichten
+Three Dutch terms that sound interchangeable but name three distinct systems — keep them apart, both in code and
+in any new UI copy, rather than treating one as a synonym for another:
+- **Notificaties**: in-app notifications about a user's own actions/events on the platform (an application was
+  selected, someone applied to your listing, a new message arrived, ...). Entry point `notifications.py::
+  create_notification`, `notifications` collection, `routes/notifications.py`; surfaced via `pages/Notificaties.jsx`
+  and the unread badge in `Header.jsx`. Always addressed to a specific `userId`.
+- **Meldingen**: events *admins* need to be aware of, not the regular user-facing notification feed above. Two
+  concrete mechanisms today: `notify_ntfy` (push to admins' ntfy app for events like a new registration or a new
+  listing, see call sites in `notifications.py`/`routes/listings.py`), and the "Meldingen" tab in
+  `pages/AdminPanel.jsx` (currently a placeholder for user-submitted reports/flags — not built yet). When adding an
+  admin-alerting feature, this is the vocabulary to reach for, not "notificaties".
+- **Berichten**: the 1:1 direct-messaging system tied to a selected application (`routes/conversations.py`,
+  `conversations`/`messages` collections, `pages/Berichten.jsx` + `pages/GesprekDetail.jsx`, see also
+  `PRD_direct_messaging.md`). Despite the name suggesting "between users", admins and donateurs use this exact
+  same channel too whenever they happen to be the offerer or requester on a given application — there is no
+  separate messaging system for them.
+
 ## Frontend architecture
 
 - CRA bootstrapped via **craco** (not plain `react-scripts`) — webpack/eslint/jest tweaks live in
