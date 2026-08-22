@@ -18,6 +18,7 @@ from models import (
     SearchRequestCreateBody, SearchRequestAdminCreateBody, SearchRequestUpdate,
     MATERIAL_CATEGORIES, MATERIAL_SUBCATEGORY_MAP, MATERIAL_MAIN_CATEGORY_KEYS,
 )
+from reports import create_report
 
 router = APIRouter()
 
@@ -153,6 +154,20 @@ async def create_search_request(body: SearchRequestCreateBody, user: dict = Depe
         "updatedByUserId": user["id"],
     })
     await db.search_requests.insert_one(doc)
+
+    # Melding voor de admin-groep (PRD_meldingen_admin.md §6.4) — enkel bij deze
+    # gebruikersflow, niet bij de admin-variant hieronder (die is al door een
+    # admin zelf aangemaakt). Geen idempotentiecheck nodig: elke aanmaak is
+    # een unieke gebeurtenis.
+    org = await db.organisations.find_one({"id": user["organisationId"]}, {"_id": 0, "name": 1})
+    org_label = (org or {}).get("name") or "een organisatie"
+    await create_report(
+        db, "new_search_request", "search_request", search_request_id,
+        f'{org_label} plaatste een nieuw zoekertje "{doc.get("projectName") or "(geen projectnaam)"}".',
+        target_title=doc.get("projectName"),
+        meta={"organisationId": user["organisationId"]},
+    )
+
     return _public_view(doc)
 
 

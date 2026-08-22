@@ -40,8 +40,14 @@ from models import (
 from game_auth import (
     get_current_game_user, create_game_token, set_game_auth_cookie, clear_game_auth_cookie,
 )
+from reports import create_report
 
 router = APIRouter(prefix="/game", tags=["game"])
+
+# Drempel voor de 'evaluatie met hoge score'-Melding aan de admin-groep
+# (PRD_meldingen_admin.md §6.5) — points komt enkel omhoog via choose_best()
+# hieronder (+3 per keuze), de enige plek in dit bestand met een $inc op points.
+EVALUATION_HIGH_SCORE_THRESHOLD = 10
 
 _USERNAME_COLLATION = Collation(locale="en", strength=2)  # case-insensitive (PRD §3)
 
@@ -259,8 +265,42 @@ async def choose_best(body: GameChooseBestBody, user: dict = Depends(get_current
     is_own = chosen["userId"] == user["id"]
     if not is_own:
         # +3 punten voor kwaliteit (PRD §4.2 stap 6/§5) — eigen evaluatie kiezen levert niets extra op.
-        await db.game_evaluations.update_one({"id": body.evaluationId}, {"$inc": {"votes": 1, "points": 3}})
+        updated = await db.game_evaluations.find_one_and_update(
+            {"id": body.evaluationId},
+            {"$inc": {"votes": 1, "points": 3}},
+            return_document=ReturnDocument.AFTER,
+        )
+        await _maybe_report_high_score(updated)
     return {"ok": True, "own": is_own}
+
+
+async def _maybe_report_high_score(evaluation: dict | None) -> None:
+    """Melding voor de admin-groep zodra een evaluatie meer dan
+    EVALUATION_HIGH_SCORE_THRESHOLD punten haalt (PRD_meldingen_admin.md §6.5).
+    Idempotentie via het adminReported-veld: de tweede atomische update hier
+    slaagt enkel voor wie het veld als eerste van False naar True zet, dus bij
+    gelijktijdige stemmen die de drempel samen overschrijden ontstaat er nooit
+    meer dan 1 Melding voor dezelfde evaluatie."""
+    if not evaluation or evaluation.get("points", 0) <= EVALUATION_HIGH_SCORE_THRESHOLD:
+        return
+    won_race = await db.game_evaluations.find_one_and_update(
+        {"id": evaluation["id"], "adminReported": {"$ne": True}},
+        {"$set": {"adminReported": True}},
+    )
+    if not won_race:
+        return
+    listing = await db.listings.find_one({"id": evaluation["listingId"]}, {"_id": 0, "title": 1})
+    listing_title = (listing or {}).get("title")
+    await create_report(
+        db, "evaluation_high_score", "evaluation", evaluation["id"],
+        f'Een evaluatie op "{listing_title or "een aanbieding"}" haalde {evaluation["points"]} punten.',
+        target_title=listing_title,
+        meta={
+            "listingId": evaluation["listingId"],
+            "answer1": evaluation.get("answer1"),
+            "answer2": evaluation.get("answer2"),
+        },
+    )
 
 
 @router.get("/leaderboard")
