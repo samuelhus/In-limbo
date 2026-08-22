@@ -37,7 +37,7 @@ from deps import db, client, log, limiter
 from seed import seed
 from tasks import (
     archive_expired_listings, mark_inactive_orgs, send_photo_reminders,
-    send_message_email_reminders,
+    send_message_email_reminders, report_upcoming_deadlines,
 )
 from notifications import backfill_mailerlite
 
@@ -107,10 +107,17 @@ async def health() -> dict:
 # Startup / shutdown
 # --------------------------------------------------------------------------
 async def _nightly_maintenance() -> None:
-    """Nachtelijke taak: archiveer verlopen listings en markeer inactieve orgs."""
+    """Nachtelijke taak: archiveer verlopen listings, markeer inactieve orgs,
+    en meld aanbiedingen waarvan de deadline binnen 7 dagen valt aan de
+    admin-groep (PRD_meldingen_admin.md §6.2/§9 — zelfde cadans als de
+    andere nachtelijke taken, geen aparte scheduler-registratie nodig)."""
     archived = await archive_expired_listings(db)
     inactive = await mark_inactive_orgs(db)
-    log.info(f"Nachtelijke maintenance — archived={archived} inactive_orgs={inactive}")
+    deadline_reports = await report_upcoming_deadlines(db)
+    log.info(
+        f"Nachtelijke maintenance — archived={archived} inactive_orgs={inactive} "
+        f"deadline_reports={deadline_reports}"
+    )
 
 
 async def _photo_reminder_job() -> None:
@@ -164,6 +171,11 @@ async def startup() -> None:
     await db.password_resets.create_index("expiresAt", expireAfterSeconds=0)
     await db.newsletter_subscribers.create_index("email", unique=True)
     await db.contact_messages.create_index("createdAt")
+    # Meldingen (zie prd/PRD_meldingen_admin.md) — team-overzicht van
+    # platformgebeurtenissen, los van db.notifications hierboven.
+    await db.reports.create_index("status")  # open-count-badge + standaardfilter
+    await db.reports.create_index("createdAt")  # nieuwste eerst
+    await db.reports.create_index([("type", 1), ("targetId", 1)])  # idempotentiechecks per trigger
     # Schat of Schroot? (swipe-spel, zie prd/PRD_Schat_of_Schroot.md) — losstaand
     # subsysteem, eigen collecties (routes/game.py, routes/admin_game.py).
     # partialFilterExpression sluit username=None uit van de uniciteitscontrole
@@ -199,7 +211,8 @@ async def startup() -> None:
     # Eenmalige run bij opstart (vangt listings die verlopen zijn tijdens downtime)
     archived = await archive_expired_listings(db)
     inactive = await mark_inactive_orgs(db)
-    log.info(f"Startup OK — archived={archived} inactive_orgs={inactive}")
+    deadline_reports = await report_upcoming_deadlines(db)
+    log.info(f"Startup OK — archived={archived} inactive_orgs={inactive} deadline_reports={deadline_reports}")
 
     # MailerLite-inhaalslag: no-op als MAILERLITE_API_KEY niet is ingesteld. Zodra
     # de key wél ingesteld wordt, haalt de eerstvolgende herstart automatisch alle

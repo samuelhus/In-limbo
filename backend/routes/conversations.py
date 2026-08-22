@@ -59,6 +59,7 @@ import cloudinary.uploader
 from fastapi import APIRouter, HTTPException, Depends, Query
 
 from deps import db, now_iso, strip_mongo
+from reports import create_report
 from models import (
     ConversationCreate, MessageCreate,
     MAX_CONVERSATION_ATTACHMENTS, MAX_CONVERSATION_ATTACHMENT_BYTES,
@@ -620,8 +621,26 @@ async def block_conversation(conversation_id: str, user: dict = Depends(get_dona
     verandert niets. De blokkerende partij zelf blijft gewoon kunnen
     versturen (zie send_message) — enkel de geblokkeerde partij wordt
     tegengehouden."""
-    _conversation, offerer_user_id, _role = await _load_conversation(conversation_id, user)
-    await db.conversations.update_one({"id": conversation_id}, {"$addToSet": {"blockedBy": user["id"]}})
+    conversation, offerer_user_id, _role = await _load_conversation(conversation_id, user)
+    result = await db.conversations.update_one({"id": conversation_id}, {"$addToSet": {"blockedBy": user["id"]}})
+    if result.modified_count:
+        # Melding voor de admin-groep (PRD_meldingen_admin.md §6.6) — enkel bij
+        # een effectieve blokkade (modified_count>0), niet bij een herhaalde
+        # aanroep op een gesprek dat al geblokkeerd was ($addToSet is zelf al
+        # idempotent, maar zou anders wel een 2de Melding triggeren).
+        other_party_id = conversation["requesterUserId"] if user["id"] == offerer_user_id else offerer_user_id
+        listing = await db.listings.find_one({"id": conversation["listingId"]}, {"_id": 0, "title": 1})
+        await create_report(
+            db, "conversation_blocked", "conversation", conversation_id,
+            f'Een gebruiker blokkeerde de tegenpartij in een gesprek over "{(listing or {}).get("title") or "een aanbieding"}".',
+            target_title=(listing or {}).get("title"),
+            meta={
+                "blockerUserId": user["id"],
+                "blockedUserId": other_party_id,
+                "applicationId": conversation.get("applicationId"),
+                "listingId": conversation.get("listingId"),
+            },
+        )
     updated = await db.conversations.find_one({"id": conversation_id})
     return _serialize_conversation(updated, offerer_user_id, user["id"])
 
