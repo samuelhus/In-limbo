@@ -200,6 +200,7 @@
     "filter_warehouse": "En entrepôt",
     "filter_rehomed": "Redistribué",
     "empty": "Aucune offre dans cette catégorie pour le moment.",
+    "load_error": "Impossible de charger les offres. Réessayez.",
     "limited_view": "Connectez-vous pour voir l'offre complète",
     "load_more": "Charger plus",
     "filters": "Filtres",

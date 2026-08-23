@@ -246,6 +246,7 @@ export default function Catalogus() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [fallbackItems, setFallbackItems] = useState([]);
   const [showFallback, setShowFallback] = useState(false);
+  const [error, setError] = useState('');
   const debounceRef = useRef(null);
 
   const limit = 20;
@@ -263,6 +264,7 @@ export default function Catalogus() {
 
   const load = useCallback(async (reset = false) => {
     setLoading(true);
+    setError('');
     const startSkip = reset ? 0 : skip;
     try {
       const params = { skip: startSkip, limit };
@@ -292,10 +294,14 @@ export default function Catalogus() {
         setShowFallback(false);
         setFallbackItems([]);
       }
+    } catch {
+      // Bv. netwerkonderbreking of een geannuleerd request (rapid filter-
+      // wissels) — anders bleef dit een onbehandelde promise rejection.
+      setError(t('catalogus.load_error'));
     } finally {
       setLoading(false);
     }
-  }, [status, skip, debouncedQuery]);
+  }, [status, skip, debouncedQuery, t]);
 
   // Reload whenever status filter changes OR debounced search changes
   useEffect(() => {
@@ -402,6 +408,10 @@ export default function Catalogus() {
 
         {/* Grid */}
         <div className="md:col-span-9 lg:col-span-10">
+          {error && (
+            <p className="text-destructive mb-8" data-testid="catalogus-error">{error}</p>
+          )}
+
           {/* Zero-results banner */}
           {isSearching && showFallback && (
             <div className="mb-8 border-l-2 border-foreground/20 pl-4" data-testid="catalogus-no-results">

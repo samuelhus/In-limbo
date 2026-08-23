@@ -200,6 +200,7 @@
     "filter_warehouse": "In magazijn",
     "filter_rehomed": "Herbestemd",
     "empty": "Er zijn nog geen aanbiedingen in deze categorie.",
+    "load_error": "Kon aanbiedingen niet laden. Probeer opnieuw.",
     "limited_view": "Log in voor de volledige aanbieding",
     "load_more": "Meer laden",
     "filters": "Filters",
