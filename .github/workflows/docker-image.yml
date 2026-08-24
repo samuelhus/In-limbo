@@ -1,18 +1,80 @@
 name: Docker Image CI
 
+# Bouwt de backend- en frontend-image (zie backend/Dockerfile en
+# frontend/Dockerfile — er is bewust geen Dockerfile op de repo-root).
+# Op push naar main worden de images ook gepubliceerd naar GHCR, zodat de
+# server ze kan pullen i.p.v. lokaal te bouwen (dat liep daar vast op RAM).
+# Op pull requests wordt enkel gebouwd, als CI-check, zonder te pushen.
+
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-
-  build:
-
+  build-backend:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/samuelhus/in-limbo-backend:latest
+            ghcr.io/samuelhus/in-limbo-backend:${{ github.sha }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: ${{ github.event_name == 'push' }}
+          # REACT_APP_BACKEND_URL blijft bewust leeg — zie de nginx-config in
+          # frontend/Dockerfile, die /api relatief naar de backend-container
+          # doorstuurt (zelfde aanpak als in docker-compose.yml).
+          build-args: |
+            REACT_APP_SENTRY_DSN=${{ secrets.REACT_APP_SENTRY_DSN }}
+            REACT_APP_ENVIRONMENT=production
+            REACT_APP_UMAMI_URL=${{ vars.REACT_APP_UMAMI_URL }}
+            REACT_APP_UMAMI_WEBSITE_ID=${{ vars.REACT_APP_UMAMI_WEBSITE_ID }}
+          tags: |
+            ghcr.io/samuelhus/in-limbo-frontend:latest
+            ghcr.io/samuelhus/in-limbo-frontend:${{ github.sha }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
