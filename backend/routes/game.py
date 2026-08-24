@@ -105,7 +105,15 @@ async def game_register(body: GameRegisterBody, response: Response):
         "consentAt": now_iso(),
         "anonymized": False,
     }
-    await db.game_users.insert_one(doc)
+    try:
+        await db.game_users.insert_one(doc)
+    except DuplicateKeyError:
+        # Race: de find_one hierboven zag nog geen match, maar een gelijktijdige
+        # aanvraag met dezelfde (case-insensitieve) username registreerde
+        # ondertussen als eerste — botst op de unique index (server.py). Zelfde
+        # afhandeling als de expliciete botsing hierboven i.p.v. een onafgevangen
+        # 500 (zie ook swipe()/evaluate() hieronder, die dit al zo deden).
+        raise HTTPException(409, "Username al in gebruik")
     token = create_game_token(doc["id"], doc["username"])
     set_game_auth_cookie(response, token)
     return {"id": doc["id"], "username": doc["username"]}
