@@ -14,5 +14,8 @@ Disallow: /mijn-organisatie
 Disallow: /mijn-aanvragen
 Disallow: /mijn-aanbiedingen
 Disallow: /admin
+# Individuele organisatiepagina's staan bewust niet in de sitemap (enkel de
+# /partners-overzichtspagina) — dicht dit af tegen bulkcrawling van partnerdata.
+Disallow: /organisaties/
 
 Sitemap: https://www.inlimbo.brussels/sitemap.xml

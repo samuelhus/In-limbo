@@ -6,7 +6,7 @@ import unicodedata
 from datetime import datetime
 from difflib import SequenceMatcher
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fastapi.responses import StreamingResponse
 
 from reportlab.lib.pagesizes import A4
@@ -14,7 +14,7 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor, Color
 from reportlab.pdfgen import canvas as rl_canvas
 
-from deps import db, now_iso, strip_mongo
+from deps import db, now_iso, strip_mongo, limiter
 from models import OrgUpdate
 from auth import get_validated_user
 from notifications import FRONTEND_URL
@@ -83,15 +83,17 @@ MUTED = HexColor("#6B7280")
 
 
 @router.get("/organisations")
+@limiter.limit("20/minute")
 async def list_organisations(
+    request: Request,
     q: str = Query("", description="Search query for org name"),
     validated_only: bool = Query(True),
 ):
     """Public list. If validated_only, only orgs that passed validation —
     this includes 'inactive' (dormant >24mo, see tasks.mark_inactive_orgs):
     an org doesn't stop being a validated partner just because it's been
-    quiet, so the partner page still lists it.
-    """
+    quiet, so the partner page still lists it. Rate-limited — this is the
+    /partners directory endpoint, a target for bulk scraping."""
     filt: dict = {}
     if validated_only:
         filt["status"] = {"$in": ["active", "inactive"]}
@@ -149,7 +151,10 @@ async def check_similar_organisations(name: str = Query(..., min_length=2)):
 
 
 @router.get("/organisations/search")
-async def search_organisations(q: str = Query(..., min_length=2), includeInactive: bool = False):
+@limiter.limit("60/minute")
+async def search_organisations(request: Request, q: str = Query(..., min_length=2), includeInactive: bool = False):
+    """Typeahead gebruikt door checkout/checkin/registratie (o.a. Checkout.jsx
+    zonder debounce) — vandaar de ruimere limiet dan de andere org-endpoints."""
     statuses = ["active", "inactive"] if includeInactive else ["active"]
     regex = {"$regex": q, "$options": "i"}
     docs = await db.organisations.find(
@@ -185,7 +190,8 @@ async def list_organisation_checkout_users(org_id: str):
 
 
 @router.get("/organisations/{org_id}")
-async def get_organisation(org_id: str):
+@limiter.limit("30/minute")
+async def get_organisation(request: Request, org_id: str):
     org = await db.organisations.find_one({"$or": [{"id": org_id}, {"slug": org_id}]})
     if not org:
         raise HTTPException(404, "Organisatie niet gevonden")
