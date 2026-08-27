@@ -27,11 +27,26 @@ export default function ListingDetail() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
 
+  // Herbruikbare refresh (na een geslaagde aanvraag, of wijzigingen vanuit
+  // OwnerPanel) — bewust zonder reset/cancellation-guard: dit is een gerichte
+  // herlaadbeurt voor de al zichtbare listing, geen navigatie naar een andere.
   const load = useCallback(() => {
     api.get(`/listings/${id}`).then(({ data }) => setItem(data)).catch(() => setItem(false));
   }, [id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // Reset bij elke id-wissel (bv. via een link van listing A naar listing B,
+    // zonder page reload) — anders blijft listing A nog even zichtbaar terwijl
+    // B al aan het laden is, of wint een trage respons voor A alsnog van een
+    // snellere voor B als ze door elkaar toekomen.
+    let cancelled = false;
+    setItem(null);
+    setActive(0); // vorige foto-index kan buiten bereik liggen voor de nieuwe listing
+    api.get(`/listings/${id}`)
+      .then(({ data }) => { if (!cancelled) setItem(data); })
+      .catch(() => { if (!cancelled) setItem(false); });
+    return () => { cancelled = true; };
+  }, [id]);
 
   if (item === null) {
     return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground" data-testid="listing-loading">{t('common.loading')}</div>;
