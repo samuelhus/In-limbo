@@ -161,8 +161,10 @@ async def search_organisations(request: Request, q: str = Query(..., min_length=
         {"name": regex, "status": {"$in": statuses}},
         # studentCheckout wordt meegestuurd zodat de (publieke) checkout-pagina
         # meteen weet of ze de student/bestaande-gebruiker-keuze moet tonen,
-        # zonder een extra call.
-        {"_id": 0, "id": 1, "name": 1, "category": 1, "studentCheckout": 1},
+        # zonder een extra call. status wordt meegestuurd zodat de UI een
+        # inactieve organisatie kan aanduiden i.p.v. ze onopgemerkt te laten
+        # kiezen bij een checkout/checkin met includeInactive=true.
+        {"_id": 0, "id": 1, "name": 1, "category": 1, "studentCheckout": 1, "status": 1},
     ).limit(10).to_list(10)
     return docs
 

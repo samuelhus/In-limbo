@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
 import AdminNieuws from './admin/AdminNieuws';
@@ -43,7 +43,14 @@ const SECTION_TITLES = {
 
 export default function AdminPanel() {
   const { t } = useTranslation();
-  const [section, setSection] = useState('validatie');
+  // Actieve sectie in de URL (?tab=...) i.p.v. pure component-state — anders
+  // springt verversen altijd terug naar "Validatie", is een tab niet deelbaar/
+  // bookmarkbaar, en verlaat de browser-terugknop meteen /admin i.p.v. naar de
+  // vorige tab te gaan.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedSection = searchParams.get('tab');
+  const section = SECTIONS.some((s) => s.key === requestedSection) ? requestedSection : 'validatie';
+  const setSection = (key) => setSearchParams(key === 'validatie' ? {} : { tab: key });
   const [queue, setQueue] = useState(null);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);

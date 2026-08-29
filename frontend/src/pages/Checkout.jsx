@@ -169,13 +169,21 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
         {step === 1 && (
           <section className="space-y-6" data-testid="checkout-step-1">
             <div>
-              <label className="label-overline">{t('checkout.find_org')}</label>
+              <label className="label-overline" htmlFor="checkout-org-search-input">{t('checkout.find_org')}</label>
               {selectedOrg ? (
                 <div
                   className="inline-flex items-center gap-2 border border-foreground bg-surface px-4 py-2"
                   data-testid="checkout-selected-org"
                 >
                   <span className="font-medium">{selectedOrg.name}</span>
+                  {selectedOrg.status === 'inactive' && (
+                    <span
+                      className="text-xs uppercase tracking-wide bg-muted text-muted-foreground px-2 py-0.5"
+                      data-testid="checkout-selected-org-inactive-badge"
+                    >
+                      {t('checkout.inactive_org_badge')}
+                    </span>
+                  )}
                   <button
                     onClick={clearOrg}
                     className="text-muted-foreground hover:text-foreground w-8 h-8 inline-flex items-center justify-center text-xl -mr-1"
@@ -184,9 +192,11 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                     ×
                   </button>
                 </div>
-              ) : (
+              ) : null}
+              {!selectedOrg && (
                 <>
                   <input
+                    id="checkout-org-search-input"
                     type="text"
                     className="input-flat"
                     placeholder={t('checkout.type_org_name')}
@@ -205,6 +215,14 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                           >
                             <span className="font-medium">{o.name}</span>
                             <span className="text-muted-foreground ml-2 text-xs">{t(`org_categories.${o.category}`)}</span>
+                            {o.status === 'inactive' && (
+                              <span
+                                className="ml-2 text-xs uppercase tracking-wide bg-muted text-muted-foreground px-2 py-0.5"
+                                data-testid={`checkout-org-option-${o.id}-inactive-badge`}
+                              >
+                                {t('checkout.inactive_org_badge')}
+                              </span>
+                            )}
                           </button>
                         </li>
                       ))}
@@ -241,8 +259,9 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
 
                 {checkoutBy === 'student' && (
                   <div className="mt-4">
-                    <label className="label-overline">{t('checkout.student_email_label')}</label>
+                    <label className="label-overline" htmlFor="checkout-student-email-input">{t('checkout.student_email_label')}</label>
                     <input
+                      id="checkout-student-email-input"
                       type="email"
                       className="input-flat"
                       placeholder={t('checkout.student_email_placeholder')}
@@ -255,8 +274,9 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
 
                 {checkoutBy === 'user' && (
                   <div className="mt-4">
-                    <label className="label-overline">{t('checkout.pick_user_label')}</label>
+                    <label className="label-overline" htmlFor="checkout-pick-user-select">{t('checkout.pick_user_label')}</label>
                     <select
+                      id="checkout-pick-user-select"
                       className="input-flat"
                       value={pickedUserId}
                       onChange={(e) => setPickedUserId(e.target.value)}
@@ -291,8 +311,9 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
           <section className="space-y-6" data-testid="checkout-step-2">
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-3 items-end">
               <div>
-                <label className="label-overline">{t('checkout.material_label')}</label>
+                <label className="label-overline" htmlFor="checkout-material-select">{t('checkout.material_label')}</label>
                 <select
+                  id="checkout-material-select"
                   ref={materialSelectRef}
                   className="input-flat"
                   value={currentMaterial}
@@ -306,8 +327,9 @@ setTimeout(() => materialSelectRef.current?.focus(), 0);
                 </select>
               </div>
               <div>
-                <label className="label-overline">{t('checkout.weight_label')}</label>
+                <label className="label-overline" htmlFor="checkout-weight-input">{t('checkout.weight_label')}</label>
                 <input
+                  id="checkout-weight-input"
                   ref={weightInputRef}
                   type="number"
                   inputMode="decimal"

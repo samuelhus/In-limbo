@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '@/lib/api';
 import StatusBadge from '@/components/StatusBadge';
 
-export default function AdminDonnateurListings() {
+export default function AdminDonateurListings() {
   const { userId } = useParams();
   const [listings, setListings] = useState([]);
   const [username, setUsername] = useState('');
@@ -24,7 +24,7 @@ export default function AdminDonnateurListings() {
       <Link to="/admin" className="text-sm text-muted-foreground hover:underline mb-6 block">
         ← Terug naar admin
       </Link>
-      <p className="overline mb-2">Donnateur</p>
+      <p className="overline mb-2">Donateur</p>
       <h1 className="text-3xl font-bold tracking-tight mb-8">
         Aanbiedingen van {username}
       </h1>

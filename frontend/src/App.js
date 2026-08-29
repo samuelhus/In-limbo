@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '@/index.css';
 import '@/App.css';
 
@@ -63,11 +64,12 @@ function ConditionalFooter() {
 }
 
 function NotFound() {
+  const { t } = useTranslation();
   return (
     <div className="max-w-3xl mx-auto px-4 py-32 text-center" data-testid="not-found">
       <p className="overline mb-3">404</p>
-      <h1 className="text-5xl font-bold tracking-tight">Verloren in limbo.</h1>
-      <p className="mt-4 text-muted-foreground">Deze pagina bestaat niet.</p>
+      <h1 className="text-5xl font-bold tracking-tight">{t('common.not_found_title')}</h1>
+      <p className="mt-4 text-muted-foreground">{t('common.not_found_body')}</p>
     </div>
   );
 }

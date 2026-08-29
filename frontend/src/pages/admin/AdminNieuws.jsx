@@ -286,8 +286,9 @@ export default function AdminNieuws() {
           </div>
 
           <div>
-            <label className="label-overline">Categorie</label>
+            <label className="label-overline" htmlFor="admin-nieuws-category">Categorie</label>
             <select
+              id="admin-nieuws-category"
               className="input-flat"
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -301,10 +302,11 @@ export default function AdminNieuws() {
 
           {form.postType === 'nieuws' && EVENT_DATE_CATEGORIES.includes(form.category) && (
             <div>
-              <label className="label-overline">
+              <label className="label-overline" htmlFor="admin-nieuws-event-date">
                 Datum evenement <span className="text-muted-foreground normal-case">(verplicht voor deze categorie — wordt op de site getoond i.p.v. de publicatiedatum)</span>
               </label>
               <input
+                id="admin-nieuws-event-date"
                 type="date"
                 className="input-flat"
                 value={form.eventDate}
@@ -386,8 +388,9 @@ export default function AdminNieuws() {
               {form.languages.includes('nl') && (
                 <>
                   <div>
-                    <label className="label-overline">Titel (NL)</label>
+                    <label className="label-overline" htmlFor="admin-nieuws-title-nl">Titel (NL)</label>
                     <input
+                      id="admin-nieuws-title-nl"
                       type="text"
                       className="input-flat"
                       value={form.titleNl}
@@ -412,8 +415,9 @@ export default function AdminNieuws() {
               {form.languages.includes('fr') && (
                 <>
                   <div>
-                    <label className="label-overline">Titel (FR)</label>
+                    <label className="label-overline" htmlFor="admin-nieuws-title-fr">Titel (FR)</label>
                     <input
+                      id="admin-nieuws-title-fr"
                       type="text"
                       className="input-flat"
                       value={form.titleFr}
@@ -438,8 +442,9 @@ export default function AdminNieuws() {
           ) : (
             <>
               <div>
-                <label className="label-overline">Titel (NL)</label>
+                <label className="label-overline" htmlFor="admin-inspiratie-title-nl">Titel (NL)</label>
                 <input
+                  id="admin-inspiratie-title-nl"
                   type="text"
                   className="input-flat"
                   value={form.titleNl}
@@ -450,8 +455,9 @@ export default function AdminNieuws() {
                 />
               </div>
               <div>
-                <label className="label-overline">Titel (FR)</label>
+                <label className="label-overline" htmlFor="admin-inspiratie-title-fr">Titel (FR)</label>
                 <input
+                  id="admin-inspiratie-title-fr"
                   type="text"
                   className="input-flat"
                   value={form.titleFr}
@@ -554,10 +560,11 @@ export default function AdminNieuws() {
 
               {form.category === 'documentatie' && (
                 <div>
-                  <label className="label-overline">
+                  <label className="label-overline" htmlFor="admin-inspiratie-link">
                     Link naar document <span className="text-muted-foreground normal-case">(optioneel)</span>
                   </label>
                   <input
+                    id="admin-inspiratie-link"
                     type="url"
                     className="input-flat"
                     placeholder="https://drive.google.com/…"

@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { api, formatApiError } from '@/lib/api';
+import { useModalA11y } from '@/hooks/useModalA11y';
 
 export default function ApplyModal({ listing, onClose, onSubmitted }) {
   const { t } = useTranslation();
+  const panelRef = useModalA11y(onClose);
   const [motivation, setMotivation] = useState('');
   // Als string bijgehouden zodat je tijdens het typen (bv. backspacen naar leeg
   // om "1" te vervangen door "5") niet meteen teruggeklampt wordt naar 1 — dat
@@ -55,14 +57,19 @@ export default function ApplyModal({ listing, onClose, onSubmitted }) {
       data-testid="apply-modal-overlay"
     >
       <div
+        ref={panelRef}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="apply-modal-title"
+        tabIndex={-1}
         className="w-full sm:max-w-xl bg-surface p-6 sm:p-10 border-t sm:border border-border max-h-[90vh] overflow-y-auto"
         data-testid="apply-modal"
       >
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <p className="overline mb-2">{t('listing.apply_modal_title')}</p>
-            <h2 className="text-2xl font-bold tracking-tight">{listing.title}</h2>
+            <h2 id="apply-modal-title" className="text-2xl font-bold tracking-tight">{listing.title}</h2>
           </div>
           <button onClick={onClose} className="text-2xl leading-none px-2" data-testid="apply-modal-close">×</button>
         </div>
@@ -70,12 +77,13 @@ export default function ApplyModal({ listing, onClose, onSubmitted }) {
         <form onSubmit={submit} className="space-y-5">
           {showQuantityField && (
             <div>
-              <label className="label-overline">
+              <label className="label-overline" htmlFor="apply-quantity-input">
                 {t('listing.apply_quantity_label')}
                 <span className="text-muted-foreground normal-case"> ({t('listing.apply_quantity_available', { count: remaining })})</span>
               </label>
               <div className="relative w-32">
                 <input
+                  id="apply-quantity-input"
                   type="number"
                   min="1"
                   max={remaining}
@@ -122,8 +130,9 @@ export default function ApplyModal({ listing, onClose, onSubmitted }) {
           )}
 
           <div>
-            <label className="label-overline">{t('listing.motivation')}</label>
+            <label className="label-overline" htmlFor="apply-motivation-input">{t('listing.motivation')}</label>
             <textarea
+              id="apply-motivation-input"
               rows={6}
               maxLength={500}
               required
