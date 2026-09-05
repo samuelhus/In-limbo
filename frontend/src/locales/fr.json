@@ -1128,5 +1128,25 @@
         "note": "La MÉDIANE a été délibérément choisie plutôt que la moyenne arithmétique : la moyenne serait fortement faussée par la valeur extrême de l'Électro (24,9 par rapport à une fourchette de 0,2–4,0 pour les autres catégories), ce qui donnerait un chiffre irréaliste pour une simple « catégorie résiduelle »."
       }
     }
+  },
+
+  "kiosk": {
+    "overline": "Kiosque",
+    "title": "En quoi pouvons-nous t'aider ?",
+    "tiles": {
+      "checkout": "Sortie de matériel",
+      "catalogus": "Parcourir le catalogue",
+      "spel": "Jouer au jeu",
+      "inspiratie": "Lire l'inspiration"
+    },
+    "return_btn": "← Retour au menu",
+    "return_confirm": "Es-tu sûr(e) ? Toute progression non enregistrée sera perdue.",
+    "disable_btn_label": "Désactiver le mode kiosque",
+    "disable_confirm": "Désactiver le mode kiosque sur cet appareil ?",
+    "idle": {
+      "overline": "Toujours là ?",
+      "message": "Retour au menu principal dans {{seconds}} secondes…",
+      "stay_btn": "Je suis toujours là"
+    }
   }
 }

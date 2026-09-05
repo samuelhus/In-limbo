@@ -1128,5 +1128,25 @@
         "note": "Bewust de MEDIAAN gekozen i.p.v. het rekenkundig gemiddelde: het gemiddelde zou sterk vertekend worden door de Electro-uitschieter (24,9 t.o.v. een range van 0,2–4,0 bij de overige categorieën), en zou daardoor voor een gewone \"restcategorie\" een onrealistisch hoog cijfer opleveren."
       }
     }
+  },
+
+  "kiosk": {
+    "overline": "Kiosk",
+    "title": "Waarmee kunnen we je helpen?",
+    "tiles": {
+      "checkout": "Uitchecken",
+      "catalogus": "Catalogus doorbladeren",
+      "spel": "Speel het spel",
+      "inspiratie": "Inspiratie lezen"
+    },
+    "return_btn": "← Terug naar start",
+    "return_confirm": "Weet je het zeker? Eventuele voortgang gaat verloren.",
+    "disable_btn_label": "Kiosk-modus uitschakelen",
+    "disable_confirm": "Kiosk-modus uitschakelen op dit toestel?",
+    "idle": {
+      "overline": "Nog daar?",
+      "message": "Terug naar het startmenu over {{seconds}} seconden…",
+      "stay_btn": "Ik ben er nog"
+    }
   }
 }

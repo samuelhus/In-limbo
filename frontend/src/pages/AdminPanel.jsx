@@ -10,6 +10,7 @@ import AdminOrganisaties from './admin/AdminOrganisaties';
 import AdminZoekertjes from './admin/AdminZoekertjes';
 import AdminGame from './admin/AdminGame';
 import AdminMeldingen from './admin/AdminMeldingen';
+import AdminKiosk from './admin/AdminKiosk';
 
 // Zie prd/PRD_meldingen_admin.md §4/§9 — zelfde 60 sec-pollinterval als de
 // bestaande bell-badge (NotificationCenter.jsx), voor consistentie.
@@ -25,6 +26,7 @@ const SECTIONS = [
   { key: 'statistieken', label: 'Statistieken' },
   { key: 'transacties', label: 'Transacties' },
   { key: 'meldingen', label: 'Meldingen' },
+  { key: 'kiosk', label: 'Kiosk' },
   { key: 'gearchiveerd', label: 'Gearchiveerd' },
 ];
 
@@ -38,6 +40,7 @@ const SECTION_TITLES = {
   statistieken: 'Statistieken',
   transacties: 'Transacties',
   meldingen: 'Meldingen',
+  kiosk: 'Kiosk',
   gearchiveerd: 'Gearchiveerde aanbiedingen',
 };
 
@@ -376,6 +379,8 @@ export default function AdminPanel() {
         {section === 'transacties' && <AdminTransacties />}
 
         {section === 'meldingen' && <AdminMeldingen onCountChanged={loadOpenReportsCount} />}
+
+        {section === 'kiosk' && <AdminKiosk />}
 
         {section === 'gearchiveerd' && (
           <div data-testid="admin-gearchiveerd-placeholder">
