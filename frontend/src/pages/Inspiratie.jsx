@@ -130,7 +130,7 @@ function TagFilter({ tagsInUse, activeTag, setActiveTag, i18n, t }) {
 export default function Inspiratie() {
   const { t, i18n } = useTranslation();
   const [posts, setPosts] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const [allTags, setAllTags] = useState([]);
   const [activeTag, setActiveTag] = useState(null);
@@ -138,7 +138,7 @@ export default function Inspiratie() {
   useEffect(() => {
     api.get('/news', { params: { postType: 'inspiratie' } })
       .then(({ data }) => setPosts(data))
-      .catch(() => setError('Kon inspiratie niet laden.'));
+      .catch(() => setError(true));
     api.get('/tags')
       .then(({ data }) => setAllTags(data))
       .catch(() => {}); // niet kritiek — filter toont zich dan gewoon niet
@@ -167,7 +167,7 @@ export default function Inspiratie() {
       <p className="overline mb-4">{t('inspiratie.subtitle')}</p>
       <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-8">{t('inspiratie.title')}</h1>
 
-      {error && <p className="text-destructive">{error}</p>}
+      {error && <p className="text-destructive">{t('inspiratie.load_error')}</p>}
       {posts === null && !error && <p className="text-muted-foreground">{t('common.loading')}</p>}
 
       {posts && posts.length > 0 && (
@@ -186,7 +186,7 @@ export default function Inspiratie() {
 
       {filteredPosts && filteredPosts.length === 0 && posts && posts.length > 0 && (
         <p className="text-muted-foreground" data-testid="inspiratie-filter-empty">
-          {t('inspiratie.empty')}
+          {t('inspiratie.no_filter_results')}
         </p>
       )}
 

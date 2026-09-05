@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -32,6 +33,7 @@ function ToolbarButton({ onClick, active, disabled, label, children }) {
  * - testId: string — data-testid prefix for the toolbar buttons
  */
 export default function RichTextEditor({ value, onChange, maxLength = 5000, testId = 'richtext' }) {
+  const { t } = useTranslation();
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -72,7 +74,7 @@ export default function RichTextEditor({ value, onChange, maxLength = 5000, test
   const charCount = editor.getText().length;
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('Link-URL (laat leeg om te verwijderen):', previousUrl || 'https://');
+    const url = window.prompt(t('richtext_editor.link_prompt'), previousUrl || 'https://');
     if (url === null) return;
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
@@ -82,21 +84,21 @@ export default function RichTextEditor({ value, onChange, maxLength = 5000, test
   };
 
   const insertVideo = () => {
-    const url = window.prompt('YouTube- of Vimeo-link:', 'https://');
+    const url = window.prompt(t('richtext_editor.video_prompt'), 'https://');
     if (!url) return;
     const parsed = parseVideoUrl(url);
     if (!parsed) {
-      alert('Kon geen geldige YouTube- of Vimeo-link herkennen in deze URL.');
+      alert(t('richtext_editor.video_invalid'));
       return;
     }
     editor.chain().focus().insertContent({ type: 'videoEmbed', attrs: parsed }).run();
   };
 
   const insertAudio = () => {
-    const url = window.prompt('Link naar audiobestand (mp3):', 'https://');
+    const url = window.prompt(t('richtext_editor.audio_prompt'), 'https://');
     if (!url) return;
     if (!isSafeAudioUrl(url)) {
-      alert('Ongeldige link — de audio-URL moet met http:// of https:// beginnen.');
+      alert(t('richtext_editor.audio_invalid'));
       return;
     }
     editor.chain().focus().insertContent({ type: 'audioEmbed', attrs: { src: url.trim() } }).run();
@@ -106,61 +108,61 @@ export default function RichTextEditor({ value, onChange, maxLength = 5000, test
     <div className="richtext-editor" data-testid={testId}>
       <div className="flex flex-wrap gap-1.5 mb-2" data-testid={`${testId}-toolbar`}>
         <ToolbarButton
-          label="Vet"
+          label={t('richtext_editor.bold')}
           active={editor.isActive('bold')}
           onClick={() => editor.chain().focus().toggleBold().run()}
         >
           <strong>V</strong>
         </ToolbarButton>
         <ToolbarButton
-          label="Cursief"
+          label={t('richtext_editor.italic')}
           active={editor.isActive('italic')}
           onClick={() => editor.chain().focus().toggleItalic().run()}
         >
           <em>C</em>
         </ToolbarButton>
         <ToolbarButton
-          label="Opsomming"
+          label={t('richtext_editor.bullet_list')}
           active={editor.isActive('bulletList')}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
         >
           • Lijst
         </ToolbarButton>
         <ToolbarButton
-          label="Genummerde lijst"
+          label={t('richtext_editor.ordered_list')}
           active={editor.isActive('orderedList')}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
         >
           1. Lijst
         </ToolbarButton>
         <ToolbarButton
-          label="Link toevoegen/wijzigen"
+          label={t('richtext_editor.link_button')}
           active={editor.isActive('link')}
           onClick={setLink}
         >
           🔗 Link
         </ToolbarButton>
         <ToolbarButton
-          label="Video invoegen (YouTube/Vimeo)"
+          label={t('richtext_editor.video_button')}
           onClick={insertVideo}
         >
           🎬 Video
         </ToolbarButton>
         <ToolbarButton
-          label="Audio invoegen (mp3-link)"
+          label={t('richtext_editor.audio_button')}
           onClick={insertAudio}
         >
           🔊 Audio
         </ToolbarButton>
         <ToolbarButton
-          label="Ongedaan maken"
+          label={t('richtext_editor.undo')}
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
         >
           ↶
         </ToolbarButton>
         <ToolbarButton
-          label="Opnieuw"
+          label={t('richtext_editor.redo')}
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
         >

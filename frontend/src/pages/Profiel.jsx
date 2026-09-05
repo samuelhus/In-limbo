@@ -161,8 +161,9 @@ export default function Profiel() {
         {isDonateur ? (
           <>
             <div>
-              <label className="label-overline">{t('profile.username_label')}</label>
+              <label className="label-overline" htmlFor="profiel-username">{t('profile.username_label')}</label>
               <input
+                id="profiel-username"
                 className="input-flat"
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
@@ -173,8 +174,9 @@ export default function Profiel() {
               </p>
             </div>
             <div>
-              <label className="label-overline">{t('auth.donateur_first_name_label')}</label>
+              <label className="label-overline" htmlFor="profiel-firstname">{t('auth.donateur_first_name_label')}</label>
               <input
+                id="profiel-firstname"
                 className="input-flat"
                 value={form.firstName}
                 onChange={(e) => setForm({ ...form, firstName: e.target.value })}
@@ -216,8 +218,9 @@ export default function Profiel() {
             </div>
             {form.donorType === 'bedrijf' && (
               <div>
-                <label className="label-overline">{t('auth.donateur_company_name_label')}</label>
+                <label className="label-overline" htmlFor="profiel-companyname">{t('auth.donateur_company_name_label')}</label>
                 <input
+                  id="profiel-companyname"
                   className="input-flat"
                   value={form.companyName}
                   onChange={(e) => setForm({ ...form, companyName: e.target.value })}
@@ -230,27 +233,28 @@ export default function Profiel() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="label-overline">{t('profile.first_name_label')}</label>
-                <input className="input-flat" value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} data-testid="profiel-firstname" />
+                <label className="label-overline" htmlFor="profiel-firstname">{t('profile.first_name_label')}</label>
+                <input id="profiel-firstname" className="input-flat" value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} data-testid="profiel-firstname" />
               </div>
               <div>
-                <label className="label-overline">{t('profile.last_name_label')}</label>
-                <input className="input-flat" value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} data-testid="profiel-lastname" />
+                <label className="label-overline" htmlFor="profiel-lastname">{t('profile.last_name_label')}</label>
+                <input id="profiel-lastname" className="input-flat" value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} data-testid="profiel-lastname" />
               </div>
             </div>
             <div>
-              <label className="label-overline">{t('profile.phone_label')}</label>
-              <input className="input-flat" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} data-testid="profiel-phone" />
+              <label className="label-overline" htmlFor="profiel-phone">{t('profile.phone_label')}</label>
+              <input id="profiel-phone" className="input-flat" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} data-testid="profiel-phone" />
             </div>
           </>
         )}
         <div>
-          <label className="label-overline">{t('profile.email_label')}</label>
-          <input type="email" className="input-flat" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} data-testid="profiel-email" />
+          <label className="label-overline" htmlFor="profiel-email">{t('profile.email_label')}</label>
+          <input id="profiel-email" type="email" className="input-flat" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} data-testid="profiel-email" />
         </div>
         <div>
-          <label className="label-overline">{t('profile.language_label')}</label>
+          <label className="label-overline" htmlFor="profiel-language">{t('profile.language_label')}</label>
           <select
+            id="profiel-language"
             className="input-flat"
             value={form.preferredLanguage}
             onChange={(e) => setForm({ ...form, preferredLanguage: e.target.value })}
@@ -261,8 +265,8 @@ export default function Profiel() {
           </select>
         </div>
         <div>
-          <label className="label-overline">{t('profile.new_password')}</label>
-          <PasswordInput className="input-flat" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} data-testid="profiel-password" />
+          <label className="label-overline" htmlFor="profiel-password">{t('profile.new_password')}</label>
+          <PasswordInput id="profiel-password" className="input-flat" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} data-testid="profiel-password" />
         </div>
 
         {msg && <p className="text-sm bg-green-50 border border-green-300 text-green-900 px-3 py-2" data-testid="profiel-success">{msg}</p>}

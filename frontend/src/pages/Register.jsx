@@ -201,35 +201,35 @@ export default function Register() {
           <h2 className="text-2xl font-semibold">{t('register.personal_title')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-overline">{t('register.firstname')}</label>
-              <input className="input-flat" data-testid="register-firstname" value={user.firstName}
+              <label className="label-overline" htmlFor="register-firstname">{t('register.firstname')}</label>
+              <input id="register-firstname" className="input-flat" data-testid="register-firstname" value={user.firstName}
                 onChange={(e) => setUser({...user, firstName: e.target.value})} />
             </div>
             <div>
-              <label className="label-overline">{t('register.lastname')}</label>
-              <input className="input-flat" data-testid="register-lastname" value={user.lastName}
+              <label className="label-overline" htmlFor="register-lastname">{t('register.lastname')}</label>
+              <input id="register-lastname" className="input-flat" data-testid="register-lastname" value={user.lastName}
                 onChange={(e) => setUser({...user, lastName: e.target.value})} />
             </div>
           </div>
           <div>
-            <label className="label-overline">
+            <label className="label-overline" htmlFor="register-email">
               {t('register.email')}
               <InfoHint text={t('register.contact_hint')} testId="register-email-hint" />
             </label>
-            <input type="email" className="input-flat" data-testid="register-email" value={user.email}
+            <input id="register-email" type="email" className="input-flat" data-testid="register-email" value={user.email}
               onChange={(e) => setUser({...user, email: e.target.value})} />
           </div>
           <div>
-            <label className="label-overline">
+            <label className="label-overline" htmlFor="register-phone">
               {t('register.phone')} <span className="text-muted-foreground normal-case">({t('common.optioneel')})</span>
               <InfoHint text={t('register.contact_hint')} testId="register-phone-hint" />
             </label>
-            <input className="input-flat" data-testid="register-phone" value={user.phone}
+            <input id="register-phone" className="input-flat" data-testid="register-phone" value={user.phone}
               onChange={(e) => setUser({...user, phone: e.target.value})} />
           </div>
           <div>
-            <label className="label-overline">{t('register.password')} <span className="text-muted-foreground normal-case">({t('register.password_hint')})</span></label>
-            <PasswordInput className="input-flat" data-testid="register-password" value={user.password}
+            <label className="label-overline" htmlFor="register-password">{t('register.password')} <span className="text-muted-foreground normal-case">({t('register.password_hint')})</span></label>
+            <PasswordInput id="register-password" className="input-flat" data-testid="register-password" value={user.password}
               onChange={(e) => setUser({...user, password: e.target.value})} />
           </div>
           <div className="flex justify-between">
@@ -246,8 +246,8 @@ export default function Register() {
         <section className="space-y-6" data-testid="register-step-4-new">
           <h2 className="text-2xl font-semibold">{t('register.org_title')}</h2>
           <div>
-            <label className="label-overline">{t('register.org_name')}</label>
-            <input className="input-flat" data-testid="register-org-name" value={org.orgName}
+            <label className="label-overline" htmlFor="register-org-name">{t('register.org_name')}</label>
+            <input id="register-org-name" className="input-flat" data-testid="register-org-name" value={org.orgName}
               onChange={(e) => setOrg({...org, orgName: e.target.value})} />
             {similarOrgs.length > 0 && (
               <div data-testid="register-org-similar-warning"
@@ -263,26 +263,26 @@ export default function Register() {
             )}
           </div>
           <div>
-            <label className="label-overline">{t('register.org_description')}</label>
-            <textarea rows={4} className="input-flat" data-testid="register-org-description" value={org.orgDescription}
+            <label className="label-overline" htmlFor="register-org-description">{t('register.org_description')}</label>
+            <textarea id="register-org-description" rows={4} className="input-flat" data-testid="register-org-description" value={org.orgDescription}
               onChange={(e) => setOrg({...org, orgDescription: e.target.value})} />
           </div>
           <div>
-            <label className="label-overline">{t('register.org_category')}</label>
-            <select className="input-flat" data-testid="register-org-category" value={org.orgCategory}
+            <label className="label-overline" htmlFor="register-org-category">{t('register.org_category')}</label>
+            <select id="register-org-category" className="input-flat" data-testid="register-org-category" value={org.orgCategory}
               onChange={(e) => setOrg({...org, orgCategory: e.target.value})}>
               {ORG_CATEGORY_KEYS.map((key) => <option key={key} value={key}>{t(`org_categories.${key}`)}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-overline">{t('register.org_address')} <span className="text-muted-foreground normal-case">({t('common.optioneel')})</span></label>
-              <input className="input-flat" data-testid="register-org-address" value={org.orgAddress}
+              <label className="label-overline" htmlFor="register-org-address">{t('register.org_address')} <span className="text-muted-foreground normal-case">({t('common.optioneel')})</span></label>
+              <input id="register-org-address" className="input-flat" data-testid="register-org-address" value={org.orgAddress}
                 onChange={(e) => setOrg({...org, orgAddress: e.target.value})} />
             </div>
             <div>
-              <label className="label-overline">{t('register.org_website')} <span className="text-muted-foreground normal-case">({t('common.optioneel')})</span></label>
-              <input className="input-flat" data-testid="register-org-website" value={org.orgWebsite}
+              <label className="label-overline" htmlFor="register-org-website">{t('register.org_website')} <span className="text-muted-foreground normal-case">({t('common.optioneel')})</span></label>
+              <input id="register-org-website" className="input-flat" data-testid="register-org-website" value={org.orgWebsite}
                 onChange={(e) => setOrg({...org, orgWebsite: e.target.value})} />
             </div>
           </div>

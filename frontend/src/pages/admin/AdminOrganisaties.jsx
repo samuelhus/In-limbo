@@ -355,13 +355,13 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
       <div className="bg-background border border-border p-8 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
         <p className="overline mb-2">Organisatie bewerken</p>
         <div>
-          <label className="label-overline">Naam</label>
-          <input className="input-flat w-full" value={form.name}
+          <label className="label-overline" htmlFor="admin-org-edit-name">Naam</label>
+          <input id="admin-org-edit-name" className="input-flat w-full" value={form.name}
                  onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </div>
         <div>
-          <label className="label-overline">Profiel-URL (slug)</label>
-          <input className="input-flat w-full" value={form.slug}
+          <label className="label-overline" htmlFor="admin-org-edit-slug">Profiel-URL (slug)</label>
+          <input id="admin-org-edit-slug" className="input-flat w-full" value={form.slug}
                  placeholder="wordt automatisch aangevuld indien leeg"
                  onChange={(e) => setForm({ ...form, slug: e.target.value })} />
           <p className="text-xs text-muted-foreground mt-1">
@@ -369,30 +369,30 @@ function AdminOrgEditModal({ org, onSave, onClose, busy }) {
           </p>
         </div>
         <div>
-          <label className="label-overline">Beschrijving</label>
-          <textarea className="input-flat w-full" rows={3} value={form.description}
+          <label className="label-overline" htmlFor="admin-org-edit-description">Beschrijving</label>
+          <textarea id="admin-org-edit-description" className="input-flat w-full" rows={3} value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </div>
         <div>
-          <label className="label-overline">Categorie</label>
-          <select className="input-flat w-full" value={form.category}
+          <label className="label-overline" htmlFor="admin-org-edit-category">Categorie</label>
+          <select id="admin-org-edit-category" className="input-flat w-full" value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}>
             {ORG_CATEGORIES.map((key) => <option key={key} value={key}>{t(`org_categories.${key}`)}</option>)}
           </select>
         </div>
         <div>
-          <label className="label-overline">Adres</label>
-          <input className="input-flat w-full" value={form.address}
+          <label className="label-overline" htmlFor="admin-org-edit-address">Adres</label>
+          <input id="admin-org-edit-address" className="input-flat w-full" value={form.address}
                  onChange={(e) => setForm({ ...form, address: e.target.value })} />
         </div>
         <div>
-          <label className="label-overline">Website</label>
-          <input className="input-flat w-full" value={form.website}
+          <label className="label-overline" htmlFor="admin-org-edit-website">Website</label>
+          <input id="admin-org-edit-website" className="input-flat w-full" value={form.website}
                  onChange={(e) => setForm({ ...form, website: e.target.value })} />
         </div>
         <div>
-          <label className="label-overline">Status</label>
-          <select className="input-flat w-full" value={form.status}
+          <label className="label-overline" htmlFor="admin-org-edit-status">Status</label>
+          <select id="admin-org-edit-status" className="input-flat w-full" value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}>
             {ORG_STATUSES.map((s) => <option key={s} value={s}>{t(`status.${s}`, { defaultValue: s })}</option>)}
           </select>

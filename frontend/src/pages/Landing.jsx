@@ -242,9 +242,9 @@ const isLoggedIn = user && typeof user === 'object';
           data-testid="landing-impact-widget"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16">
-            <p className="overline mb-2">Sinds de lancering van deze website — augustus 2026</p>
+            <p className="overline mb-2">{t('landing.impact_overline')}</p>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-10">
-              Onze impact tot nu toe
+              {t('landing.impact_title')}
             </h2>
             <motion.div
               className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-6"
@@ -258,7 +258,7 @@ const isLoggedIn = user && typeof user === 'object';
                   {impact.totalWeightKg.toLocaleString('nl-BE')}
                 </p>
                 <p className="mt-2 text-sm uppercase tracking-widest text-foreground/70">
-                  kg materiaal hergebruikt
+                  {t('organisation.impact_weight_label')}
                 </p>
               </motion.div>
               <motion.div variants={fadeScale} data-testid="landing-impact-co2">
@@ -266,7 +266,7 @@ const isLoggedIn = user && typeof user === 'object';
                   {impact.totalCo2Kg.toLocaleString('nl-BE')}
                 </p>
                 <p className="mt-2 text-sm uppercase tracking-widest text-foreground/70">
-                  kg CO2-equivalent bespaard
+                  {t('organisation.impact_co2_label')}
                 </p>
               </motion.div>
             </motion.div>
@@ -275,7 +275,7 @@ const isLoggedIn = user && typeof user === 'object';
               className="industrial-link text-sm"
               data-testid="landing-impact-methodology-link"
             >
-              Hoe berekenen we dit? →
+              {t('organisation.impact_methodology_link')}
             </Link>
           </div>
         </section>

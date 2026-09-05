@@ -11,13 +11,33 @@ export default function OrganisationPage() {
   const { id } = useParams();
   const [org, setOrg] = useState(null);
   const [listings, setListings] = useState([]);
+  const [listingsError, setListingsError] = useState(false);
   const [impact, setImpact] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
   useEffect(() => {
-    api.get(`/organisations/${id}`).then(({ data }) => setOrg(data)).catch(() => setOrg(false));
-    api.get(`/organisations/${id}/listings`).then(({ data }) => setListings(data)).catch(() => {});
-    api.get(`/organisations/${id}/stats/impact`).then(({ data }) => setImpact(data)).catch(() => {});
+    // Reset bij elke org-wissel (bv. via een link van org A naar org B, zonder
+    // page reload) — anders blijft de vorige org zichtbaar terwijl de nieuwe
+    // nog laadt, of wint een trage respons voor org A alsnog van een snellere
+    // voor org B als ze door elkaar toekomen.
+    let cancelled = false;
+    setOrg(null);
+    setListings([]);
+    setListingsError(false);
+    setImpact(null);
+    setLightboxIndex(null);
+
+    api.get(`/organisations/${id}`)
+      .then(({ data }) => { if (!cancelled) setOrg(data); })
+      .catch(() => { if (!cancelled) setOrg(false); });
+    api.get(`/organisations/${id}/listings`)
+      .then(({ data }) => { if (!cancelled) setListings(data); })
+      .catch(() => { if (!cancelled) setListingsError(true); });
+    api.get(`/organisations/${id}/stats/impact`)
+      .then(({ data }) => { if (!cancelled) setImpact(data); })
+      .catch(() => {}); // niet kritiek — impact-widget toont zich dan gewoon niet
+
+    return () => { cancelled = true; };
   }, [id]);
 
   if (org === null) return <div className="max-w-5xl mx-auto px-4 py-24 text-muted-foreground">{t('common.loading')}</div>;
@@ -135,6 +155,12 @@ export default function OrganisationPage() {
             {t('organisation.impact_methodology_link')}
           </Link>
         </section>
+      )}
+
+      {listingsError && (
+        <p className="mt-20 text-sm text-destructive" data-testid="org-listings-error">
+          {t('organisation.listings_load_error')}
+        </p>
       )}
 
       {active.length > 0 && (

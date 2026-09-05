@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useModalA11y } from '@/hooks/useModalA11y';
 
 /**
  * Fullscreen photo lightbox with prev/next navigation.
@@ -22,19 +23,27 @@ export default function Lightbox({ photos, index, onClose, onNavigate }) {
   }, [index, photos.length, onNavigate]);
 
   useEffect(() => {
+    // Escape sluiten + de focus trap zelf worden door useModalA11y hieronder
+    // afgehandeld — hier enkel de pijltjestoetsen, specifiek voor de Lightbox.
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') goPrev();
       if (e.key === 'ArrowRight') goNext();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, goPrev, goNext]);
+  }, [goPrev, goNext]);
+
+  const panelRef = useModalA11y(onClose);
 
   if (index == null || !photos || photos.length === 0) return null;
 
   return (
     <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('inspiratie.gallery_photo_alt')}
+      tabIndex={-1}
       className="fixed inset-0 z-50 bg-foreground/90 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8 animate-fade-in"
       onClick={onClose}
       data-testid="lightbox-overlay"

@@ -104,6 +104,7 @@ function ListingTile({ item, isValidated, isAdmin }) {
         // AbortError = gebruiker heeft het deelvenster zelf gesloten — geen echte fout.
         if (shareErr?.name !== 'AbortError') {
           console.error('Delen mislukt:', shareErr);
+          alert(t('catalogus.instagram_share_error'));
         }
       })
       .finally(() => setReadyFile(null));
@@ -147,7 +148,7 @@ function ListingTile({ item, isValidated, isAdmin }) {
           <button
             onClick={readyFile ? handleShareTap : handlePrepare}
             disabled={exporting}
-            title={readyFile ? 'Delen' : 'Exporteer als Instagram afbeelding'}
+            title={readyFile ? t('catalogus.instagram_share_tooltip') : t('catalogus.instagram_export_tooltip')}
             data-testid={readyFile ? `share-instagram-btn-${item.id}` : `export-instagram-btn-${item.id}`}
             className={`absolute top-3 right-3 text-white w-8 h-8 flex items-center justify-center transition-colors disabled:opacity-50 z-10 text-base ${
               readyFile ? 'bg-primary hover:bg-primary/80 animate-pulse' : 'bg-black/50 hover:bg-black/80'
@@ -164,12 +165,12 @@ function ListingTile({ item, isValidated, isAdmin }) {
         )}
         {item.isRecurrent && (
           <div className="absolute bottom-3 left-3 text-[10px] uppercase tracking-widest bg-background/90 px-2 py-0.5">
-            Recurrent
+            {t('catalogus.recurrent_badge')}
           </div>
         )}
         {item.status === 'in_magazijn' && (
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center bg-[#BBF7D0]/80 py-2 font-heading tracking-[0.3em] uppercase text-xs text-[#14532D]">
-            Magazijn
+            {t('nav.warehouse')}
           </div>
         )}
       </div>

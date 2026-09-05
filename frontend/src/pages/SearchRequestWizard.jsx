@@ -282,8 +282,9 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
       {adminMode && step === 0 && (
         <section className="space-y-6" data-testid="wizard-step-org">
           <div className="space-y-2 relative">
-            <label className="label-overline">{t('search_request.admin_org_label')}</label>
+            <label className="label-overline" htmlFor="wizard-org-search-input">{t('search_request.admin_org_label')}</label>
             <input
+              id="wizard-org-search-input"
               className="input-flat"
               value={orgQuery}
               onChange={(e) => { setOrgQuery(e.target.value); setSelectedOrg(null); }}
@@ -332,10 +333,11 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
       {step === 2 && (
         <section className="space-y-6" data-testid="wizard-step-project">
           <div className="space-y-2">
-            <label className="label-overline">
+            <label className="label-overline" htmlFor="wizard-project-name-input">
               {t('search_request.field_project_name')} {!adminMode && <span className="text-destructive">*</span>}
             </label>
             <input
+              id="wizard-project-name-input"
               className="input-flat"
               maxLength={100}
               value={data.projectName}
@@ -345,10 +347,11 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
             />
           </div>
           <div className="space-y-2">
-            <label className="label-overline">
+            <label className="label-overline" htmlFor="wizard-location-input">
               {t('search_request.field_location')} <span className="text-muted-foreground normal-case">({t('common.optional')})</span>
             </label>
             <input
+              id="wizard-location-input"
               className="input-flat"
               maxLength={200}
               value={data.location}
@@ -379,10 +382,11 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
             </div>
           </div>
           <div className="space-y-2">
-            <label className="label-overline">
+            <label className="label-overline" htmlFor="wizard-short-description-input">
               {t('search_request.field_short_description')} <span className="text-muted-foreground normal-case">({t('common.optional')})</span>
             </label>
             <textarea
+              id="wizard-short-description-input"
               rows={3}
               maxLength={500}
               className="input-flat"
@@ -392,11 +396,12 @@ export default function SearchRequestWizard({ adminMode = false, editMode = fals
             />
           </div>
           <div className="space-y-2">
-            <label className="label-overline">
+            <label className="label-overline" htmlFor="wizard-deadline-input">
               {t('search_request.field_deadline')} {!adminMode && <span className="text-destructive">*</span>}
               <span className="text-muted-foreground normal-case"> ({t('search_request.deadline_hint')})</span>
             </label>
             <input
+              id="wizard-deadline-input"
               type="date"
               className="input-flat"
               min={minDeadline}

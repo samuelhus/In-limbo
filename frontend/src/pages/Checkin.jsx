@@ -177,7 +177,7 @@ export default function Checkin() {
               </div>
             )}
             <div>
-              <label className="label-overline">
+              <label className="label-overline" htmlFor="checkin-target-search-input">
                 {targetType === 'org' ? t('checkin.find_org') : t('checkin.find_donateur')}
               </label>
               {selectedTarget ? (
@@ -197,6 +197,7 @@ export default function Checkin() {
               ) : (
                 <>
                   <input
+                    id="checkin-target-search-input"
                     type="text"
                     className="input-flat"
                     placeholder={targetType === 'org' ? t('checkin.type_org_name') : t('checkin.type_donateur_name')}
@@ -244,8 +245,9 @@ export default function Checkin() {
           <section className="space-y-6" data-testid="checkin-step-2">
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-3 items-end">
               <div>
-                <label className="label-overline">{t('checkin.material_label')}</label>
+                <label className="label-overline" htmlFor="checkin-material-select">{t('checkin.material_label')}</label>
                 <select
+                  id="checkin-material-select"
                   ref={materialSelectRef}
                   className="input-flat"
                   value={currentMaterial}
@@ -259,8 +261,9 @@ export default function Checkin() {
                 </select>
               </div>
               <div>
-                <label className="label-overline">{t('checkin.weight_label')}</label>
+                <label className="label-overline" htmlFor="checkin-weight-input">{t('checkin.weight_label')}</label>
                 <input
+                  id="checkin-weight-input"
                   ref={weightInputRef}
                   type="number"
                   inputMode="decimal"

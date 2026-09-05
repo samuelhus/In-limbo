@@ -184,53 +184,53 @@ function AdminUserEditModal({ user, onSave, onClose, busy }) {
         <p className="overline mb-2">Gebruiker bewerken</p>
         {isDonateur ? (
           <div>
-            <label className="label-overline">Gebruikersnaam</label>
-            <input className="input-flat w-full" value={form.username}
+            <label className="label-overline" htmlFor="admin-user-edit-username">Gebruikersnaam</label>
+            <input id="admin-user-edit-username" className="input-flat w-full" value={form.username}
                    onChange={(e) => setForm({ ...form, username: e.target.value })} />
           </div>
         ) : (
           <>
             <div>
-              <label className="label-overline">Voornaam</label>
-              <input className="input-flat w-full" value={form.firstName}
+              <label className="label-overline" htmlFor="admin-user-edit-firstname">Voornaam</label>
+              <input id="admin-user-edit-firstname" className="input-flat w-full" value={form.firstName}
                      onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
             </div>
             <div>
-              <label className="label-overline">Achternaam</label>
-              <input className="input-flat w-full" value={form.lastName}
+              <label className="label-overline" htmlFor="admin-user-edit-lastname">Achternaam</label>
+              <input id="admin-user-edit-lastname" className="input-flat w-full" value={form.lastName}
                      onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
             </div>
           </>
         )}
         <div>
-          <label className="label-overline">E-mail</label>
-          <input className="input-flat w-full" value={form.email}
+          <label className="label-overline" htmlFor="admin-user-edit-email">E-mail</label>
+          <input id="admin-user-edit-email" className="input-flat w-full" value={form.email}
                  onChange={(e) => setForm({ ...form, email: e.target.value })} />
         </div>
         <div>
-          <label className="label-overline">Telefoon</label>
-          <input className="input-flat w-full" value={form.phone}
+          <label className="label-overline" htmlFor="admin-user-edit-phone">Telefoon</label>
+          <input id="admin-user-edit-phone" className="input-flat w-full" value={form.phone}
                  onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label-overline">Rol</label>
-            <select className="input-flat w-full" value={form.role}
+            <label className="label-overline" htmlFor="admin-user-edit-role">Rol</label>
+            <select id="admin-user-edit-role" className="input-flat w-full" value={form.role}
                     onChange={(e) => setForm({ ...form, role: e.target.value })}>
               {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <div>
-            <label className="label-overline">Status</label>
-            <select className="input-flat w-full" value={form.status}
+            <label className="label-overline" htmlFor="admin-user-edit-status">Status</label>
+            <select id="admin-user-edit-status" className="input-flat w-full" value={form.status}
                     onChange={(e) => setForm({ ...form, status: e.target.value })}>
               {USER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label className="label-overline">Taalvoorkeur</label>
-          <select className="input-flat w-full" value={form.preferredLanguage}
+          <label className="label-overline" htmlFor="admin-user-edit-language">Taalvoorkeur</label>
+          <select id="admin-user-edit-language" className="input-flat w-full" value={form.preferredLanguage}
                   onChange={(e) => setForm({ ...form, preferredLanguage: e.target.value })}
                   data-testid="admin-user-edit-language">
             <option value="nl">Nederlands</option>

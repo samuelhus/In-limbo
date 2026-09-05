@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, formatApiError } from '@/lib/api';
+import { useModalA11y } from '@/hooks/useModalA11y';
 
 const REASONS = ['voorwaarden', 'misleidend', 'ander'];
 
 export default function ReportListingModal({ listing, onClose, onSubmitted }) {
   const { t } = useTranslation();
+  const panelRef = useModalA11y(onClose);
   const [reason, setReason] = useState('voorwaarden');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -35,22 +37,28 @@ export default function ReportListingModal({ listing, onClose, onSubmitted }) {
       data-testid="report-listing-modal-overlay"
     >
       <div
+        ref={panelRef}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-listing-modal-title"
+        tabIndex={-1}
         className="w-full sm:max-w-md bg-surface p-6 sm:p-8 border-t sm:border border-border"
         data-testid="report-listing-modal"
       >
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <p className="overline mb-2">{t('listing.report_modal_title')}</p>
-            <h2 className="text-xl font-bold tracking-tight">{listing.title}</h2>
+            <h2 id="report-listing-modal-title" className="text-xl font-bold tracking-tight">{listing.title}</h2>
           </div>
           <button onClick={onClose} className="text-2xl leading-none px-2" data-testid="report-listing-modal-close">×</button>
         </div>
 
         <form onSubmit={submit} className="space-y-5">
           <div>
-            <label className="label-overline">{t('listing.report_reason_label')}</label>
+            <label className="label-overline" htmlFor="report-listing-reason-select">{t('listing.report_reason_label')}</label>
             <select
+              id="report-listing-reason-select"
               className="input-flat"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -63,8 +71,9 @@ export default function ReportListingModal({ listing, onClose, onSubmitted }) {
           </div>
 
           <div>
-            <label className="label-overline">{t('listing.report_note_label')}</label>
+            <label className="label-overline" htmlFor="report-listing-note-input">{t('listing.report_note_label')}</label>
             <textarea
+              id="report-listing-note-input"
               rows={4}
               maxLength={500}
               value={note}

@@ -88,26 +88,26 @@ export default function MijnOrganisatie() {
 
       <form onSubmit={save} className="mt-10 space-y-5">
         <div>
-          <label className="label-overline">{t('organisation.name')}</label>
-          <input className="input-flat" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} data-testid="org-name-input" />
+          <label className="label-overline" htmlFor="org-name-input">{t('organisation.name')}</label>
+          <input id="org-name-input" className="input-flat" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} data-testid="org-name-input" />
         </div>
         <div>
-          <label className="label-overline">{t('organisation.description')}</label>
-          <textarea rows={5} className="input-flat" value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} data-testid="org-description-input" />
+          <label className="label-overline" htmlFor="org-description-input">{t('organisation.description')}</label>
+          <textarea id="org-description-input" rows={5} className="input-flat" value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} data-testid="org-description-input" />
         </div>
         <div>
-          <label className="label-overline">{t('organisation.category')}</label>
-          <select className="input-flat" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} data-testid="org-category-input">
+          <label className="label-overline" htmlFor="org-category-input">{t('organisation.category')}</label>
+          <select id="org-category-input" className="input-flat" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} data-testid="org-category-input">
             {CATS.map((key) => <option key={key} value={key}>{t(`org_categories.${key}`)}</option>)}
           </select>
         </div>
         <div>
-          <label className="label-overline">{t('organisation.address')}</label>
-          <input className="input-flat" value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} data-testid="org-address-input" />
+          <label className="label-overline" htmlFor="org-address-input">{t('organisation.address')}</label>
+          <input id="org-address-input" className="input-flat" value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} data-testid="org-address-input" />
         </div>
         <div>
-          <label className="label-overline">{t('organisation.website')}</label>
-          <input className="input-flat" value={form.website} onChange={(e) => setForm({...form, website: e.target.value})} data-testid="org-website-input" />
+          <label className="label-overline" htmlFor="org-website-input">{t('organisation.website')}</label>
+          <input id="org-website-input" className="input-flat" value={form.website} onChange={(e) => setForm({...form, website: e.target.value})} data-testid="org-website-input" />
         </div>
 
         <label className="flex items-start gap-3 cursor-pointer pt-1" data-testid="org-visible-label">

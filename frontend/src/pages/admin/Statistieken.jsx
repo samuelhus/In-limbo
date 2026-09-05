@@ -77,8 +77,9 @@ export default function Statistieken() {
       {/* Periode filter */}
       <div className="flex flex-wrap items-end gap-4" data-testid="admin-stats-filter">
         <div>
-          <label className="label-overline">Jaar</label>
+          <label className="label-overline" htmlFor="admin-stats-year">Jaar</label>
           <select
+            id="admin-stats-year"
             className="input-flat"
             value={year}
             onChange={(e) => { setYear(e.target.value); setMonth(''); }}
@@ -90,8 +91,9 @@ export default function Statistieken() {
         </div>
         {year && (
           <div>
-            <label className="label-overline">Maand</label>
+            <label className="label-overline" htmlFor="admin-stats-month">Maand</label>
             <select
+              id="admin-stats-month"
               className="input-flat"
               value={month}
               onChange={(e) => setMonth(e.target.value)}

@@ -303,8 +303,9 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 2: Title */}
       {step === 2 && (
         <section className="space-y-3" data-testid="wizard-step-title">
-          <label className="label-overline">{t('listing.wizard_title_label')}</label>
+          <label className="label-overline" htmlFor="wizard-title-input">{t('listing.wizard_title_label')}</label>
           <input
+            id="wizard-title-input"
             className="input-flat text-lg"
             data-testid="wizard-title-input"
             value={data.title}
@@ -319,8 +320,9 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 3: Description */}
       {step === 3 && (
         <section className="space-y-3" data-testid="wizard-step-description">
-          <label className="label-overline">{t('listing.wizard_description_label')}</label>
+          <label className="label-overline" htmlFor="wizard-description-input">{t('listing.wizard_description_label')}</label>
           <textarea
+            id="wizard-description-input"
             rows={6}
             className="input-flat"
             data-testid="wizard-description-input"
@@ -337,8 +339,9 @@ export default function ListingWizard({ editMode = false }) {
         <section className="space-y-4" data-testid="wizard-step-deadline">
           {!data.isRecurrent && !(isAdmin && data.placeInWarehouse) && (
             <div>
-              <label className="label-overline">{t('listing.wizard_deadline_label')}</label>
+              <label className="label-overline" htmlFor="wizard-deadline-input">{t('listing.wizard_deadline_label')}</label>
               <input
+                id="wizard-deadline-input"
                 type="date"
                 className="input-flat"
                 data-testid="wizard-deadline-input"
@@ -410,8 +413,9 @@ export default function ListingWizard({ editMode = false }) {
       {step === 5 && (
         <section className="space-y-6" data-testid="wizard-step-weight">
           <div className="space-y-3">
-            <label className="label-overline">{t('listing.wizard_weight_label')}</label>
+            <label className="label-overline" htmlFor="wizard-weight-input">{t('listing.wizard_weight_label')}</label>
             <input
+              id="wizard-weight-input"
               type="number"
               step="0.1"
               min="0.1"
@@ -423,11 +427,12 @@ export default function ListingWizard({ editMode = false }) {
             />
           </div>
           <div className="space-y-3">
-            <label className="label-overline">
+            <label className="label-overline" htmlFor="wizard-quantity-input">
               {t('listing.wizard_quantity_label')}
               <span className="text-muted-foreground normal-case"> ({t('listing.wizard_quantity_hint')})</span>
             </label>
             <input
+              id="wizard-quantity-input"
               type="number"
               step="1"
               min="1"
@@ -466,8 +471,9 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 7: Dimensions */}
       {step === 7 && (
         <section className="space-y-3" data-testid="wizard-step-dimensions">
-          <label className="label-overline">{t('listing.wizard_step_dimensions')} <span className="text-muted-foreground normal-case">({t('common.optional')})</span></label>
+          <label className="label-overline" htmlFor="wizard-dimensions-input">{t('listing.wizard_step_dimensions')} <span className="text-muted-foreground normal-case">({t('common.optional')})</span></label>
           <input
+            id="wizard-dimensions-input"
             className="input-flat"
             data-testid="wizard-dimensions-input"
             placeholder={t('listing.wizard_dimensions_placeholder')}
@@ -480,8 +486,9 @@ export default function ListingWizard({ editMode = false }) {
       {/* STEP 8: Transport */}
       {step === 8 && (
         <section className="space-y-3" data-testid="wizard-step-transport">
-          <label className="label-overline">{t('listing.wizard_step_transport')} <span className="text-muted-foreground normal-case">({t('common.optional')})</span></label>
+          <label className="label-overline" htmlFor="wizard-transport-input">{t('listing.wizard_step_transport')} <span className="text-muted-foreground normal-case">({t('common.optional')})</span></label>
           <textarea
+            id="wizard-transport-input"
             rows={3}
             className="input-flat"
             data-testid="wizard-transport-input"
