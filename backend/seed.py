@@ -5,6 +5,7 @@ import uuid
 import typing
 from datetime import datetime, timezone, timedelta
 from auth import hash_password
+from deps import KIOSK_EMAIL
 from models import OrgCategory
 
 VALID_ORG_CATEGORIES = set(typing.get_args(OrgCategory)) - {""}
@@ -66,6 +67,40 @@ async def seed(db) -> None:
             await db.users.update_one(
                 {"email": admin_email},
                 {"$set": {"passwordHash": hash_password(admin_password)}},
+            )
+
+    # 1b. Kiosk-account ---------------------------------------------------
+    # Eén vast, gedeeld systeemaccount waarmee /kiosk automatisch inlogt (zie
+    # routes/auth.py::kiosk_login, opgezocht via het gedeelde KIOSK_EMAIL uit
+    # deps.py) — los van de anonieme "kiosk-modus"-laag (il_kiosk_mode,
+    # PRD_kiosk_modus.md). Draait, net als het admin-account hierboven,
+    # altijd (ongeacht SEED_TEST_DATA) zodat dit account op elke omgeving
+    # beschikbaar is. Het wachtwoord wordt hier enkel gezet voor schema-
+    # consistentie — de kiosk-login-route gebruikt het niet, ze logt
+    # rechtstreeks in op basis van KIOSK_EMAIL.
+    kiosk_password = os.environ.get("KIOSK_PASSWORD", "Kiosk123!")
+    kiosk_user = await db.users.find_one({"email": KIOSK_EMAIL})
+    if kiosk_user is None:
+        await db.users.insert_one({
+            "id": str(uuid.uuid4()),
+            "email": KIOSK_EMAIL,
+            "passwordHash": hash_password(kiosk_password),
+            "firstName": "Kiosk",
+            "lastName": None,
+            "phone": None,
+            "role": "kiosk",
+            "status": "validated",
+            "rejectionReason": None,
+            "organisationId": "",
+            "dateLastLogin": None,
+            "createdAt": _iso_now(),
+        })
+    else:
+        from auth import verify_password
+        if not verify_password(kiosk_password, kiosk_user["passwordHash"]):
+            await db.users.update_one(
+                {"email": KIOSK_EMAIL},
+                {"$set": {"passwordHash": hash_password(kiosk_password)}},
             )
 
     # 2. Validated orgs --------------------------------------------------

@@ -1131,14 +1131,13 @@
   },
 
   "kiosk": {
-    "overline": "Kiosk",
-    "title": "Waarmee kunnen we je helpen?",
     "tiles": {
       "checkout": "Uitchecken",
       "catalogus": "Catalogus doorbladeren",
-      "spel": "Speel het spel",
-      "inspiratie": "Inspiratie lezen"
+      "spel": "Speel: Schat of Schroot",
+      "inspiratie": "Inspiratie"
     },
+    "announcements_heading": "Aankondigingen",
     "return_btn": "← Terug naar start",
     "return_confirm": "Weet je het zeker? Eventuele voortgang gaat verloren.",
     "disable_btn_label": "Kiosk-modus uitschakelen",

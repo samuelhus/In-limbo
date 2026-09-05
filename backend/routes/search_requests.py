@@ -40,9 +40,14 @@ def _add_months(d: datetime, months: int) -> datetime:
     return d.replace(year=year, month=month, day=day)
 
 
-def _require_not_donateur(user: dict) -> None:
-    if user.get("role") == "donateur":
-        raise HTTPException(403, "Donateurs hebben geen toegang tot zoekertjes")
+def _require_not_donateur_or_kiosk(user: dict) -> None:
+    # Blokkeert zowel donateurs als het vaste kiosk-systeemaccount
+    # (role=="kiosk", zie models.py::UserRole — los van de anonieme
+    # "kiosk-modus"/il_kiosk_mode) van de VOLLEDIGE zoekertjes-oppervlakte,
+    # niet enkel aanmaken: beide hebben geen eigen organisatie, en zoekertjes
+    # zijn nadrukkelijk niet publiek (zie moduledocstring hierboven).
+    if user.get("role") in ("donateur", "kiosk"):
+        raise HTTPException(403, "Deze account heeft geen toegang tot zoekertjes")
 
 
 def _validate_and_clamp_deadline(deadline: str | None, is_admin: bool) -> str:
@@ -98,7 +103,7 @@ async def list_material_categories():
 async def list_my_search_requests(user: dict = Depends(get_validated_user)):
     """Alle actieve zoekertjes van de eigen organisatie (niet enkel de eigen,
     want elk orglid mag alle zoekertjes van de organisatie bewerken — §2/§7)."""
-    _require_not_donateur(user)
+    _require_not_donateur_or_kiosk(user)
     if not user.get("organisationId"):
         return []
     docs = await db.search_requests.find(
@@ -110,7 +115,7 @@ async def list_my_search_requests(user: dict = Depends(get_validated_user)):
 
 @router.get("/search-requests/{search_request_id}")
 async def get_search_request(search_request_id: str, user: dict = Depends(get_validated_user)):
-    _require_not_donateur(user)
+    _require_not_donateur_or_kiosk(user)
     doc = await db.search_requests.find_one({"$or": [{"id": search_request_id}, {"slug": search_request_id}]})
     if not doc:
         raise HTTPException(404, "Zoekertje niet gevonden")
@@ -122,7 +127,7 @@ async def get_search_request(search_request_id: str, user: dict = Depends(get_va
 
 @router.post("/search-requests")
 async def create_search_request(body: SearchRequestCreateBody, user: dict = Depends(get_validated_user)):
-    _require_not_donateur(user)
+    _require_not_donateur_or_kiosk(user)
     if not user.get("organisationId"):
         raise HTTPException(400, "Je hebt geen organisatie gekoppeld aan je account")
 
@@ -175,7 +180,7 @@ async def create_search_request(body: SearchRequestCreateBody, user: dict = Depe
 async def update_search_request(
     search_request_id: str, body: SearchRequestUpdate, user: dict = Depends(get_validated_user),
 ):
-    _require_not_donateur(user)
+    _require_not_donateur_or_kiosk(user)
     doc = await db.search_requests.find_one({"id": search_request_id})
     if not doc:
         raise HTTPException(404, "Zoekertje niet gevonden")
@@ -210,7 +215,7 @@ async def update_search_request(
 
 @router.delete("/search-requests/{search_request_id}")
 async def delete_search_request(search_request_id: str, user: dict = Depends(get_validated_user)):
-    _require_not_donateur(user)
+    _require_not_donateur_or_kiosk(user)
     doc = await db.search_requests.find_one({"id": search_request_id})
     if not doc:
         raise HTTPException(404, "Zoekertje niet gevonden")

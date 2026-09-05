@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useKiosk } from '@/contexts/KioskContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
 import KioskMessageBanner from '@/components/kiosk/KioskMessageBanner';
 
 // Kiosk-startmenu (PRD §6.1) — publiek, geen <ProtectedRoute>, zelfde patroon
@@ -17,21 +19,25 @@ const TILES = [
 export default function Kiosk() {
   const { t } = useTranslation();
   const kiosk = useKiosk();
+  const auth = useAuth();
 
   // Idempotent: zet de il_kiosk_mode-vlag, ook als hij al aan staat (§6.1).
+  // Logt daarnaast altijd in als het ene vaste kiosk-account (POST
+  // /auth/kiosk-login) — dat overschrijft de bestaande il_token-cookie, wat
+  // meteen ook uitlogt wie hier toevallig al op dit toestel ingelogd was.
+  // Dit gebeurt bij elk bezoek aan /kiosk, dus ook nadat de idle-reset of de
+  // "terug naar start"-knop (KioskContext::resetToStart) hierheen navigeert
+  // — geen aparte logica daar nodig. Los van de il_kiosk_mode-vlag hierboven:
+  // dit is een echt, beperkt account (role=="kiosk"), geen localStorage-vlag.
   useEffect(() => {
     kiosk?.activateKiosk();
+    api.post('/auth/kiosk-login').catch(() => {}).finally(() => auth?.refresh());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="min-h-screen bg-background" data-testid="kiosk-page">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
-        <KioskMessageBanner />
-
-        <p className="overline mb-3 text-center">In Limbo · {t('kiosk.overline')}</p>
-        <h1 className="text-4xl font-bold tracking-tight mb-12 text-center">{t('kiosk.title')}</h1>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {TILES.map((tile) => (
             <Link
@@ -44,6 +50,8 @@ export default function Kiosk() {
             </Link>
           ))}
         </div>
+
+        <KioskMessageBanner />
 
         <KioskDisableAction />
       </div>

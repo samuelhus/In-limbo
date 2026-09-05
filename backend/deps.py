@@ -12,6 +12,13 @@ mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ["DB_NAME"]]
 
+# Vast, gedeeld e-mailadres voor het ene kiosk-account (zie seed.py en
+# routes/auth.py::kiosk_login) — één plek zodat beide altijd naar hetzelfde
+# document zoeken, ook als deze env-var ooit verandert. Ander concept dan de
+# losstaande, anonieme "kiosk-modus" (il_kiosk_mode/KioskContext.jsx,
+# prd/PRD_kiosk_modus.md) — dit is een echt account met role=="kiosk".
+KIOSK_EMAIL = os.environ.get("KIOSK_EMAIL", "kiosk@inlimbo.brussels")
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("inlimbo")
 

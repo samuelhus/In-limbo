@@ -81,6 +81,7 @@ export default function AdminGebruikers() {
           <option value="role:admin">Admin</option>
           <option value="role:user">User</option>
           <option value="role:donateur">Donateur</option>
+          <option value="role:kiosk">Kiosk</option>
         </select>
         {filterValue && (
           <button

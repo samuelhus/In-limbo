@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Response, Request, Body
 from slowapi.util import get_remote_address
 
-from deps import db, now_iso, strip_mongo, limiter, generate_unique_org_slug
+from deps import db, now_iso, strip_mongo, limiter, generate_unique_org_slug, KIOSK_EMAIL
 from models import (
     RegisterNewOrg, RegisterExistingOrg, RegisterDonateur, LoginRequest,
     PasswordResetRequest, PasswordResetConfirm,
@@ -256,6 +256,30 @@ async def logout(response: Response):
 @router.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     return strip_mongo(dict(user))
+
+
+@router.post("/auth/kiosk-login")
+@limiter.limit("30/minute")
+async def kiosk_login(request: Request, response: Response = None):
+    """Logt in op het ene, vaste kiosk-systeemaccount (gezocht via het
+    gedeelde KIOSK_EMAIL uit deps.py, niet via role — zo blijft dit uniek
+    ondubbelzinnig, ook al zou een admin ooit per ongeluk role=="kiosk" aan
+    een ander account toekennen) — geen wachtwoord nodig, dit is bedoeld als
+    stille, automatische login vanaf het kiosk-startmenu
+    (frontend/src/pages/Kiosk.jsx, bij elk bezoek en na elke idle-/
+    handmatige reset). Overschrijft gewoon de bestaande il_token-cookie, wat
+    meteen ook doet wat er nodig is als er toevallig al een ander account
+    ingelogd was op dat toestel.
+
+    Los van de anonieme "kiosk-modus"-laag (il_kiosk_mode in localStorage,
+    zie prd/PRD_kiosk_modus.md) — dit is een echt, beperkt account, geen
+    vlag. Zie models.py::UserRole voor het onderscheid."""
+    kiosk_user = await db.users.find_one({"email": KIOSK_EMAIL})
+    if not kiosk_user:
+        raise HTTPException(500, "Kiosk-account niet gevonden — controleer of seed.py is uitgevoerd")
+    token = create_access_token(kiosk_user["id"], kiosk_user["email"], "kiosk")
+    set_auth_cookie(response, token)
+    return strip_mongo(dict(kiosk_user))
 
 
 

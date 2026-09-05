@@ -58,7 +58,12 @@ export default function ListingDetail() {
   const limited = item.limited;
   const photos = item.photos || [];
   const isDonateur = user && typeof user === 'object' && user.role === 'donateur';
-  const isValidated = user && typeof user === 'object' && user.status === 'validated' && !isDonateur;
+  // Kiosk-systeemaccount (role=="kiosk") mag alle info zien zoals een
+  // gevalideerde gebruiker (zie routes/listings.py::_public_listing_view),
+  // maar de aanvraag-/meldknop hieronder horen daar niet bij — zelfde
+  // patroon als de bestaande !isDonateur-uitsluiting.
+  const isKiosk = user && typeof user === 'object' && user.role === 'kiosk';
+  const isValidated = user && typeof user === 'object' && user.status === 'validated' && !isDonateur && !isKiosk;
   const isOwner = !!item.isOwner;
   const isAdmin = isValidated && user.role === 'admin';
   const canManage = isOwner || isAdmin;
