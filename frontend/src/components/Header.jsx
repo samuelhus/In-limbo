@@ -19,7 +19,13 @@ export default function Header() {
   const isLoggedIn = user && typeof user === 'object';
   const isAdmin = isLoggedIn && user.role === 'admin';
   const isDonateur = isLoggedIn && user.role === 'donateur';
-  const isValidated = isLoggedIn && user.status === 'validated' && !isDonateur;
+  // Kiosk-systeemaccount (role=="kiosk", zie models.py::UserRole) mag alles
+  // zien maar geen aanvragen/aanbiedingen/zoekertjes — !isKiosk hier volstaat
+  // om al die nav-links (Nieuwe aanbieding, Mijn aanbiedingen, Nieuw
+  // zoekertje, Mijn zoekertjes) automatisch mee te verbergen, zelfde patroon
+  // als de bestaande !isDonateur-uitsluiting.
+  const isKiosk = isLoggedIn && user.role === 'kiosk';
+  const isValidated = isLoggedIn && user.status === 'validated' && !isDonateur && !isKiosk;
   const canCreateListings = isValidated || isDonateur;
   const displayName = isLoggedIn ? (isDonateur ? user.username : user.firstName) : '';
   const showAanbiedingen = canCreateListings || isValidated;

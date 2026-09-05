@@ -21,6 +21,8 @@ async def apply_to_listing(
 ):
     if user.get("role") == "donateur":
         raise HTTPException(403, "Donateurs kunnen geen aanvragen indienen")
+    if user.get("role") == "kiosk":
+        raise HTTPException(403, "Het kiosk-account kan geen aanvragen indienen")
     listing = await db.listings.find_one({"id": listing_id})
     if not listing:
         raise HTTPException(404, "Aanbieding niet gevonden")

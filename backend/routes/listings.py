@@ -106,7 +106,10 @@ async def _enrich_listings(items: list[dict]) -> list[dict]:
 def _can_manage_listing(user: dict, listing: dict) -> bool:
     """True als user deze listing mag bewerken/verwijderen: de aanbieder zelf,
     een admin, of een ander lid van dezelfde organisatie (donateurs — die geen
-    organisationId hebben — vallen hier niet onder)."""
+    organisationId hebben — vallen hier niet onder). Ook het vaste kiosk-
+    account (role=="kiosk", organisationId=="", zie seed.py) valt hier
+    automatisch buiten — geen aparte kiosk-check nodig in
+    update_listing/delete_listing/report_listing hieronder."""
     if user.get("role") == "admin":
         return True
     if user["id"] == listing["userId"]:
@@ -350,6 +353,8 @@ async def get_listing(listing_id: str, request: Request):
 
 @router.post("/listings")
 async def create_listing(body: ListingCreateBody, user: dict = Depends(get_donateur_or_validated_user)):
+    if user.get("role") == "kiosk":
+        raise HTTPException(403, "Het kiosk-account kan geen aanbiedingen maken")
     is_donateur = user.get("role") == "donateur"
     if is_donateur:
         body.isRecurrent = False

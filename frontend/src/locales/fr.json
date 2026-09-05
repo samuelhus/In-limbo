@@ -1131,14 +1131,13 @@
   },
 
   "kiosk": {
-    "overline": "Kiosque",
-    "title": "En quoi pouvons-nous t'aider ?",
     "tiles": {
       "checkout": "Sortie de matériel",
       "catalogus": "Parcourir le catalogue",
-      "spel": "Jouer au jeu",
-      "inspiratie": "Lire l'inspiration"
+      "spel": "Jouez : Trash ou Trésor",
+      "inspiratie": "Inspiration"
     },
+    "announcements_heading": "Annonces",
     "return_btn": "← Retour au menu",
     "return_confirm": "Es-tu sûr(e) ? Toute progression non enregistrée sera perdue.",
     "disable_btn_label": "Désactiver le mode kiosque",

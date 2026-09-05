@@ -24,7 +24,15 @@ ListingMaterial = Literal[
 ]
 
 UserStatus = Literal["pending", "validated", "rejected"]
-UserRole = Literal["user", "admin", "donateur"]
+# "kiosk" is één vast, gedeeld systeemaccount waarmee het kiosk-startmenu
+# (frontend/src/pages/Kiosk.jsx) automatisch inlogt — niet te verwarren met de
+# losstaande, anonieme "kiosk-modus"-laag (localStorage-vlag `il_kiosk_mode`,
+# zie prd/PRD_kiosk_modus.md) die toevallig hetzelfde woord gebruikt. Dit
+# account mag alles zien zoals een gevalideerde gebruiker (routes/listings.py
+# ::_public_listing_view), maar wordt expliciet geweigerd op
+# aanvragen/aanbiedingen/zoekertjes (zie routes/applications.py,
+# routes/listings.py::create_listing, routes/search_requests.py).
+UserRole = Literal["user", "admin", "donateur", "kiosk"]
 OrgStatus = Literal["pending", "validated", "rejected", "active", "inactive"]
 ListingStatus = Literal[
     "beschikbaar", "herbestemd", "in_magazijn", "gearchiveerd"
@@ -530,7 +538,7 @@ class AdminUserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
-    role: Optional[Literal["user", "admin", "donateur"]] = None
+    role: Optional[UserRole] = None
     status: Optional[Literal["pending", "validated", "rejected"]] = None
     preferredLanguage: Optional[Literal["nl", "fr"]] = None
 
