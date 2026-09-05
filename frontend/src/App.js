@@ -6,12 +6,15 @@ import '@/App.css';
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { MessagesProvider } from '@/contexts/MessagesContext';
+import { KioskProvider } from '@/contexts/KioskContext';
 import TestBanner from '@/components/TestBanner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ScrollToTop from '@/components/ScrollToTop';
 import DocumentMeta from '@/components/DocumentMeta';
+import KioskReturnButton from '@/components/kiosk/KioskReturnButton';
+import KioskIdleOverlay from '@/components/kiosk/KioskIdleOverlay';
 
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
@@ -49,6 +52,7 @@ import Voorwaarden from '@/pages/Voorwaarden';
 import Privacy from '@/pages/Privacy';
 import AdminDonateurListings from '@/pages/AdminDonateurListings';
 import Game from '@/pages/Game';
+import Kiosk from '@/pages/Kiosk';
 
 
 // Schat of Schroot? (/spel) heeft geen footer: het spel is bedoeld als 1
@@ -81,9 +85,14 @@ export default function App() {
       <ScrollToTop />
       <AuthProvider>
         <MessagesProvider>
+          {/* KioskProvider hangt binnen AuthProvider, zodat de reset-routine
+              (PRD §6.4) useAuth().logout() kan hergebruiken. */}
+          <KioskProvider>
           <div className="min-h-screen flex flex-col">
             <TestBanner />
             <Header />
+            <KioskReturnButton />
+            <KioskIdleOverlay />
             <main className="flex-1">
               <Routes>
                 <Route path="/" element={<Landing />} />
@@ -99,6 +108,7 @@ export default function App() {
                 <Route path="/inspiratie/:id" element={<InspiratieDetail />} />
                 <Route path="/impact-methodologie" element={<ImpactMethodologie />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/kiosk" element={<Kiosk />} />
                 <Route path="/wachtwoord-vergeten" element={<WachtwoordVergeten />} />
                 <Route path="/wachtwoord-reset" element={<WachtwoordReset />} />
                 <Route
@@ -271,6 +281,7 @@ export default function App() {
             </main>
             <ConditionalFooter />
           </div>
+          </KioskProvider>
         </MessagesProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -759,3 +759,36 @@ class ReportPublic(BaseModel):
     meta: dict = Field(default_factory=dict)
     handledByAdminId: Optional[str] = None
     handledAt: Optional[str] = None
+
+
+# ---------- Kiosk-mededelingen (zie prd/PRD_kiosk_modus.md §6.6/§7) ----------
+# Los van het Report-systeem hierboven: een kiosk-mededeling gaat de andere
+# richting op — een admin stuurt een boodschap NAAR de kioskbezoekers (banner
+# op /kiosk), geen signaal naar de admin. Opslag: db.kiosk_messages, zelfde
+# platte-document-vorm/CRUD-stijl als db.news (routes/news.py).
+KioskMessageType = Literal['hulp', 'evenement', 'mededeling']
+
+
+class KioskMessageCreate(BaseModel):
+    """Body voor POST /api/admin/kiosk/messages."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+    type: KioskMessageType
+    text: str = Field(..., min_length=1, max_length=300)
+    active: bool = True
+
+
+class KioskMessageUpdate(BaseModel):
+    """Body voor PATCH /api/admin/kiosk/messages/{id} — alle velden optioneel."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+    type: Optional[KioskMessageType] = None
+    text: Optional[str] = Field(None, min_length=1, max_length=300)
+    active: Optional[bool] = None
+
+
+class KioskMessagePublic(BaseModel):
+    id: str
+    type: KioskMessageType
+    text: str
+    active: bool
+    createdAt: str
+    updatedAt: str

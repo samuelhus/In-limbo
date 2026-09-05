@@ -63,6 +63,7 @@ from routes.donateur import router as donateur_router
 from routes.conversations import router as conversations_router
 from routes.game import router as game_router
 from routes.admin_game import router as admin_game_router
+from routes.kiosk import router as kiosk_router
 
 
 cloudinary.config(
@@ -176,6 +177,9 @@ async def startup() -> None:
     await db.reports.create_index("status")  # open-count-badge + standaardfilter
     await db.reports.create_index("createdAt")  # nieuwste eerst
     await db.reports.create_index([("type", 1), ("targetId", 1)])  # idempotentiechecks per trigger
+    # Kiosk-mededelingen (zie prd/PRD_kiosk_modus.md §6.6) — banner op /kiosk.
+    await db.kiosk_messages.create_index("active")  # publieke banner-query (GET /kiosk/messages)
+    await db.kiosk_messages.create_index("createdAt")  # nieuwste eerst, zowel publiek als in het admin-tabblad
     # Schat of Schroot? (swipe-spel, zie prd/PRD_Schat_of_Schroot.md) — losstaand
     # subsysteem, eigen collecties (routes/game.py, routes/admin_game.py).
     # partialFilterExpression sluit username=None uit van de uniciteitscontrole
@@ -274,6 +278,7 @@ api.include_router(donateur_router)
 api.include_router(conversations_router)
 api.include_router(game_router)
 api.include_router(admin_game_router)
+api.include_router(kiosk_router)
 
 app.include_router(api)
 
